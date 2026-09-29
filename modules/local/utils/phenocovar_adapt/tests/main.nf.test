@@ -1,0 +1,78 @@
+nextflow_process {
+
+    name "Test Process PHENOCOVAR_ADAPT"
+    script "../main.nf"
+    process "PHENOCOVAR_ADAPT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "utils"
+    tag "utils/phenocovar_adapt"
+
+    test("homo_sapiens popgen - quantitative pheno + covar - stub") {
+        options "-stub"
+
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_quantitative_phenoname.phe', checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_covariates.txt', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.gemma_pheno.size() == 1 },
+                { assert process.out.emmax_pheno.size() == 1 },
+                { assert process.out.tassel_pheno.size() == 1 },
+                { assert process.out.rmvp_pheno.size() == 1 },
+                { assert process.out.omiga_pheno.size() == 1 },
+                { assert process.out.gemma_covar.size() == 1 },
+                { assert process.out.emmax_covar.size() == 1 },
+                { assert process.out.omiga_covar.size() == 1 }
+            )
+        }
+    }
+
+    test("homo_sapiens popgen - quantitative pheno + covar") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_quantitative_phenoname.phe', checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_covariates.txt', checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.gemma_pheno.size() == 1 },
+                { assert path(process.out.gemma_pheno.get(0).get(1)).toFile().length() > 0 },
+                { assert path(process.out.emmax_pheno.get(0).get(1)).readLines().get(0).tokenize(" ") },
+                { assert path(process.out.tassel_pheno.get(0).get(1)).readLines().get(0).contains("Taxa") },
+                { assert path(process.out.rmvp_pheno.get(0).get(1)).readLines().get(0).contains("Taxa") },
+                { assert path(process.out.omiga_pheno.get(0).get(1)).readLines().get(0).contains("FID") },
+                { assert process.out.gemma_covar.size() == 1 },
+                { assert process.out.emmax_covar.size() == 1 },
+                { assert process.out.omiga_covar.size() == 1 }
+            )
+        }
+    }
+}

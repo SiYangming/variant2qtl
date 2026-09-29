@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "tassel_mlm"
+description: Run TASSEL mixed linear model association via run_pipeline.pl
+keywords:
+  - tassel
+  - mlm
+  - gwas
+  - plant
+tools:
+  - "tassel":
+      description: "Trait Analysis by aSSociation, Evolution and Linkage (TASSEL)"
+      homepage: "https://www.maizegenetics.net/tassel"
+      documentation: "https://bitbucket.org/tasseladmin/tassel-5-source/wiki/Home"
+      tool_dev_url: "https://bitbucket.org/tasseladmin/tassel-5-source"
+      licence: ["LGPL-2.1-only"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - vcf:
+        type: file
+        description: VCF genotype file
+        pattern: "*.{vcf,vcf.gz}"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: TASSEL phenotype file
+        pattern: "*.{txt,tsv,pheno}"
+  - - meta3:
+        type: map
+        description: Kinship metadata; pass [] when absent
+    - kinship:
+        type: file
+        description: Optional kinship matrix
+        pattern: "*.{txt,kin,kinship}"
+
+output:
+  - results:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*_mlm*.txt":
+          type: file
+          description: TASSEL MLM association export
+          pattern: "*_mlm*.txt"
+  - log:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.log":
+          type: file
+          description: Pipeline log
+          pattern: "*.log"
+  versions_tassel:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

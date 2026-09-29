@@ -1,0 +1,83 @@
+nextflow_process {
+
+    name "Test Process RMVP_GWAS"
+    script "../main.nf"
+    process "RMVP_GWAS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "rmvp"
+    tag "rmvp/gwas"
+
+    test("homo_sapiens popgen - vcf - stub") {
+        options "-stub"
+
+
+        tag "stub"
+        when {
+            process {
+                """
+                file('plink_simulated.rmvp.pheno.txt').text = 'Taxa\\tQuantitativeTrait\\nind1\\t1.0\\nind2\\t2.0\\n'
+
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.vcf.gz', checkIfExists: true)
+                ]
+                input[1] = [ [ id:'plink_simulated' ], file('plink_simulated.rmvp.pheno.txt') ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.results.size() == 1 },
+                { assert process.out.results.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.results.get(0).get(1)).exists() }
+            )
+        }
+    }
+
+    test("homo_sapiens popgen - plink_simulated vcf") {
+        tag "gwas_real"
+
+        setup {
+            run("PHENOCOVAR_ADAPT") {
+                script "../../../utils/phenocovar_adapt/main.nf"
+                process {
+                    """
+                    input[0] = [
+                        [ id:'plink_simulated' ],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_quantitative_phenoname.phe', checkIfExists: true)
+                    ]
+                    input[1] = [
+                        [ id:'plink_simulated' ],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_covariates.txt', checkIfExists: true)
+                    ]
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.vcf.gz', checkIfExists: true)
+                ]
+                input[1] = PHENOCOVAR_ADAPT.out.rmvp_pheno
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.results.size() == 1 },
+                { assert process.out.results.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.results.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

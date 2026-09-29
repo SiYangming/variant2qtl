@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "rmvp_gwas"
+description: Run rMVP multi-model GWAS (FarmCPU / MLM / GLM)
+keywords:
+  - rmvp
+  - farmcpu
+  - gwas
+  - r
+tools:
+  - "r-rmvp":
+      description: "Memory-efficient, visualization-enhanced, parallel-accelerated GWAS (rMVP)"
+      homepage: "https://github.com/xiaolei-lab/rMVP"
+      documentation: "https://github.com/xiaolei-lab/rMVP"
+      tool_dev_url: "https://github.com/xiaolei-lab/rMVP"
+      licence: ["Apache-2.0"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - vcf:
+        type: file
+        description: VCF genotype file
+        pattern: "*.{vcf,vcf.gz}"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: Phenotype table for rMVP
+        pattern: "*.{txt,csv,tsv,phe}"
+
+output:
+  - results:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.csv":
+          type: file
+          description: rMVP association CSV outputs
+          pattern: "*.csv"
+  - plots:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.png":
+          type: file
+          description: Optional Manhattan / QQ plots
+          pattern: "*.png"
+  - log:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.log":
+          type: file
+          description: Run log
+          pattern: "*.log"
+  versions_rmvp:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,66 @@
+nextflow_workflow {
+
+    name "Test Workflow GENOTYPE_INGEST_HARMONIZE"
+    script "../main.nf"
+    config "./nextflow.config"
+
+    workflow "GENOTYPE_INGEST_HARMONIZE"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "genotype_ingest_harmonize"
+    tag "plink"
+    tag "plink/vcf"
+
+    test("homo_sapiens popgen - plink_simulated.vcf.gz") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([
+                    [ id: 'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.vcf.gz', checkIfExists: true)
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks().size() >= 1 },
+                { assert workflow.out.bed.size() == 1 },
+                { assert workflow.out.bed.get(0).get(0).id == "plink_simulated" },
+                { assert path(workflow.out.bed.get(0).get(1)).exists() },
+                { assert path(workflow.out.bed.get(0).get(2)).exists() },
+                { assert path(workflow.out.bed.get(0).get(3)).exists() },
+                { assert workflow.out.vcf.size() == 1 }
+            )
+        }
+    }
+
+    test("homo_sapiens popgen - plink_simulated.vcf.gz - stub") {
+        options '-stub'
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of([
+                    [ id: 'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.vcf.gz', checkIfExists: true)
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.bed.size() == 1 },
+                { assert workflow.out.bed.get(0).get(0).id == "plink_simulated" },
+                { assert path(workflow.out.bed.get(0).get(1)).exists() }
+            )
+        }
+    }
+
+}

@@ -14,17 +14,22 @@
 
 ## Introduction
 
-**nf-core/variant2qtl** is a bioinformatics pipeline that ...
+**variant2qtl** (current version: **0.0.1**) is a Nextflow DSL2 pipeline for high-throughput QTL association analysis.
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+**English**
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/guidelines/graphic_design/workflow_diagrams#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.
+
+**中文**
+
+一款基于 Nextflow DSL2 构建的、支持多源变异（SNP/Indel/SV/STR）输入的全自动 QTL（eQTL/sQTL/pQTL/gQTL）高通量关联分析流程。
+
+The pipeline is designed to:
+
+1. Accept multi-source genetic variant inputs (SNP, Indel, SV, STR)
+2. Run QTL association analyses across modalities (eQTL / sQTL / pQTL / gQTL)
+3. Perform automated functional annotation of associated variants
+4. Produce reproducible, high-throughput association results and reports
 
 ## Usage
 

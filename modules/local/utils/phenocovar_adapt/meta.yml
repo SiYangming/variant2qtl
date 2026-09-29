@@ -1,0 +1,98 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "phenocovar_adapt"
+description: Adapt plink-style quantitative phenotype and covariates to GEMMA / EMMAX / TASSEL / rMVP / OmiGA GWAS formats
+keywords:
+  - phenotype
+  - covariates
+  - gwas
+  - adapt
+tools:
+  - "gawk":
+      description: "GNU Awk pattern scanning and processing language"
+      homepage: "https://www.gnu.org/software/gawk/"
+      documentation: "https://www.gnu.org/software/gawk/manual/"
+      tool_dev_url: "https://git.savannah.gnu.org/cgit/gawk.git"
+      licence: ["GPL-3.0-or-later"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information e.g. [ id:'test' ]
+    - phenotype:
+        type: file
+        description: Quantitative phenotype with header FID IID trait (plink style)
+        pattern: "*.{phe,pheno,txt,tsv}"
+  - - meta2:
+        type: map
+        description: Covariate metadata; pass [] when covariates absent
+    - covariates:
+        type: file
+        description: Optional covariates with header FID IID cov... (plink style)
+        pattern: "*.{txt,tsv,cov,covar}"
+
+output:
+  - gemma_pheno:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.gemma.pheno.txt":
+          type: file
+          description: GEMMA phenotype (single column, no header)
+  - gemma_covar:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.gemma.covar.txt":
+          type: file
+          description: GEMMA covariates (numeric columns only, no header)
+  - emmax_pheno:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.emmax.pheno.txt":
+          type: file
+          description: EMMAX phenotype (FID IID pheno, no header)
+  - emmax_covar:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.emmax.covar.txt":
+          type: file
+          description: EMMAX covariates (FID IID intercept cov..., no header)
+  - tassel_pheno:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.tassel.pheno.txt":
+          type: file
+          description: TASSEL trait file (Taxa + trait header)
+  - rmvp_pheno:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.rmvp.pheno.txt":
+          type: file
+          description: rMVP phenotype (Taxa + trait header)
+  - omiga_pheno:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.omiga.pheno.txt":
+          type: file
+          description: OmiGA phenotype (FID IID trait with header)
+  - omiga_covar:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.omiga.covar.txt":
+          type: file
+          description: OmiGA covariates (FID IID cov... with header)
+  versions_gawk:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,142 @@
+{
+    "homo sapiens - [bam,bai,XX], [fa,fai], bed": {
+        "content": [
+            "VcfFile [chromosomes=[chr22], sampleCount=1, variantCount=1, phased=false, phasedAutodetect=false]",
+            "a155caa3310c034ded2fad32a6be6163",
+            {
+                "bam": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.spanning.bam"
+                    ]
+                ],
+                "vcf": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.vcf.gz"
+                    ]
+                ],
+                "versions_trgt": [
+                    [
+                        "TRGT_GENOTYPE",
+                        "trgt",
+                        "5.0.0-e9acee0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-07T15:54:03.787336555",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.0"
+        }
+    },
+    "homo sapiens - [bam,bai,[]], [fa,fai], bed - stub": {
+        "content": [
+            {
+                "bam": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.spanning.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "vcf": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.vcf.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                    ]
+                ],
+                "versions_trgt": [
+                    [
+                        "TRGT_GENOTYPE",
+                        "trgt",
+                        "5.0.0-e9acee0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-07T16:17:52.646400692",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.0"
+        }
+    },
+    "homo sapiens - [bam,bai,XX], [fa,fai], bed - stub": {
+        "content": [
+            {
+                "bam": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.spanning.bam:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "vcf": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.vcf.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                    ]
+                ],
+                "versions_trgt": [
+                    [
+                        "TRGT_GENOTYPE",
+                        "trgt",
+                        "5.0.0-e9acee0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-07T08:41:50.133007612",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.0"
+        }
+    },
+    "homo sapiens - [bam,bai,[]], [fa,fai], bed": {
+        "content": [
+            "VcfFile [chromosomes=[chr22], sampleCount=1, variantCount=1, phased=false, phasedAutodetect=false]",
+            "a155caa3310c034ded2fad32a6be6163",
+            {
+                "bam": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.spanning.bam"
+                    ]
+                ],
+                "vcf": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test.vcf.gz"
+                    ]
+                ],
+                "versions_trgt": [
+                    [
+                        "TRGT_GENOTYPE",
+                        "trgt",
+                        "5.0.0-e9acee0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-07-07T15:54:13.36315897",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.0"
+        }
+    }
+}

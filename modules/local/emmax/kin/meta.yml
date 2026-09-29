@@ -1,0 +1,46 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "emmax_kin"
+description: Compute EMMAX kinship matrix (emmax-kin) from tped/tfam
+keywords:
+  - emmax
+  - kinship
+  - gwas
+tools:
+  - "emmax":
+      description: "Efficient mixed-model association eXpedited (EMMAX)"
+      homepage: "http://csg.sph.umich.edu/kang/emmax/"
+      documentation: "http://csg.sph.umich.edu/kang/emmax/"
+      tool_dev_url: "https://github.com/SiYangming/emmax"
+      licence: ["Other"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - tped:
+        type: file
+        description: PLINK transposed ped
+        pattern: "*.tped"
+    - tfam:
+        type: file
+        description: PLINK transposed fam
+        pattern: "*.tfam"
+
+output:
+  - kinship:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.kinf":
+          type: file
+          description: EMMAX kinship matrix
+          pattern: "*.kinf"
+  versions_emmax:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

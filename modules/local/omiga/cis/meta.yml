@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "omiga_cis"
+description: Run OmiGA cis-molQTL mapping (LM/LMM)
+keywords:
+  - omiga
+  - cis-qtl
+  - eqtl
+  - molqtl
+  - lmm
+tools:
+  - "omiga":
+      description: "OmiGA: ultra-efficient molecular QTL and GWAS toolkit"
+      homepage: "https://omiga.bio"
+      documentation: "https://omiga.bio/#/Installation"
+      tool_dev_url: "https://github.com/SCAU-AnimalGenetics/OmiGA"
+      licence: ["GPL-3.0-only"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - bed:
+        type: file
+        description: PLINK bed (OmiGA genotype prefix)
+        pattern: "*.bed"
+    - bim:
+        type: file
+        description: PLINK bim
+        pattern: "*.bim"
+    - fam:
+        type: file
+        description: PLINK fam
+        pattern: "*.fam"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: Molecular phenotype BED/OPF for cis-QTL
+        pattern: "*.{bed.gz,opf.gz,bed,txt}"
+  - - meta3:
+        type: map
+        description: Covariate metadata; pass [] when absent
+    - covariates:
+        type: file
+        description: Optional covariates matrix
+        pattern: "*.{txt,tsv,cov,covar}"
+
+output:
+  - cis_qtl:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.cis_qtl*.txt.gz":
+          type: file
+          description: Cis-QTL summary statistics
+          pattern: "*.cis_qtl*.txt.gz"
+  - outdir:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*_out":
+          type: directory
+          description: Full OmiGA output directory
+  versions_omiga:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -30,9 +30,9 @@ lint:
 template:
   org: nf-core
   name: variant2qtl
-  description: Map variants to QTL associations
+  description: An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.
   author: siyangming
-  version: 1.0.0dev
+  version: 0.0.1
   force: true
   outdir: .
   skip_features: []

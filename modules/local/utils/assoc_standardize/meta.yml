@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "assoc_standardize"
+description: Best-effort standardization of GWAS association tables to CHR POS SNP P
+keywords:
+  - gwas
+  - association
+  - standardize
+tools:
+  - "gawk":
+      description: "GNU Awk pattern scanning and processing language"
+      homepage: "https://www.gnu.org/software/gawk/"
+      documentation: "https://www.gnu.org/software/gawk/manual/"
+      tool_dev_url: "https://git.savannah.gnu.org/cgit/gawk.git"
+      licence: ["GPL-3.0-or-later"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information e.g. [ id:'test' ]
+    - assoc:
+        type: file
+        description: Tool-specific association results file
+        pattern: "*.{txt,tsv,csv,ps,assoc.txt}"
+    - tool:
+        type: string
+        description: Tool key guiding column map (gemma|emmax|tassel|rmvp|omiga|generic)
+
+output:
+  - standardized:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.std.tsv":
+          type: file
+          description: Standardized TSV with columns CHR POS SNP P
+          pattern: "*.std.tsv"
+  versions_gawk:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"
