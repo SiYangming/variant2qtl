@@ -38,7 +38,7 @@ workflow VARIANT2QTL {
     //
     FASTQC(ch_samplesheet)
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.map{ _meta, file -> file })
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    // FastQC 4.1.0 publishes versions via topic("versions"), not FASTQC.out.versions
 
     //
     // Optional genotype ingest → QC → GWAS benchmark (all default OFF).
