@@ -23,6 +23,17 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "genotype_input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_genotype_input.json",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Optional cohort genotype samplesheet (id + phenotype; VCF and/or bed/bim/fam; optional covariates).",
+                    "help_text": "One row per analysis cohort. Provide either `vcf` (ingest→bed) or `bed`+`bim`+`fam`. When set, this drives genotype ingest/QC/GWAS inputs instead of the scattered `--gwas_benchmark_*` / `--genotype_ingest_vcf` file params. FASTQC still uses `--input`.",
+                    "fa_icon": "fas fa-file-csv"
+                },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",

@@ -6,6 +6,7 @@
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
+include { samplesheetToList      } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_variant2qtl_pipeline'
@@ -42,59 +43,133 @@ workflow VARIANT2QTL {
 
     //
     // Optional genotype ingest → QC → GWAS benchmark (all default OFF).
-    // Prefer ingest VCF→bed over raw --gwas_benchmark_bed when ingest is ON.
-    // When run_genotype_qc=true, filtered bed feeds the benchmark (VCF cleared so
-    // fan-out regenerates from QC bed). Params-bed path still works when ingest OFF.
-    // Shared QC bed can optionally feed OmiGA cis via --omiga_cis_use_qc_bed.
+    // Prefer --genotype_input samplesheet (one row per cohort) over scattered
+    // --gwas_benchmark_* / --genotype_ingest_vcf params. Rows with VCF (no bed)
+    // are ingested; rows with bed/bim/fam skip ingest. Shared QC bed can feed
+    // OmiGA cis via --omiga_cis_use_qc_bed.
     //
     def ch_shared_qc_bed = channel.empty()
 
-    if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark) {
-        def gwas_meta = [id: params.gwas_benchmark_id ?: 'gwas_benchmark']
-
+    if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
         def ch_gwas_vcf = channel.empty()
+        def ch_gwas_pheno = channel.empty()
+        def ch_gwas_covar = channel.empty()
 
-        if (params.run_genotype_ingest) {
-            if (!params.genotype_ingest_vcf) {
-                log.warn "run_genotype_ingest=true but missing --genotype_ingest_vcf; channels empty."
-            } else {
-                def ch_ingest_vcf = channel.of([
-                    gwas_meta,
-                    file(params.genotype_ingest_vcf, checkIfExists: true)
-                ])
-                GENOTYPE_INGEST_HARMONIZE(ch_ingest_vcf)
-                ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
-                ch_gwas_plink_raw = GENOTYPE_INGEST_HARMONIZE.out.bed
-                ch_gwas_vcf = GENOTYPE_INGEST_HARMONIZE.out.vcf
+        if (params.genotype_input) {
+            def ch_geno_rows = channel
+                .fromList(samplesheetToList(params.genotype_input, "${projectDir}/assets/schema_genotype_input.json"))
+                .map { meta, vcf, bed, bim, fam, phenotype, covariates ->
+                    def paths = [vcf, bed, bim, fam, phenotype, covariates].collect { pathish ->
+                        if (pathish == null || pathish instanceof List || pathish instanceof Collection) {
+                            return null
+                        }
+                        def s = pathish.toString()?.trim()
+                        if (!s || s == 'null' || s == '[]') {
+                            return null
+                        }
+                        if (s.contains('://')) {
+                            return file(s, checkIfExists: true)
+                        }
+                        def candidates = [file(s), file("${projectDir}/${s}")]
+                        def assetsIdx = s.indexOf('assets/')
+                        if (assetsIdx >= 0) {
+                            candidates << file("${projectDir}/${s.substring(assetsIdx)}")
+                        }
+                        def f = candidates.find { cand -> cand.exists() }
+                        if (!f) {
+                            error("genotype_input path not found: ${s}")
+                        }
+                        return f
+                    }
+                    def vcf_p = paths[0]
+                    def bed_p = paths[1]
+                    def bim_p = paths[2]
+                    def fam_p = paths[3]
+                    def phe_p = paths[4]
+                    def cov_p = paths[5]
+                    def has_bed = bed_p && bim_p && fam_p
+                    def has_vcf = vcf_p != null
+                    if (!has_bed && !has_vcf) {
+                        error("genotype_input row '${meta.id}': provide vcf and/or bed+bim+fam")
+                    }
+                    if ((bed_p || bim_p || fam_p) && !has_bed) {
+                        error("genotype_input row '${meta.id}': bed, bim, and fam must all be set together")
+                    }
+                    [meta, vcf_p, bed_p, bim_p, fam_p, phe_p, cov_p, has_bed, has_vcf]
+                }
+
+            def ch_geno_branched = ch_geno_rows.branch { row ->
+                from_bed: row[7]
+                from_vcf: row[8] && !row[7]
             }
+
+            ch_gwas_pheno = ch_geno_rows.map { meta, _vcf, _bed, _bim, _fam, phe, _cov, _hb, _hv -> [meta, phe] }
+            ch_gwas_covar = ch_geno_rows
+                .filter { row -> row[6] != null }
+                .map { meta, _vcf, _bed, _bim, _fam, _phe, cov, _hb, _hv -> [meta, cov] }
+
+            ch_gwas_plink_raw = ch_geno_branched.from_bed.map { meta, _vcf, bed, bim, fam, _phe, _cov, _hb, _hv ->
+                [meta, bed, bim, fam]
+            }
+            ch_gwas_vcf = ch_geno_branched.from_bed
+                .filter { row -> row[1] != null }
+                .map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _hb, _hv -> [meta, vcf] }
+                .mix(
+                    ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _hb, _hv -> [meta, vcf] }
+                )
+
+            // VCF-only rows always go through ingest; empty channel is a no-op.
+            GENOTYPE_INGEST_HARMONIZE(
+                ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _hb, _hv -> [meta, vcf] }
+            )
+            ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
+            ch_gwas_plink_raw = ch_gwas_plink_raw.mix(GENOTYPE_INGEST_HARMONIZE.out.bed)
+            ch_gwas_vcf = ch_gwas_vcf.mix(GENOTYPE_INGEST_HARMONIZE.out.vcf)
         } else {
-            ch_gwas_plink_raw = (params.gwas_benchmark_bed && params.gwas_benchmark_bim && params.gwas_benchmark_fam)
-                ? channel.of([
-                    gwas_meta,
-                    file(params.gwas_benchmark_bed, checkIfExists: true),
-                    file(params.gwas_benchmark_bim, checkIfExists: true),
-                    file(params.gwas_benchmark_fam, checkIfExists: true)
-                ])
-                : channel.empty()
+            def gwas_meta = [id: params.gwas_benchmark_id ?: 'gwas_benchmark']
 
-            ch_gwas_vcf = params.gwas_benchmark_vcf
-                ? channel.of([gwas_meta, file(params.gwas_benchmark_vcf, checkIfExists: true)])
-                : channel.empty()
+            if (params.run_genotype_ingest) {
+                if (!params.genotype_ingest_vcf) {
+                    log.warn "run_genotype_ingest=true but missing --genotype_ingest_vcf; channels empty."
+                } else {
+                    def ch_ingest_vcf = channel.of([
+                        gwas_meta,
+                        file(params.genotype_ingest_vcf, checkIfExists: true)
+                    ])
+                    GENOTYPE_INGEST_HARMONIZE(ch_ingest_vcf)
+                    ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
+                    ch_gwas_plink_raw = GENOTYPE_INGEST_HARMONIZE.out.bed
+                    ch_gwas_vcf = GENOTYPE_INGEST_HARMONIZE.out.vcf
+                }
+            } else {
+                ch_gwas_plink_raw = (params.gwas_benchmark_bed && params.gwas_benchmark_bim && params.gwas_benchmark_fam)
+                    ? channel.of([
+                        gwas_meta,
+                        file(params.gwas_benchmark_bed, checkIfExists: true),
+                        file(params.gwas_benchmark_bim, checkIfExists: true),
+                        file(params.gwas_benchmark_fam, checkIfExists: true)
+                    ])
+                    : channel.empty()
 
-            if ((params.run_genotype_qc || params.run_gwas_benchmark) &&
-                (!params.gwas_benchmark_bed || !params.gwas_benchmark_bim || !params.gwas_benchmark_fam)) {
-                log.warn "genotype_qc/gwas_benchmark enabled but missing --gwas_benchmark_bed/bim/fam; channels empty."
+                ch_gwas_vcf = params.gwas_benchmark_vcf
+                    ? channel.of([gwas_meta, file(params.gwas_benchmark_vcf, checkIfExists: true)])
+                    : channel.empty()
+
+                if ((params.run_genotype_qc || params.run_gwas_benchmark) &&
+                    (!params.gwas_benchmark_bed || !params.gwas_benchmark_bim || !params.gwas_benchmark_fam)) {
+                    log.warn "genotype_qc/gwas_benchmark enabled but missing --gwas_benchmark_bed/bim/fam; channels empty."
+                }
             }
+
+            ch_gwas_pheno = params.gwas_benchmark_phenotype
+                ? channel.of([gwas_meta, file(params.gwas_benchmark_phenotype, checkIfExists: true)])
+                : channel.empty()
+
+            ch_gwas_covar = params.gwas_benchmark_covariates
+                ? channel.of([gwas_meta, file(params.gwas_benchmark_covariates, checkIfExists: true)])
+                : channel.empty()
         }
-
-        def ch_gwas_pheno = params.gwas_benchmark_phenotype
-            ? channel.of([gwas_meta, file(params.gwas_benchmark_phenotype, checkIfExists: true)])
-            : channel.empty()
-
-        def ch_gwas_covar = params.gwas_benchmark_covariates
-            ? channel.of([gwas_meta, file(params.gwas_benchmark_covariates, checkIfExists: true)])
-            : channel.empty()
 
         def ch_gwas_plink = ch_gwas_plink_raw
         if (params.run_genotype_qc) {
@@ -107,8 +182,8 @@ workflow VARIANT2QTL {
         }
 
         if (params.run_gwas_benchmark) {
-            if (!params.gwas_benchmark_phenotype) {
-                log.warn "run_gwas_benchmark=true but missing --gwas_benchmark_phenotype."
+            if (!params.genotype_input && !params.gwas_benchmark_phenotype) {
+                log.warn "run_gwas_benchmark=true but missing --gwas_benchmark_phenotype (or --genotype_input)."
             }
             GWAS_BENCHMARK_PARALLEL(
                 ch_gwas_plink,
