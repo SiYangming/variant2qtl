@@ -33,30 +33,30 @@ input:
         pattern: "*.{txt,csv,tsv,phe}"
 
 output:
-  - results:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.csv":
-          type: file
-          description: rMVP association CSV outputs
-          pattern: "*.csv"
-  - plots:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.png":
-          type: file
-          description: Optional Manhattan / QQ plots
-          pattern: "*.png"
-  - log:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.log":
-          type: file
-          description: Run log
-          pattern: "*.log"
+  results:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.csv":
+        type: file
+        description: rMVP association CSV outputs
+        pattern: "*.csv"
+  plots:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.png":
+        type: file
+        description: Optional Manhattan / QQ plots
+        pattern: "*.png"
+  log:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.log":
+        type: file
+        description: Run log
+        pattern: "*.log"
   versions_rmvp:
     description: Software versions
 

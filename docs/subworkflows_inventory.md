@@ -63,7 +63,7 @@ nf-core subworkflows install vcf_impute_minimac4
 | ----------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `genotype_ingest_harmonize`   | 多源变异入口（SNP/Indel）→ 标准化 VCF/PLINK；可选 liftover、bcftools norm、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**已深化**（SV/STR 仍在 P3 编排）   |
 | `genotype_qc`                 | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                       | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关） |
-| `genotype_to_analysis_format` | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                         | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                               |
+| `genotype_to_analysis_format` | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                           | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                               |
 | `molqtl_map_omiga`            | **OmiGA** cis（经 analysis-format）                                                 | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                    |
 | `molqtl_map_tensorqtl`        | tensorQTL 备用/对照引擎                                                             | local `tensorqtl`                                                                                    |
 | `qtl_postprocess`             | 结果合并、FDR/q-value、按染色体汇总、导出标准表                                     | 轻量 R/Python local                                                                                  |

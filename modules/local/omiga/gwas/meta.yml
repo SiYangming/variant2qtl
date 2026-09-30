@@ -47,21 +47,21 @@ input:
         pattern: "*.{txt,tsv,cov,covar}"
 
 output:
-  - gwas:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.gwas*":
-          type: file
-          description: GWAS summary outputs
-          pattern: "*.gwas*"
-  - outdir:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*_out":
-          type: directory
-          description: Full OmiGA output directory
+  gwas:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.gwas*":
+        type: file
+        description: GWAS summary outputs
+        pattern: "*.gwas*"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Full OmiGA output directory
   versions_omiga:
     description: Software versions
 

@@ -40,22 +40,22 @@ input:
         pattern: "*.{txt,kin,kinship}"
 
 output:
-  - results:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*_mlm*.txt":
-          type: file
-          description: TASSEL MLM association export
-          pattern: "*_mlm*.txt"
-  - log:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.log":
-          type: file
-          description: Pipeline log
-          pattern: "*.log"
+  results:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_mlm*.txt":
+        type: file
+        description: TASSEL MLM association export
+        pattern: "*_mlm*.txt"
+  log:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.log":
+        type: file
+        description: Pipeline log
+        pattern: "*.log"
   versions_tassel:
     description: Software versions
 

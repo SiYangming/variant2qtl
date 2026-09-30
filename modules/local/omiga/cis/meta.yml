@@ -49,21 +49,21 @@ input:
         pattern: "*.{txt,tsv,cov,covar}"
 
 output:
-  - cis_qtl:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.cis_qtl*.txt.gz":
-          type: file
-          description: Cis-QTL summary statistics
-          pattern: "*.cis_qtl*.txt.gz"
-  - outdir:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*_out":
-          type: directory
-          description: Full OmiGA output directory
+  cis_qtl:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cis_qtl*.txt.gz":
+        type: file
+        description: Cis-QTL summary statistics
+        pattern: "*.cis_qtl*.txt.gz"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Full OmiGA output directory
   versions_omiga:
     description: Software versions
 

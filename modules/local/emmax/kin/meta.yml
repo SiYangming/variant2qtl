@@ -29,14 +29,14 @@ input:
         pattern: "*.tfam"
 
 output:
-  - kinship:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.kinf":
-          type: file
-          description: EMMAX kinship matrix
-          pattern: "*.kinf"
+  kinship:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.kinf":
+        type: file
+        description: EMMAX kinship matrix
+        pattern: "*.kinf"
   versions_emmax:
     description: Software versions
 
