@@ -1,0 +1,76 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "emmax_assoc"
+description: Run EMMAX mixed-model association on tped/tfam
+keywords:
+  - emmax
+  - association
+  - gwas
+  - lmm
+tools:
+  - "emmax":
+      description: "Efficient mixed-model association eXpedited (EMMAX)"
+      homepage: "http://csg.sph.umich.edu/kang/emmax/"
+      documentation: "http://csg.sph.umich.edu/kang/emmax/"
+      tool_dev_url: "https://github.com/SiYangming/emmax"
+      licence: ["Other"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - tped:
+        type: file
+        description: PLINK transposed ped
+        pattern: "*.tped"
+    - tfam:
+        type: file
+        description: PLINK transposed fam
+        pattern: "*.tfam"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: Three-column phenotype (FAMID INDID pheno); NA for missing
+        pattern: "*.{txt,phe,pheno}"
+  - - meta3:
+        type: map
+        description: Kinship metadata
+    - kinship:
+        type: file
+        description: EMMAX kinship matrix (*.kinf)
+        pattern: "*.kinf"
+  - - meta4:
+        type: map
+        description: Covariate metadata; pass [] when absent
+    - covariates:
+        type: file
+        description: Optional covariates (intercept in column 3)
+        pattern: "*.{txt,cov,covar}"
+
+output:
+  - assoc:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.ps":
+          type: file
+          description: EMMAX association results (SNP beta p)
+          pattern: "*.ps"
+  - reml:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.reml":
+          type: file
+          description: REML / heritability output
+          pattern: "*.reml"
+  versions_emmax:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

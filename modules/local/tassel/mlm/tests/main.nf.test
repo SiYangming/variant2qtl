@@ -1,0 +1,41 @@
+nextflow_process {
+
+    name "Test Process TASSEL_MLM"
+    script "../main.nf"
+    process "TASSEL_MLM"
+
+    tag "modules"
+    tag "modules_local"
+    tag "tassel"
+    tag "tassel/mlm"
+
+    test("homo_sapiens popgen - vcf - stub") {
+        options "-stub"
+
+
+        tag "stub"
+        when {
+            process {
+                """
+                file('plink_simulated.tassel.pheno.txt').text = 'Taxa\\tQuantitativeTrait\\nind1\\t1.0\\nind2\\t2.0\\n'
+
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.vcf.gz', checkIfExists: true)
+                ]
+                input[1] = [ [ id:'plink_simulated' ], file('plink_simulated.tassel.pheno.txt') ]
+                input[2] = [ [ id:'plink_simulated' ], [] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.results.size() == 1 },
+                { assert process.out.results.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.results.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

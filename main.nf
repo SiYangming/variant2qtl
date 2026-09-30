@@ -24,7 +24,7 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_vari
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// TODO nf-core: Remove this line if you don't need a FASTA file
+// NOTE: Remove this line if you don't need a FASTA file
 //   This is an example of how to use getGenomeAttribute() to fetch parameters
 //   from igenomes.config using `--genome`
 params.fasta = getGenomeAttribute('fasta')
@@ -52,7 +52,7 @@ workflow NFCORE_VARIANT2QTL {
         samplesheet
     )
     emit:
-    multiqc_report = VARIANT2QTL.out.multiqc_report // channel: /path/to/multiqc_report.html
+    VARIANT2QTL.out.multiqc_report // channel: /path/to/multiqc_report.html
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,7 +94,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        NFCORE_VARIANT2QTL.out.multiqc_report
+        NFCORE_VARIANT2QTL.out
     )
 }
 

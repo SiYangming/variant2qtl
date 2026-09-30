@@ -14,24 +14,29 @@
 
 ## Introduction
 
-**nf-core/variant2qtl** is a bioinformatics pipeline that ...
+**variant2qtl** (current version: **0.0.1**) is a Nextflow DSL2 pipeline for high-throughput QTL association analysis.
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+**English**
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/guidelines/graphic_design/workflow_diagrams#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.
+
+**中文**
+
+一款基于 Nextflow DSL2 构建的、支持多源变异（SNP/Indel/SV/STR）输入的全自动 QTL（eQTL/sQTL/pQTL/gQTL）高通量关联分析流程。
+
+The pipeline is designed to:
+
+1. Accept multi-source genetic variant inputs (SNP, Indel, SV, STR)
+2. Run QTL association analyses across modalities (eQTL / sQTL / pQTL / gQTL)
+3. Perform automated functional annotation of associated variants
+4. Produce reproducible, high-throughput association results and reports
 
 ## Usage
 
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
+<!-- NOTE: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
      Explain what rows and columns represent. For instance (please edit as appropriate):
 
 First, prepare a samplesheet with your input data that looks as follows:
@@ -49,7 +54,7 @@ Each row represents a fastq file (single-end) or a pair of fastq files (paired e
 
 Now, you can run the pipeline using:
 
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+<!-- NOTE: update the following command to include all required parameters for a minimal example -->
 
 ```bash
 nextflow run nf-core/variant2qtl \
@@ -67,7 +72,7 @@ nf-core/variant2qtl was originally written by siyangming.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+<!-- NOTE: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
 
@@ -75,10 +80,10 @@ If you would like to contribute to this pipeline, please see the [contributing g
 
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
+<!-- NOTE: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
 <!-- If you use nf-core/variant2qtl for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+<!-- NOTE: Add bibliography of tools and data used in your pipeline -->
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

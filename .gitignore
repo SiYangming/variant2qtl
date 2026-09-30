@@ -2,6 +2,9 @@
 work/
 data/
 results/
+tmp/
+.nf-test/
+.nf-test.log
 .DS_Store
 testing/
 testing*

@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "MOLQTL_MAP_OMIGA"
+description: Local subworkflow molqtl_map_omiga for SiYangming/variant2qtl
+keywords:
+  - gwas
+  - qtl
+  - local
+components:
+  - omiga/cis
+  - genotype_to_analysis_format
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

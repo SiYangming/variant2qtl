@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "het_outliers"
+description: Flag samples with F het beyond N SD of the mean from a PLINK2 .het file
+keywords:
+  - plink2
+  - heterozygosity
+  - qc
+tools:
+  - python:
+      description: Python
+      homepage: https://www.python.org/
+input:
+  - - meta:
+        type: map
+        description: Groovy map with id
+    - het:
+        type: file
+        description: PLINK2 .het report
+output:
+  - outliers:
+      - meta:
+          type: map
+      - "*.het_outliers.txt":
+          type: file
+          description: FID IID list for --remove
+  - versions:
+      - versions.yml:
+          type: file
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

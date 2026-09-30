@@ -1,0 +1,61 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "gemma_relatedness"
+description: Estimate relatedness / kinship matrix with GEMMA (-gk)
+keywords:
+  - gemma
+  - kinship
+  - relatedness
+  - gwas
+  - lmm
+tools:
+  - "gemma":
+      description: "Linear mixed models (LMMs) for genome-wide association (GWA)"
+      homepage: "https://github.com/genetics-statistics/GEMMA"
+      documentation: "https://www.xzlab.org/software.html"
+      tool_dev_url: "https://github.com/genetics-statistics/GEMMA"
+      licence: ["GPL-3.0-only"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information e.g. [ id:'test' ]
+    - bed:
+        type: file
+        description: PLINK binary genotype bed
+        pattern: "*.bed"
+    - bim:
+        type: file
+        description: PLINK bim
+        pattern: "*.bim"
+    - fam:
+        type: file
+        description: PLINK fam
+        pattern: "*.fam"
+
+output:
+  - relatedness:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.cXX.txt":
+          type: file
+          description: GEMMA relatedness / kinship matrix
+          pattern: "*.cXX.txt"
+  - log:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.log.txt":
+          type: file
+          description: GEMMA log
+          pattern: "*.log.txt"
+  versions_gemma:
+    description: Software versions
+    pattern: "versions.yml"
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

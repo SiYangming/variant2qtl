@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "GENOTYPE_INGEST_HARMONIZE"
+description: Local subworkflow genotype_ingest_harmonize for SiYangming/variant2qtl
+keywords:
+  - gwas
+  - qtl
+  - local
+components:
+  - picard/liftovervcf
+  - bcftools/index
+  - bcftools/norm
+  - bcftools/view
+  - plink/vcf
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "plink2_pca_bfile"
+description: Run plink2 --pca on PLINK binary bed/bim/fam
+keywords:
+  - plink2
+  - pca
+  - qc
+tools:
+  - plink2:
+      description: PLINK 2
+      homepage: https://www.cog-genomics.org/plink/2.0/
+input:
+  - - meta:
+        type: map
+    - bed:
+        type: file
+    - bim:
+        type: file
+    - fam:
+        type: file
+output:
+  - eigenvec:
+      - meta:
+          type: map
+      - "*.eigenvec":
+          type: file
+  - eigenval:
+      - meta:
+          type: map
+      - "*.eigenval":
+          type: file
+  - versions:
+      - versions.yml:
+          type: file
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

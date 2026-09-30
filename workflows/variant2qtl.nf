@@ -9,6 +9,10 @@ include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_variant2qtl_pipeline'
+include { GWAS_BENCHMARK_PARALLEL   } from '../subworkflows/local/gwas_benchmark_parallel/main'
+include { GENOTYPE_QC               } from '../subworkflows/local/genotype_qc/main'
+include { GENOTYPE_INGEST_HARMONIZE } from '../subworkflows/local/genotype_ingest_harmonize/main'
+include { MOLQTL_MAP_OMIGA          } from '../subworkflows/local/molqtl_map_omiga/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,13 +34,144 @@ workflow VARIANT2QTL {
     FASTQC (
         ch_samplesheet
     )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect { entry -> entry[1] })
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+
+    //
+    // Optional genotype ingest → QC → GWAS benchmark (all default OFF).
+    // Prefer ingest VCF→bed over raw --gwas_benchmark_bed when ingest is ON.
+    // When run_genotype_qc=true, filtered bed feeds the benchmark (VCF cleared so
+    // fan-out regenerates from QC bed). Params-bed path still works when ingest OFF.
+    // Shared QC bed can optionally feed OmiGA cis via --omiga_cis_use_qc_bed.
+    //
+    def ch_shared_qc_bed = channel.empty()
+
+    if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark) {
+        def gwas_meta = [id: params.gwas_benchmark_id ?: 'gwas_benchmark']
+
+        def ch_gwas_plink_raw = channel.empty()
+        def ch_gwas_vcf = channel.empty()
+
+        if (params.run_genotype_ingest) {
+            if (!params.genotype_ingest_vcf) {
+                log.warn "run_genotype_ingest=true but missing --genotype_ingest_vcf; channels empty."
+            } else {
+                def ch_ingest_vcf = channel.of([
+                    gwas_meta,
+                    file(params.genotype_ingest_vcf, checkIfExists: true)
+                ])
+                GENOTYPE_INGEST_HARMONIZE(ch_ingest_vcf)
+                ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
+                ch_gwas_plink_raw = GENOTYPE_INGEST_HARMONIZE.out.bed
+                ch_gwas_vcf = GENOTYPE_INGEST_HARMONIZE.out.vcf
+            }
+        } else {
+            ch_gwas_plink_raw = (params.gwas_benchmark_bed && params.gwas_benchmark_bim && params.gwas_benchmark_fam)
+                ? channel.of([
+                    gwas_meta,
+                    file(params.gwas_benchmark_bed, checkIfExists: true),
+                    file(params.gwas_benchmark_bim, checkIfExists: true),
+                    file(params.gwas_benchmark_fam, checkIfExists: true)
+                ])
+                : channel.empty()
+
+            ch_gwas_vcf = params.gwas_benchmark_vcf
+                ? channel.of([gwas_meta, file(params.gwas_benchmark_vcf, checkIfExists: true)])
+                : channel.empty()
+
+            if ((params.run_genotype_qc || params.run_gwas_benchmark) &&
+                (!params.gwas_benchmark_bed || !params.gwas_benchmark_bim || !params.gwas_benchmark_fam)) {
+                log.warn "genotype_qc/gwas_benchmark enabled but missing --gwas_benchmark_bed/bim/fam; channels empty."
+            }
+        }
+
+        def ch_gwas_pheno = params.gwas_benchmark_phenotype
+            ? channel.of([gwas_meta, file(params.gwas_benchmark_phenotype, checkIfExists: true)])
+            : channel.empty()
+
+        def ch_gwas_covar = params.gwas_benchmark_covariates
+            ? channel.of([gwas_meta, file(params.gwas_benchmark_covariates, checkIfExists: true)])
+            : channel.empty()
+
+        def ch_gwas_plink = ch_gwas_plink_raw
+        if (params.run_genotype_qc) {
+            GENOTYPE_QC(ch_gwas_plink_raw)
+            ch_versions = ch_versions.mix(GENOTYPE_QC.out.versions)
+            ch_gwas_plink = GENOTYPE_QC.out.bed
+            ch_shared_qc_bed = GENOTYPE_QC.out.bed
+            // QC changes SNP set — force VCF rebuild from filtered bed
+            ch_gwas_vcf = channel.empty()
+        }
+
+        if (params.run_gwas_benchmark) {
+            if (!params.gwas_benchmark_phenotype) {
+                log.warn "run_gwas_benchmark=true but missing --gwas_benchmark_phenotype."
+            }
+            GWAS_BENCHMARK_PARALLEL(
+                ch_gwas_plink,
+                ch_gwas_vcf,
+                ch_gwas_pheno,
+                ch_gwas_covar
+            )
+            ch_versions = ch_versions.mix(GWAS_BENCHMARK_PARALLEL.out.versions)
+        }
+    }
+
+    //
+    // Optional OmiGA cis-molQTL (default OFF)
+    // Inputs: --omiga_cis_bed/bim/fam + --omiga_cis_phenotype (+ optional covariates),
+    // or --omiga_cis_use_qc_bed to reuse the shared QC bed from the GWAS/QC branch.
+    //
+    if (params.run_omiga_cis) {
+        def omiga_meta = [id: params.omiga_cis_id ?: 'omiga_cis']
+
+        def ch_omiga_plink = channel.empty()
+        if (params.omiga_cis_use_qc_bed) {
+            ch_omiga_plink = ch_shared_qc_bed.map { _meta, bed, bim, fam ->
+                [omiga_meta, bed, bim, fam]
+            }
+        } else if (params.omiga_cis_bed && params.omiga_cis_bim && params.omiga_cis_fam) {
+            ch_omiga_plink = channel.of([
+                omiga_meta,
+                file(params.omiga_cis_bed, checkIfExists: true),
+                file(params.omiga_cis_bim, checkIfExists: true),
+                file(params.omiga_cis_fam, checkIfExists: true)
+            ])
+        }
+
+        def ch_omiga_pheno = params.omiga_cis_phenotype
+            ? channel.of([omiga_meta, file(params.omiga_cis_phenotype, checkIfExists: true)])
+            : channel.empty()
+
+        def ch_omiga_covar = params.omiga_cis_covariates
+            ? channel.of([omiga_meta, file(params.omiga_cis_covariates, checkIfExists: true)])
+            : channel.empty()
+
+        def ch_omiga_vcf = params.omiga_cis_vcf
+            ? channel.of([omiga_meta, file(params.omiga_cis_vcf, checkIfExists: true)])
+            : channel.empty()
+
+        if (!params.omiga_cis_use_qc_bed &&
+            (!params.omiga_cis_bed || !params.omiga_cis_bim || !params.omiga_cis_fam)) {
+            log.warn "run_omiga_cis=true but missing --omiga_cis_bed/bim/fam (or --omiga_cis_use_qc_bed); channels empty."
+        }
+        if (!params.omiga_cis_phenotype) {
+            log.warn "run_omiga_cis=true but missing --omiga_cis_phenotype."
+        }
+
+        MOLQTL_MAP_OMIGA(
+            ch_omiga_plink,
+            ch_omiga_pheno,
+            ch_omiga_covar,
+            ch_omiga_vcf
+        )
+        ch_versions = ch_versions.mix(MOLQTL_MAP_OMIGA.out.versions)
+    }
 
     //
     // Collate and save software versions
     //
-    def topic_versions = Channel.topic("versions")
+    def topic_versions = channel.topic("versions")
         .distinct()
         .branch { entry ->
             versions_file: entry instanceof Path
@@ -103,7 +238,8 @@ workflow VARIANT2QTL {
         []
     )
 
-    emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    emit:
+    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 
 }

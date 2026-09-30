@@ -1,0 +1,95 @@
+nextflow_process {
+
+    name "Test Process ASSOC_STANDARDIZE"
+    script "../main.nf"
+    process "ASSOC_STANDARDIZE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "utils"
+    tag "utils/assoc_standardize"
+
+    test("gemma assoc - stub") {
+        options "-stub"
+
+
+        tag "stub"
+        when {
+            process {
+                """
+                file('test.assoc.txt').text = 'chr\\trs\\tps\\tn_miss\\tallele1\\tallele0\\taf\\tbeta\\tse\\tp_wald\\n1\\trs1\\t100\\t0\\tA\\tG\\t0.5\\t0.1\\t0.05\\t0.001\\n'
+
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file('test.assoc.txt'),
+                    'gemma'
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.standardized.size() == 1 },
+                { assert process.out.standardized.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.standardized.get(0).get(1)).exists() },
+                { assert path(process.out.standardized.get(0).get(1)).readLines().get(0).contains("CHR") }
+            )
+        }
+    }
+
+    test("emmax assoc - stub") {
+        options "-stub"
+
+
+        tag "stub"
+        when {
+            process {
+                """
+                file('test.ps').text = 'rs1\\t0.1\\t0.001\\n'
+
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file('test.ps'),
+                    'emmax'
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.standardized.size() == 1 },
+                { assert path(process.out.standardized.get(0).get(1)).exists() }
+            )
+        }
+    }
+
+    test("gemma assoc") {
+        when {
+            process {
+                """
+                file('test.assoc.txt').text = 'chr\\trs\\tps\\tn_miss\\tallele1\\tallele0\\taf\\tbeta\\tse\\tp_wald\\n1\\trs1\\t100\\t0\\tA\\tG\\t0.5\\t0.1\\t0.05\\t0.001\\n'
+
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file('test.assoc.txt'),
+                    'gemma'
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.standardized.size() == 1 },
+                { assert path(process.out.standardized.get(0).get(1)).readLines().get(0).split('\t') as List == ['CHR', 'POS', 'SNP', 'P'] },
+                { assert path(process.out.standardized.get(0).get(1)).readLines().get(1).contains("rs1") },
+                { assert path(process.out.standardized.get(0).get(1)).readLines().get(1).contains("0.001") }
+            )
+        }
+    }
+}

@@ -1,0 +1,46 @@
+nextflow_process {
+
+    name "Test Process GEMMA_LMM"
+    script "../main.nf"
+    process "GEMMA_LMM"
+
+    tag "modules"
+    tag "modules_local"
+    tag "gemma"
+    tag "gemma/lmm"
+
+    test("homo_sapiens popgen - plink_simulated - stub") {
+        options "-stub"
+
+
+        tag "stub"
+        when {
+            process {
+                """
+                file('plink_simulated.cXX.txt').text = '1.0\\n'
+                file('plink_simulated.gemma.pheno.txt').text = '1.0\\n2.0\\n'
+                file('plink_simulated.gemma.covar.txt').text = '0 1\\n1 0\\n'
+
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bed', checkIfExists: true),
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bim', checkIfExists: true),
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.fam', checkIfExists: true)
+                ]
+                input[1] = [ [ id:'plink_simulated' ], file('plink_simulated.gemma.pheno.txt') ]
+                input[2] = [ [ id:'plink_simulated' ], file('plink_simulated.cXX.txt') ]
+                input[3] = [ [ id:'plink_simulated' ], file('plink_simulated.gemma.covar.txt') ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.assoc.size() == 1 },
+                { assert process.out.assoc.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.assoc.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

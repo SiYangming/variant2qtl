@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "GWAS_BENCHMARK_PARALLEL"
+description: Local subworkflow gwas_benchmark_parallel for SiYangming/variant2qtl
+keywords:
+  - gwas
+  - qtl
+  - local
+components:
+  - phenocovar/adapt
+  - assoc/standardize
+  - gemma/relatedness
+  - gemma/lmm
+  - emmax/kin
+  - emmax/assoc
+  - tassel/mlm
+  - rmvp/gwas
+  - omiga/gwas
+  - genotype_to_gwas_formats
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

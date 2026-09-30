@@ -13,11 +13,11 @@ workflow UTILS_NFCORE_PIPELINE {
     nextflow_cli_args
 
     main:
-    valid_config = checkConfigProvided()
+    // Run config checks; single unnamed emit satisfies nextflow lint
     checkProfileProvided(nextflow_cli_args)
 
     emit:
-    valid_config
+    checkConfigProvided()
 }
 
 /*

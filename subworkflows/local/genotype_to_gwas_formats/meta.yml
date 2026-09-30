@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "GENOTYPE_TO_GWAS_FORMATS"
+description: Local subworkflow genotype_to_gwas_formats for SiYangming/variant2qtl
+keywords:
+  - gwas
+  - qtl
+  - local
+components:
+  - plink/recode
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,71 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "omiga_gwas"
+description: Run OmiGA GWAS for complex traits
+keywords:
+  - omiga
+  - gwas
+  - lmm
+tools:
+  - "omiga":
+      description: "OmiGA: ultra-efficient molecular QTL and GWAS toolkit"
+      homepage: "https://omiga.bio"
+      documentation: "https://omiga.bio/#/GWAS"
+      tool_dev_url: "https://github.com/SCAU-AnimalGenetics/OmiGA"
+      licence: ["GPL-3.0-only"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - bed:
+        type: file
+        description: PLINK bed
+        pattern: "*.bed"
+    - bim:
+        type: file
+        description: PLINK bim
+        pattern: "*.bim"
+    - fam:
+        type: file
+        description: PLINK fam
+        pattern: "*.fam"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: Trait phenotype file for GWAS
+        pattern: "*.{txt,tsv,phe,pheno,bed.gz}"
+  - - meta3:
+        type: map
+        description: Covariate metadata; pass [] when absent
+    - covariates:
+        type: file
+        description: Optional covariates
+        pattern: "*.{txt,tsv,cov,covar}"
+
+output:
+  - gwas:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*.gwas*":
+          type: file
+          description: GWAS summary outputs
+          pattern: "*.gwas*"
+  - outdir:
+      - meta:
+          type: map
+          description: Groovy map containing sample information
+      - "*_out":
+          type: directory
+          description: Full OmiGA output directory
+  versions_omiga:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

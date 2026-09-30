@@ -1,0 +1,44 @@
+nextflow_process {
+
+    name "Test Process OMIGA_GWAS"
+    script "../main.nf"
+    process "OMIGA_GWAS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "omiga"
+    tag "omiga/gwas"
+
+    test("homo_sapiens popgen - plink_simulated - stub") {
+        options "-stub"
+
+
+        tag "stub"
+        when {
+            process {
+                """
+                file('plink_simulated.omiga.pheno.txt').text = 'FID\\tIID\\tQuantitativeTrait\\nfam1\\tind1\\t1.0\\nfam2\\tind2\\t2.0\\n'
+                file('plink_simulated.omiga.covar.txt').text = 'FID\\tIID\\tSex\\tAge\\nfam1\\tind1\\t1\\t40\\nfam2\\tind2\\t2\\t41\\n'
+
+                input[0] = [
+                    [ id:'plink_simulated' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bed', checkIfExists: true),
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bim', checkIfExists: true),
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.fam', checkIfExists: true)
+                ]
+                input[1] = [ [ id:'plink_simulated' ], file('plink_simulated.omiga.pheno.txt') ]
+                input[2] = [ [ id:'plink_simulated' ], file('plink_simulated.omiga.covar.txt') ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.outdir.size() == 1 },
+                { assert process.out.outdir.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}
