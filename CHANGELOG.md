@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Subworkflows (default OFF): `genotype_ingest_harmonize`, `genotype_qc`, `genotype_to_gwas_formats`, `gwas_benchmark_parallel`, `molqtl_map_omiga`.
 - Adapters `phenocovar_adapt` / `assoc_standardize`; OmiGA cis mini testdata under `assets/testdata/omiga_cis_mini/`.
 - Docs: `docs/modules_prebuild.md`, `docs/subworkflows_inventory.md`.
+- Profile `test_gwas` (`conf/test_gwas.config`) + pipeline nf-test `tests/gwas.nf.test` for QC → GEMMA/EMMAX → standardize; usage docs for genotype/GWAS/OmiGA flags.
+- PLINK_RECODE stub emits tped/tfam/vcf.gz when `ext.args` request transpose/vcf so GWAS stub runs can exercise EMMAX.
 
 ### `Fixed`
 

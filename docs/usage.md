@@ -6,6 +6,75 @@
 
 <!-- NOTE: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
+## Genotype ingest, QC, GWAS benchmark, and OmiGA cis
+
+These branches are **off by default**. Enable them with boolean params; they do not replace the FASTQC/MultiQC template path (still driven by `--input`).
+
+### Feature flags
+
+| Param                 | Default | What it does                                                                                                                                           |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `run_genotype_ingest` | `false` | VCF → (optional liftover/norm/samples) → PLINK bed via `genotype_ingest_harmonize`. When on, this bed feeds QC/GWAS instead of `--gwas_benchmark_bed`. |
+| `run_genotype_qc`     | `false` | MAF/HWE/geno filter (`PLINK2_FILTER`); optional het / relatedness / PCA via `genotype_qc_run_*`. Filtered bed feeds GWAS when both are on.             |
+| `run_gwas_benchmark`  | `false` | Parallel engines via `gwas_benchmark_parallel` (pheno adapt → formats → engines → optional `assoc_standardize`).                                       |
+| `run_omiga_cis`       | `false` | OmiGA cis-molQTL (`molqtl_map_omiga`). Use dedicated bed/bim/fam or reuse QC bed.                                                                      |
+
+### Related file / option params
+
+**GWAS benchmark**
+
+- `gwas_benchmark_id` — meta id (default `gwas_benchmark`)
+- `gwas_benchmark_bed` / `_bim` / `_fam` — PLINK inputs when ingest is off
+- `gwas_benchmark_vcf` — optional VCF (else rebuilt from bed)
+- `gwas_benchmark_phenotype` — PLINK-style `FID IID Trait` (header required)
+- `gwas_benchmark_covariates` — optional `FID IID cov...`
+- `gwas_benchmark_engines` — comma list, e.g. `gemma,emmax` (default includes tassel/rmvp/omiga)
+- `gwas_benchmark_standardize` — run `assoc_standardize` on engine outputs (default `true`)
+
+**Genotype ingest**
+
+- `genotype_ingest_vcf` — required when ingest is on
+- `genotype_ingest_args`, `genotype_ingest_fasta`, `genotype_ingest_norm_args`
+- `genotype_ingest_samples`, `genotype_ingest_view_args`
+- `genotype_ingest_liftover_chain` / `_fasta` / `_dict`
+
+**Genotype QC**
+
+- `genotype_qc_args` — PLINK2 filter args
+- `genotype_qc_run_het` / `genotype_qc_het_sd`
+- `genotype_qc_run_relatedness` / `genotype_qc_pi_hat`
+- `genotype_qc_run_pca` / `genotype_qc_pca_n`
+
+**OmiGA cis**
+
+- `omiga_cis_id`, `omiga_cis_bed` / `_bim` / `_fam`, `omiga_cis_vcf`
+- `omiga_cis_phenotype`, `omiga_cis_covariates`
+- `omiga_cis_use_qc_bed` — reuse shared QC bed from the GWAS/QC branch instead of `omiga_cis_bed/bim/fam`
+
+### Recommended combinations
+
+1. **Bed → QC → GWAS** (no ingest): `--run_genotype_qc --run_gwas_benchmark` + `--gwas_benchmark_{bed,bim,fam,phenotype}` (+ optional covariates). Limit engines with `--gwas_benchmark_engines gemma,emmax`.
+2. **VCF ingest → QC → GWAS**: `--run_genotype_ingest --genotype_ingest_vcf ...` plus QC/GWAS flags (omit `gwas_benchmark_bed`; ingest supplies bed).
+3. **QC bed → OmiGA cis**: enable QC (and usually GWAS or at least QC) with `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`.
+
+Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`.
+
+### Example: `test_gwas` profile
+
+Smoke-tests the genotype path with nf-core `plink_simulated` popgen data (bed + quantitative phenotype + covariates), QC on, engines `gemma,emmax`, standardize on. Prefer `-stub` for CI:
+
+```bash
+nextflow run . -profile test_gwas,docker -stub --outdir results_test_gwas
+```
+
+Without stub (amd64 docker recommended if including EMMAX):
+
+```bash
+nextflow run . -profile test_gwas,docker --outdir results_test_gwas
+```
+
+The existing `-profile test,docker` FASTQC-only path is unchanged.
+
 ## Samplesheet input
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
@@ -138,6 +207,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test`
   - A profile with a complete configuration for automated testing
   - Includes links to test data so needs no other parameters
+- `test_gwas`
+  - Genotype QC + GWAS benchmark smoke test (`gemma,emmax`) on `plink_simulated`
+  - Prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, and OmiGA cis](#genotype-ingest-qc-gwas-benchmark-and-omiga-cis)
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)
 - `singularity`

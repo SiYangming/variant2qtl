@@ -57,9 +57,16 @@ process PLINK_RECODE {
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
-
+    def args = task.ext.args ?: ''
+    // Emit formats the GWAS fan-out expects (transpose → tped/tfam; vcf → vcf.gz)
+    def stub_files = "touch ${prefix}.ped\ntouch ${prefix}.map"
+    if (args.contains('transpose')) {
+        stub_files += "\ntouch ${prefix}.tped\ntouch ${prefix}.tfam"
+    }
+    if (args.contains('vcf') || args.contains('bgz')) {
+        stub_files += "\ntouch ${prefix}.vcf.gz"
+    }
     """
-    touch ${prefix}.ped
-    touch ${prefix}.map
+    ${stub_files}
     """
 }
