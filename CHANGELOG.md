@@ -1,9 +1,9 @@
-# nf-core/variant2qtl: Changelog
+# SiYangming/variant2qtl: Changelog
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.0.1dev - 2026-09-29
+## v0.0.1dev - [unreleased]
 
 ### `Added`
 
@@ -14,22 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs: `docs/modules_prebuild.md`, `docs/subworkflows_inventory.md`.
 - Profile `test_gwas` (`conf/test_gwas.config`) + pipeline nf-test `tests/gwas.nf.test` for QC → GEMMA/EMMAX → standardize; usage docs for genotype/GWAS/OmiGA flags.
 - PLINK_RECODE stub emits tped/tfam/vcf.gz when `ext.args` request transpose/vcf so GWAS stub runs can exercise EMMAX.
-
-### `Fixed`
-
-### `Dependencies`
-
-### `Deprecated`
-
-## v0.0.1 - 2026-09-24
-
-Initial release of **variant2qtl**, created with the [nf-core](https://nf-co.re/) template.
-
-An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.
-
-一款基于 Nextflow DSL2 构建的、支持多源变异（SNP/Indel/SV/STR）输入的全自动 QTL（eQTL/sQTL/pQTL/gQTL）高通量关联分析流程。
-
-### `Added`
+- Synced pipeline template to nf-core/tools v4.1.0.
 
 ### `Fixed`
 

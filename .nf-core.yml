@@ -1,6 +1,6 @@
 repository_type: pipeline
 
-nf_core_version: 3.5.2
+nf_core_version: 4.1.0
 
 lint:
   # Skip template recreate check: personal org + digit in name makes create flaky/hangy
@@ -35,7 +35,7 @@ template:
   description: An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.
   author: siyangming
   version: 0.0.1dev
-  force: true
+  force: false
   outdir: .
   skip_features: []
   is_nfcore: false

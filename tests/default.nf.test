@@ -14,7 +14,7 @@ nextflow_pipeline {
 
         then {
             // Ignore profile-dependent MultiQC plot binaries (conda often skips pdf/png/svg leaves).
-            def stable_name = getAllFilesFromDir(
+            def stable_path = getAllFilesFromDir(
                 params.outdir,
                 relative: true,
                 includeDir: true,
@@ -25,14 +25,16 @@ nextflow_pipeline {
                     'multiqc/multiqc_report.html'
                 ]
             )
-            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assert workflow.success
             assertAll(
-                { assert workflow.success},
                 { assert snapshot(
                     // pipeline versions.yml without Nextflow version (multi-NXF CI)
                     removeNextflowVersion("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml"),
-                    stable_name,
-                    stable_path
+                    // All stable path name, with a relative path
+                    stable_path,
+                    // All files with stable contents
+                    stable_content
                 ).match() }
             )
         }

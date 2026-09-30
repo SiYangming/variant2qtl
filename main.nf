@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    nf-core/variant2qtl
+    SiYangming/variant2qtl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/variant2qtl
+    Github : https://github.com/SiYangming/variant2qtl
 ----------------------------------------------------------------------------------------
 */
 
@@ -38,7 +38,7 @@ params.fasta = getGenomeAttribute('fasta')
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow NFCORE_VARIANT2QTL {
+workflow SIYANGMING_VARIANT2QTL {
 
     take:
     samplesheet // channel: samplesheet read in from --input
@@ -49,7 +49,11 @@ workflow NFCORE_VARIANT2QTL {
     // WORKFLOW: Run pipeline
     //
     VARIANT2QTL (
-        samplesheet
+        samplesheet,
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description,
+        params.outdir,
     )
     emit:
     VARIANT2QTL.out.multiqc_report // channel: /path/to/multiqc_report.html
@@ -81,7 +85,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_VARIANT2QTL (
+    SIYANGMING_VARIANT2QTL (
         PIPELINE_INITIALISATION.out.samplesheet
     )
     //
@@ -93,8 +97,7 @@ workflow {
         params.plaintext_email,
         params.outdir,
         params.monochrome_logs,
-        params.hook_url,
-        NFCORE_VARIANT2QTL.out
+        SIYANGMING_VARIANT2QTL.out.multiqc_report
     )
 }
 
