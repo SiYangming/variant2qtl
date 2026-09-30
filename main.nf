@@ -56,7 +56,7 @@ workflow SIYANGMING_VARIANT2QTL {
         params.outdir,
     )
     emit:
-    VARIANT2QTL.out.multiqc_report // channel: /path/to/multiqc_report.html
+    multiqc_report = VARIANT2QTL.out.multiqc_report // channel: /path/to/multiqc_report.html
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
