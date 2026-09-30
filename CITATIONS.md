@@ -1,4 +1,4 @@
-# nf-core/variant2qtl: Citations
+# SiYangming/variant2qtl: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 

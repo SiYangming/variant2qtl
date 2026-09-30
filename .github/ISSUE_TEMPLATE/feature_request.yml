@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an idea for the nf-core/variant2qtl pipeline
+description: Suggest an idea for the SiYangming/variant2qtl pipeline
 labels: enhancement
 body:
   - type: textarea
