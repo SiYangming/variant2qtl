@@ -4,6 +4,10 @@ name: nf-core template version comment
 
 on: pull_request_target
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
   template_version:
     runs-on: ubuntu-latest
@@ -26,14 +30,15 @@ jobs:
 
       - name: Check nf-core outdated
         id: nf_core_outdated
-        run: echo "OUTPUT=$(pip list --outdated | grep nf-core)" >> ${GITHUB_ENV}
+        run: echo "OUTPUT=$(pip list --outdated | grep nf-core || true)" >> ${GITHUB_ENV}
 
       - name: Post nf-core template version comment
         uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2
         if: |
           contains(env.OUTPUT, 'nf-core')
         with:
-          repo-token: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
+          # Prefer bot token when present; github.token always works with pull-requests: write
+          repo-token: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN != '' && secrets.NF_CORE_BOT_AUTH_TOKEN || github.token }}
           allow-repeats: false
           message: |
             > [!WARNING]
@@ -43,4 +48,3 @@ jobs:
             > Please update your pipeline to the latest version.
             >
             > For more documentation on how to update your pipeline, please see the [nf-core documentation](https://github.com/nf-core/tools?tab=readme-ov-file#sync-a-pipeline-with-the-template) and [Synchronisation documentation](https://nf-co.re/docs/contributing/sync).
-          #

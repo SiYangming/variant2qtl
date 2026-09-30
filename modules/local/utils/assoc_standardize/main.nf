@@ -19,7 +19,7 @@ process ASSOC_STANDARDIZE {
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}.${tool}"
-    // Best-effort column maps per tool (header names or positional for headerless EMMAX)
+    // Use awk string matches (not /regex/) so Groovy does not parse slashy strings inside """
     """
     TOOL="${tool}"
     ASSOC="${assoc}"
@@ -33,7 +33,7 @@ process ASSOC_STANDARDIZE {
             awk -v OFS='\\t' '
                 NR==1 {
                     for (i=1; i<=NF; i++) {
-                        h=\$i; gsub(/\\r/, "", h)
+                        h=\$i; gsub("\\r", "", h)
                         if (h=="chr") c=i
                         if (h=="rs") s=i
                         if (h=="ps") p=i
@@ -53,7 +53,7 @@ process ASSOC_STANDARDIZE {
             awk -v OFS='\\t' '
                 NR==1 {
                     for (i=1; i<=NF; i++) {
-                        h=tolower(\$i); gsub(/\\r/, "", h)
+                        h=tolower(\$i); gsub("\\r", "", h)
                         if (h=="marker" || h=="snp") s=i
                         if (h=="chr" || h=="chromosome") c=i
                         if (h=="pos" || h=="position" || h=="site") p=i
@@ -75,18 +75,18 @@ process ASSOC_STANDARDIZE {
             awk -v FS=',' -v OFS='\\t' '
                 NR==1 {
                     for (i=1; i<=NF; i++) {
-                        h=\$i; gsub(/\\r|"/, "", h); hl=tolower(h)
+                        h=\$i; gsub("\\r", "", h); gsub("\\"", "", h); hl=tolower(h)
                         if (hl=="snp") s=i
                         if (hl=="chrs" || hl=="chr" || hl=="chrom") c=i
                         if (hl=="pos" || hl=="position") p=i
-                        if (hl ~ /p\\.value$/ || hl=="pvalue" || hl=="p" || hl ~ /\\.p\\.value$/) pv=i
+                        if (hl ~ "p\\\\.value\$" || hl=="pvalue" || hl=="p" || hl ~ "\\\\.p\\\\.value\$") pv=i
                     }
                     next
                 }
                 s && pv {
                     chr = c ? \$c : "NA"
                     pos = p ? \$p : "NA"
-                    gsub(/"/, "", \$s); gsub(/"/, "", chr); gsub(/"/, "", pos); gsub(/"/, "", \$pv)
+                    gsub("\\"", "", \$s); gsub("\\"", "", chr); gsub("\\"", "", pos); gsub("\\"", "", \$pv)
                     print chr, pos, \$s, \$pv
                 }
             ' "\${ASSOC}" >> "\${OUT}"
@@ -96,7 +96,7 @@ process ASSOC_STANDARDIZE {
             awk -v OFS='\\t' '
                 NR==1 {
                     for (i=1; i<=NF; i++) {
-                        h=\$i; gsub(/\\r/, "", h); hl=tolower(h)
+                        h=\$i; gsub("\\r", "", h); hl=tolower(h)
                         if (hl=="snp" || hl=="rs" || hl=="id" || hl=="variant") s=i
                         if (hl=="chr" || hl=="chrom" || hl=="chromosome") c=i
                         if (hl=="pos" || hl=="bp" || hl=="position") p=i
@@ -116,11 +116,11 @@ process ASSOC_STANDARDIZE {
             awk -v OFS='\\t' '
                 NR==1 {
                     for (i=1; i<=NF; i++) {
-                        h=\$i; gsub(/\\r/, "", h); hl=tolower(h)
+                        h=\$i; gsub("\\r", "", h); hl=tolower(h)
                         if (hl=="snp" || hl=="rs" || hl=="marker" || hl=="id") s=i
                         if (hl=="chr" || hl=="chrom" || hl=="chromosome" || hl=="chrs") c=i
                         if (hl=="pos" || hl=="bp" || hl=="ps" || hl=="position") p=i
-                        if (hl=="p" || hl=="pvalue" || hl=="p_value" || hl=="p_lrt" || hl=="p_wald" || hl ~ /p\\.value/) pv=i
+                        if (hl=="p" || hl=="pvalue" || hl=="p_value" || hl=="p_lrt" || hl=="p_wald" || hl ~ "p\\\\.value") pv=i
                     }
                     next
                 }

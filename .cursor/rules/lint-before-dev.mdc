@@ -30,8 +30,9 @@ Pass criteria:
 - Do not mix topic version tuples into Path-based `ch_versions`
 - This pipeline is **not** official nf-core: `manifest.name` / `.nf-core.yml` template use org `SiYangming` and `is_nfcore: false` (name may contain digits)
 - New `$defs` groups in `nextflow_schema.json` must be referenced from top-level `allOf`
-- Keep `subworkflows/nf-core/utils_*` at the **exact git SHAs in `modules.json`** (do not curl `master` — newer utils drop `imNotification` and break local includes / `check_local_copy`)
+- Keep `subworkflows/nf-core/utils_*` at the **exact git SHAs in `modules.json`** when possible; local emit-lint fixes are OK with `.nf-core.yml` `nfcore_components: false` (personal pipeline)
 - `nextflow lint .` may warn inside vendored `modules/nf-core` / `subworkflows/nf-core`; fix only local code unless a failure blocks the pipeline
+- Gate criteria: `nextflow lint` on local paths = **0 errors and 0 warnings**; `nf-core pipelines lint` = **0 failures and 0 warnings**
 
 ## After implementing a change
 

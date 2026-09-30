@@ -5,7 +5,9 @@ keywords:
   - gwas
   - qtl
   - local
-components: []
+components:
+  - omiga/cis
+  - genotype_to_analysis_format
 input: []
 output: []
 authors:

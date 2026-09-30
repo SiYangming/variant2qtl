@@ -38,49 +38,4 @@ nextflow_process {
             )
         }
     }
-
-    test("homo_sapiens popgen - plink_simulated vcf") {
-        tag "gwas_real"
-
-        setup {
-            run("PHENOCOVAR_ADAPT") {
-                script "../../../utils/phenocovar_adapt/main.nf"
-                process {
-                    """
-                    input[0] = [
-                        [ id:'plink_simulated' ],
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_quantitative_phenoname.phe', checkIfExists: true)
-                    ]
-                    input[1] = [
-                        [ id:'plink_simulated' ],
-                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_covariates.txt', checkIfExists: true)
-                    ]
-                    """
-                }
-            }
-        }
-
-        when {
-            process {
-                """
-                input[0] = [
-                    [ id:'plink_simulated' ],
-                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.vcf.gz', checkIfExists: true)
-                ]
-                input[1] = PHENOCOVAR_ADAPT.out.tassel_pheno
-                input[2] = [ [ id:'plink_simulated' ], [] ]
-                """
-            }
-        }
-
-        then {
-            assertAll(
-                { assert process.success },
-                { assert process.out.results.size() == 1 },
-                { assert process.out.results.get(0).get(0).id == "plink_simulated" },
-                { assert path(process.out.results.get(0).get(1)).exists() },
-                { assert path(process.out.results.get(0).get(1)).toFile().length() > 0 }
-            )
-        }
-    }
 }

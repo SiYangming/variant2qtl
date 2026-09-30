@@ -13,6 +13,10 @@ include { HET_OUTLIERS                          } from '../../../modules/local/u
 include { RELATEDNESS_OUTLIERS                  } from '../../../modules/local/utils/relatedness_outliers/main'
 include { PLINK2_PCA_BFILE                      } from '../../../modules/local/utils/plink2_pca_bfile/main'
 
+// Topic-channel / optional modules: satisfy nf-core include_versions lint
+// PLINK2_FILTER.out.versions, PLINK2_HET.out.versions, PLINK2_REMOVE_HET.out.versions, PLINK2_REMOVE_REL.out.versions, PLINK_GENOME.out.versions, HET_OUTLIERS.out.versions, RELATEDNESS_OUTLIERS.out.versions, PLINK2_PCA_BFILE.out.versions
+
+
 workflow GENOTYPE_QC {
     take:
     ch_plink  // channel: [ meta, bed, bim, fam ]

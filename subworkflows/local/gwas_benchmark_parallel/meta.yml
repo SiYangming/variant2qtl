@@ -5,7 +5,17 @@ keywords:
   - gwas
   - qtl
   - local
-components: []
+components:
+  - phenocovar/adapt
+  - assoc/standardize
+  - gemma/relatedness
+  - gemma/lmm
+  - emmax/kin
+  - emmax/assoc
+  - tassel/mlm
+  - rmvp/gwas
+  - omiga/gwas
+  - genotype_to_gwas_formats
 input: []
 output: []
 authors:

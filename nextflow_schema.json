@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/variant2qtl/master/nextflow_schema.json",
-    "title": "nf-core/variant2qtl pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/SiYangming/variant2qtl/master/nextflow_schema.json",
+    "title": "SiYangming/variant2qtl pipeline parameters",
     "description": "An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.",
     "type": "object",
     "$defs": {

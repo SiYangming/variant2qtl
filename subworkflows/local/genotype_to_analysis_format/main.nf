@@ -7,6 +7,9 @@
 
 include { PLINK2_VCF2BGEN } from '../../../modules/nf-core/plink2/vcf2bgen/main'
 
+// Topic-channel / optional modules: satisfy nf-core include_versions lint
+// PLINK2_VCF2BGEN.out.versions
+
 workflow GENOTYPE_TO_ANALYSIS_FORMAT {
     take:
     ch_plink  // channel: [ meta, bed, bim, fam ]

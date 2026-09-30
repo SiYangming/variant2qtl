@@ -5,7 +5,8 @@ keywords:
   - gwas
   - qtl
   - local
-components: []
+components:
+  - plink/recode
 input: []
 output: []
 authors:

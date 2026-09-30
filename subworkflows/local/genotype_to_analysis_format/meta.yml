@@ -1,11 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "GENOTYPE_TO_ANALYSIS_FORMAT"
-description: Passthrough PLINK bed and optional VCF→BGEN for molQTL engines
+description: Local subworkflow genotype_to_analysis_format for SiYangming/variant2qtl
 keywords:
   - gwas
   - qtl
   - local
-components: []
+components:
+  - plink2/vcf2bgen
 input: []
 output: []
 authors:

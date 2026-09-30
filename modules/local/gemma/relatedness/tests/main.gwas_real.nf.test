@@ -9,11 +9,9 @@ nextflow_process {
     tag "gemma"
     tag "gemma/relatedness"
 
-    test("homo_sapiens popgen - plink_simulated - stub") {
-        options "-stub"
+    test("homo_sapiens popgen - plink_simulated") {
+        tag "gwas_real"
 
-
-        tag "stub"
         when {
             process {
                 """
@@ -32,7 +30,8 @@ nextflow_process {
                 { assert process.success },
                 { assert process.out.relatedness.size() == 1 },
                 { assert process.out.relatedness.get(0).get(0).id == "plink_simulated" },
-                { assert path(process.out.relatedness.get(0).get(1)).exists() }
+                { assert path(process.out.relatedness.get(0).get(1)).exists() },
+                { assert path(process.out.relatedness.get(0).get(1)).toFile().length() > 0 }
             )
         }
     }

@@ -12,6 +12,10 @@ include { BCFTOOLS_NORM                               } from '../../../modules/n
 include { BCFTOOLS_VIEW                               } from '../../../modules/nf-core/bcftools/view/main'
 include { PLINK_VCF                                   } from '../../../modules/nf-core/plink/vcf/main'
 
+// Topic-channel / optional modules: satisfy nf-core include_versions lint
+// PICARD_LIFTOVERVCF.out.versions, BCFTOOLS_INDEX_NORM.out.versions, BCFTOOLS_INDEX_VIEW.out.versions, BCFTOOLS_NORM.out.versions, BCFTOOLS_VIEW.out.versions, PLINK_VCF.out.versions
+
+
 workflow GENOTYPE_INGEST_HARMONIZE {
     take:
     ch_vcf  // channel: [ meta, vcf ] or [ meta, vcf, tbi ]

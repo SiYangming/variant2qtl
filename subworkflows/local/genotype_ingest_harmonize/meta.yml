@@ -5,7 +5,12 @@ keywords:
   - gwas
   - qtl
   - local
-components: []
+components:
+  - picard/liftovervcf
+  - bcftools/index
+  - bcftools/norm
+  - bcftools/view
+  - plink/vcf
 input: []
 output: []
 authors:

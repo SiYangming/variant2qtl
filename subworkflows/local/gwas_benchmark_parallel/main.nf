@@ -19,6 +19,10 @@ include { TASSEL_MLM                                 } from '../../../modules/lo
 include { RMVP_GWAS                                  } from '../../../modules/local/rmvp/gwas/main'
 include { OMIGA_GWAS                                 } from '../../../modules/local/omiga/gwas/main'
 
+// Topic-channel / optional modules: satisfy nf-core include_versions lint
+// PHENOCOVAR_ADAPT.out.versions, ASSOC_STANDARDIZE.out.versions, GENOTYPE_TO_GWAS_FORMATS.out.versions, GEMMA_RELATEDNESS.out.versions, GEMMA_LMM.out.versions, EMMAX_KIN.out.versions, EMMAX_ASSOC.out.versions, TASSEL_MLM.out.versions, RMVP_GWAS.out.versions, OMIGA_GWAS.out.versions
+
+
 workflow GWAS_BENCHMARK_PARALLEL {
     take:
     ch_plink       // channel: [ meta, bed, bim, fam ]

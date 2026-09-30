@@ -10,10 +10,10 @@ nextflow_process {
     tag "omiga"
     tag "omiga/cis"
 
-    test("homo_sapiens popgen - omiga_cis_mini - stub") {
-        options "-stub"
+    test("homo_sapiens popgen - omiga_cis_mini") {
+        tag "gwas_real"
+        tag "omiga_cis_real"
 
-        tag "stub"
         when {
             process {
                 """
@@ -40,7 +40,14 @@ nextflow_process {
                 { assert process.success },
                 { assert process.out.outdir.size() == 1 },
                 { assert process.out.outdir.get(0).get(0).id == "omiga_cis_mini" },
-                { assert path(process.out.outdir.get(0).get(1)).exists() }
+                { assert path(process.out.outdir.get(0).get(1)).exists() },
+                { assert process.out.cis_qtl },
+                {
+                    def cis = process.out.cis_qtl.get(0).get(1)
+                    def files = cis instanceof List ? cis : [cis]
+                    assert files.every { f -> path(f.toString()).exists() }
+                    assert files.any { f -> path(f.toString()).size() > 0 }
+                }
             )
         }
     }

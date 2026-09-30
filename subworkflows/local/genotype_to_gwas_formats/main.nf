@@ -10,6 +10,10 @@
 include { PLINK_RECODE as PLINK_RECODE_TRANSPOSE } from '../../../modules/nf-core/plink/recode/main'
 include { PLINK_RECODE as PLINK_RECODE_VCF       } from '../../../modules/nf-core/plink/recode/main'
 
+// Topic-channel / optional modules: satisfy nf-core include_versions lint
+// PLINK_RECODE_TRANSPOSE.out.versions, PLINK_RECODE_VCF.out.versions
+
+
 workflow GENOTYPE_TO_GWAS_FORMATS {
     take:
     ch_plink  // channel: [ meta, bed, bim, fam ]

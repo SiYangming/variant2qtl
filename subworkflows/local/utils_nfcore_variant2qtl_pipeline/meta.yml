@@ -1,11 +1,17 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "UTILS_NFCORE_VARIANT2QTL_PIPELINE"
+name: "PIPELINE_INITIALISATION"
 description: Local subworkflow utils_nfcore_variant2qtl_pipeline for SiYangming/variant2qtl
 keywords:
   - gwas
   - qtl
   - local
-components: []
+components:
+  - utils_nfschema_plugin
+  - completionemail
+  - completionsummary
+  - imnotification
+  - utils_nfcore_pipeline
+  - utils_nextflow_pipeline
 input: []
 output: []
 authors:

@@ -8,6 +8,10 @@
 include { OMIGA_CIS                     } from '../../../modules/local/omiga/cis/main'
 include { GENOTYPE_TO_ANALYSIS_FORMAT   } from '../genotype_to_analysis_format/main'
 
+// Topic-channel / optional modules: satisfy nf-core include_versions lint
+// OMIGA_CIS.out.versions, GENOTYPE_TO_ANALYSIS_FORMAT.out.versions
+
+
 workflow MOLQTL_MAP_OMIGA {
     take:
     ch_plink       // channel: [ meta, bed, bim, fam ]

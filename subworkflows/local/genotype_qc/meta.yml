@@ -5,7 +5,14 @@ keywords:
   - gwas
   - qtl
   - local
-components: []
+components:
+  - plink2/filter
+  - plink2/het
+  - plink2/remove
+  - plink/genome
+  - het/outliers
+  - relatedness/outliers
+  - plink2/pca/bfile
 input: []
 output: []
 authors:
