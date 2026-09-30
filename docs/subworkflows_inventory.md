@@ -59,14 +59,14 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P0 — 核心业务（必须自建）
 
-| 建议名                        | 职责                                                                                     | 依赖模块（多为 local）                                                                                                                                                 |
-| ----------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `genotype_ingest_harmonize`   | 多源变异入口（SNP/Indel/SV/STR）统一 → 标准化 VCF/PLINK；liftover、allele flip、样本对齐 | `bcftools/*`、`plink`/`plink2`、`ucsc/liftover`、`picard/liftovervcf`、STR/SV 相关；**最小切片已实现**：VCF→PLINK via `PLINK_VCF`，`params.run_genotype_ingest` 默认关 |
-| `genotype_qc`                 | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA；plink1+plink2 分叉路径                    | `plink/*`、`plink2/*`、`somalier` 或复用官方 `vcf_extract_relate_somalier`；**最小切片已实现**（PLINK2 MAF/HWE/geno）                                                  |
-| `genotype_to_analysis_format` | VCF ↔ BED/BIM/FAM ↔ pgen/bgen/zarr，供 OmiGA/tensorQTL                                 | `plink`/`plink2`、`vcf2zarr`                                                                                                                                           |
-| `molqtl_map_omiga`            | **OmiGA** cis（stub；GWAS 仍走 `gwas_benchmark_parallel`）                               | **已实现 stub**（`OMIGA_CIS`）；`params.run_omiga_cis` 默认关；pin `1.8.17`；mini 表型见 `assets/testdata/omiga_cis_mini/`                                             |
-| `molqtl_map_tensorqtl`        | tensorQTL 备用/对照引擎                                                                  | local `tensorqtl`                                                                                                                                                      |
-| `qtl_postprocess`             | 结果合并、FDR/q-value、按染色体汇总、导出标准表                                          | 轻量 R/Python local                                                                                                                                                    |
+| 建议名                        | 职责                                                                                | 依赖模块（多为 local）                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `genotype_ingest_harmonize`   | 多源变异入口（SNP/Indel）→ 标准化 VCF/PLINK；可选 liftover、bcftools norm、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**已深化**（SV/STR 仍在 P3 编排）   |
+| `genotype_qc`                 | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                       | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关） |
+| `genotype_to_analysis_format` | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                         | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                               |
+| `molqtl_map_omiga`            | **OmiGA** cis（经 analysis-format）                                                 | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                    |
+| `molqtl_map_tensorqtl`        | tensorQTL 备用/对照引擎                                                             | local `tensorqtl`                                                                                    |
+| `qtl_postprocess`             | 结果合并、FDR/q-value、按染色体汇总、导出标准表                                     | 轻量 R/Python local                                                                                  |
 
 ### P1 — 协变量与 sQTL 表型（表型矩阵侧）
 
@@ -87,11 +87,11 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P2b — GWAS 基准并行（已实现）
 
-| 建议名                      | 职责                                            | 状态                                                                                                                   |
-| --------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `gwas_benchmark_parallel`   | 并行 GEMMA / TASSEL / rMVP / EMMAX / OmiGA      | **已实现**；`params.run_gwas_benchmark` 默认关；`--gwas_benchmark_engines` 可选引擎                                    |
-| `genotype_qc`               | 最小 MAF/HWE/geno（PLINK2_FILTER）              | **已实现**；`params.run_genotype_qc` 默认关；开启时 QC bed 喂入 benchmark                                              |
-| `genotype_ingest_harmonize` | 最小 VCF→PLINK（PLINK_VCF）；无 liftover/SV/STR | **最小切片已实现**；`params.run_genotype_ingest` 默认关；开启时优先于 `--gwas_benchmark_bed`，可串 ingest→qc→benchmark |
+| 建议名                      | 职责                                       | 状态                                                                                |
+| --------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `gwas_benchmark_parallel`   | 并行 GEMMA / TASSEL / rMVP / EMMAX / OmiGA | **已实现**；`params.run_gwas_benchmark` 默认关；`--gwas_benchmark_engines` 可选引擎 |
+| `genotype_qc`               | MAF/HWE/geno + 可选 het/relatedness/PCA    | **已深化**；`params.run_genotype_qc`；`--genotype_qc_run_{het,relatedness,pca}`     |
+| `genotype_ingest_harmonize` | VCF→PLINK + 可选 liftover/norm/samples     | **已深化**；`params.run_genotype_ingest`；chain/fasta/samples 参数见 schema         |
 
 包装与 pin 见 [`docs/modules_prebuild.md`](modules_prebuild.md) P1b。
 
@@ -111,7 +111,9 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：先 `install` 上表 A 类官方 subworkflow，再按 P0 顺序实现 `genotype_*` + `molqtl_map_omiga`。
+## 建议下一步：P1（PEER / LeafCutter / phenotype_prepare）或 P3 编排层（SV/STR）。
+
+P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 
 ## 安装状态
 

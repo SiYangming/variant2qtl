@@ -1,0 +1,80 @@
+nextflow_process {
+
+    name "Test Process EMMAX_ASSOC"
+    script "../main.nf"
+    process "EMMAX_ASSOC"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "emmax"
+    tag "emmax/assoc"
+
+// Real assoc needs amd64: emmax binary hits Illegal instruction under amd64→arm64 emulation.
+    // Run with: nf-test test ... --tag gwas_real_amd64
+    test("homo_sapiens popgen - plink_simulated") {
+        tag "gwas_real_amd64"
+
+        setup {
+            run("PHENOCOVAR_ADAPT") {
+                script "../../../utils/phenocovar_adapt/main.nf"
+                process {
+                    """
+                    input[0] = [
+                        [ id:'plink_simulated' ],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_quantitative_phenoname.phe', checkIfExists: true)
+                    ]
+                    input[1] = [
+                        [ id:'plink_simulated' ],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated_covariates.txt', checkIfExists: true)
+                    ]
+                    """
+                }
+            }
+
+            run("PLINK_RECODE") {
+                script "../../../../nf-core/plink/recode/main.nf"
+                process {
+                    """
+                    input[0] = [
+                        [ id:'plink_simulated' ],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bed', checkIfExists: true),
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bim', checkIfExists: true),
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.fam', checkIfExists: true)
+                    ]
+                    """
+                }
+            }
+
+            run("EMMAX_KIN") {
+                script "../../kin/main.nf"
+                process {
+                    """
+                    input[0] = PLINK_RECODE.out.tped.join(PLINK_RECODE.out.tfam)
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                input[0] = PLINK_RECODE.out.tped.join(PLINK_RECODE.out.tfam)
+                input[1] = PHENOCOVAR_ADAPT.out.emmax_pheno
+                input[2] = EMMAX_KIN.out.kinship
+                input[3] = PHENOCOVAR_ADAPT.out.emmax_covar
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.assoc.size() == 1 },
+                { assert process.out.assoc.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.assoc.get(0).get(1)).exists() },
+                { assert path(process.out.assoc.get(0).get(1)).toFile().length() > 0 }
+            )
+        }
+    }
+}

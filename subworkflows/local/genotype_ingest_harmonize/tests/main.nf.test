@@ -41,6 +41,7 @@ nextflow_workflow {
 
     test("homo_sapiens popgen - plink_simulated.vcf.gz - stub") {
         options '-stub'
+        tag "stub"
 
         when {
             workflow {

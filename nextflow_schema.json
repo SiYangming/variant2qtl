@@ -138,10 +138,59 @@
                     "fa_icon": "fas fa-terminal",
                     "hidden": true
                 },
+                "genotype_ingest_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Reference FASTA enabling bcftools norm (left-align / split multiallelics) before PLINK conversion.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "genotype_ingest_norm_args": {
+                    "type": "string",
+                    "default": "--output-type z --check-ref w -m -both",
+                    "description": "Arguments for BCFTOOLS_NORM when --genotype_ingest_fasta is set.",
+                    "fa_icon": "fas fa-terminal",
+                    "hidden": true
+                },
+                "genotype_ingest_samples": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Sample keep-list (one ID per line) for bcftools view before PLINK conversion.",
+                    "fa_icon": "fas fa-users"
+                },
+                "genotype_ingest_view_args": {
+                    "type": "string",
+                    "default": "--output-type z",
+                    "description": "Arguments for BCFTOOLS_VIEW sample subset.",
+                    "fa_icon": "fas fa-terminal",
+                    "hidden": true
+                },
+                "genotype_ingest_liftover_chain": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "UCSC/Picard chain file for optional VCF liftover (requires fasta + dict too).",
+                    "fa_icon": "fas fa-exchange-alt"
+                },
+                "genotype_ingest_liftover_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Target reference FASTA for Picard LiftoverVcf.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "genotype_ingest_liftover_dict": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Picard sequence dictionary (.dict) for LiftoverVcf.",
+                    "fa_icon": "fas fa-file"
+                },
                 "run_genotype_qc": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Run minimal PLINK2 genotype QC (MAF/HWE/geno) before GWAS benchmark when both are enabled.",
+                    "description": "Run genotype QC (PLINK2 MAF/HWE/geno; optional het/relatedness/PCA) before GWAS/molQTL when enabled.",
                     "fa_icon": "fas fa-filter"
                 },
                 "genotype_qc_args": {
@@ -149,6 +198,59 @@
                     "default": "--maf 0.05 --hwe 1e-6 --geno 0.1",
                     "description": "Extra arguments for PLINK2_FILTER inside genotype_qc.",
                     "fa_icon": "fas fa-terminal",
+                    "hidden": true
+                },
+                "genotype_qc_run_het": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "After FILTER, remove samples with F het beyond genotype_qc_het_sd standard deviations.",
+                    "fa_icon": "fas fa-user-minus"
+                },
+                "genotype_qc_het_sd": {
+                    "type": "number",
+                    "default": 3.0,
+                    "description": "SD threshold for heterozygosity outliers.",
+                    "fa_icon": "fas fa-ruler",
+                    "hidden": true
+                },
+                "genotype_qc_run_relatedness": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "After FILTER, run PLINK --genome and remove the second sample of pairs with PI_HAT ≥ genotype_qc_pi_hat.",
+                    "fa_icon": "fas fa-people-arrows"
+                },
+                "genotype_qc_pi_hat": {
+                    "type": "number",
+                    "default": 0.185,
+                    "description": "PI_HAT threshold for relatedness removal.",
+                    "fa_icon": "fas fa-ruler",
+                    "hidden": true
+                },
+                "genotype_qc_run_pca": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Compute PLINK2 PCA on the filtered bed (emits eigenvec/eigenval).",
+                    "fa_icon": "fas fa-chart-scatter"
+                },
+                "genotype_qc_pca_n": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Number of PCs for genotype_qc_run_pca.",
+                    "fa_icon": "fas fa-hashtag",
+                    "hidden": true
+                },
+                "genotype_to_bgen": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "When molQTL runs with a VCF, also export BGEN via PLINK2_VCF2BGEN.",
+                    "fa_icon": "fas fa-file-export",
+                    "hidden": true
+                },
+                "genotype_bgen_dosage": {
+                    "type": "string",
+                    "default": "DS",
+                    "description": "VCF dosage field for BGEN export.",
+                    "fa_icon": "fas fa-tag",
                     "hidden": true
                 }
             }
@@ -191,8 +293,21 @@
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "description": "PLINK .fam for OmiGA cis (required when --run_omiga_cis).",
+                    "description": "PLINK .fam for OmiGA cis (required when --run_omiga_cis unless --omiga_cis_use_qc_bed).",
                     "fa_icon": "fas fa-file"
+                },
+                "omiga_cis_vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional VCF for BGEN export when --genotype_to_bgen is set.",
+                    "fa_icon": "fas fa-file"
+                },
+                "omiga_cis_use_qc_bed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Reuse the shared genotype_qc bed for OmiGA cis instead of --omiga_cis_bed/bim/fam.",
+                    "fa_icon": "fas fa-link"
                 },
                 "omiga_cis_phenotype": {
                     "type": "string",

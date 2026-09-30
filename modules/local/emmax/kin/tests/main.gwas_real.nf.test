@@ -1,0 +1,50 @@
+nextflow_process {
+
+    name "Test Process EMMAX_KIN"
+    script "../main.nf"
+    process "EMMAX_KIN"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "emmax"
+    tag "emmax/kin"
+
+    test("homo_sapiens popgen - plink_simulated tped") {
+        tag "gwas_real"
+
+        setup {
+            run("PLINK_RECODE") {
+                script "../../../../nf-core/plink/recode/main.nf"
+                process {
+                    """
+                    input[0] = [
+                        [ id:'plink_simulated' ],
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bed', checkIfExists: true),
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.bim', checkIfExists: true),
+                        file(params.modules_testdata_base_path + 'genomics/homo_sapiens/popgen/plink_simulated.fam', checkIfExists: true)
+                    ]
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                input[0] = PLINK_RECODE.out.tped.join(PLINK_RECODE.out.tfam)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.kinship.size() == 1 },
+                { assert process.out.kinship.get(0).get(0).id == "plink_simulated" },
+                { assert path(process.out.kinship.get(0).get(1)).exists() },
+                { assert path(process.out.kinship.get(0).get(1)).toFile().length() > 0 }
+            )
+        }
+    }
+}

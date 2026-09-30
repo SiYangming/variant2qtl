@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "relatedness_outliers"
+description: Build a PLINK --remove list from pairs with PI_HAT above threshold
+keywords:
+  - plink
+  - relatedness
+  - qc
+tools:
+  - python:
+      description: Python
+      homepage: https://www.python.org/
+input:
+  - - meta:
+        type: map
+    - genome:
+        type: file
+        description: PLINK .genome report
+output:
+  - outliers:
+      - meta:
+          type: map
+      - "*.related_outliers.txt":
+          type: file
+  - versions:
+      - versions.yml:
+          type: file
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"
