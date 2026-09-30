@@ -10,7 +10,7 @@ workflow GENOTYPE_QC {
     ch_plink  // channel: [ meta, bed, bim, fam ]
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // PLINK2_FILTER expects [ meta, genotype, variant, sample ] with matching basenames
     ch_plink_in = ch_plink.map { meta, bed, bim, fam -> [meta, bed, bim, fam] }

@@ -1,0 +1,38 @@
+---
+description: Before any new pipeline development, pass nextflow lint (and nf-core pipelines lint)
+alwaysApply: true
+---
+
+# Gate: lint before new development
+
+Before starting **any new feature, module, subworkflow, or non-trivial edit** in this repo, **stop and run lint first**. Do not implement new work until it is clean.
+
+## Required commands
+
+```bash
+# 1) Nextflow language lint (must be clean for local code)
+nextflow lint workflows/variant2qtl.nf subworkflows/local modules/local
+
+# 2) nf-core pipeline lint (use this; NOT deprecated `nf-core lint`)
+nf-core pipelines lint --plain-text
+```
+
+Pass criteria:
+
+- `nextflow lint`: no Errors; fix Warnings in `workflows/`, `modules/local/`, `subworkflows/local/`
+- `nf-core pipelines lint`: must complete without aborting; fix Failures; Warnings OK if intentional / listed under `.nf-core.yml` lint ignores
+
+## Fixes already established in this repo
+
+- Prefer `channel.of` / `channel.empty` — never deprecated `Channel.*` factories
+- Remove unused Groovy vars in process `script:` blocks
+- Prefer explicit closures (`{ x -> ... }`) when Nextflow lint warns about implicit `it`
+- Do not mix topic version tuples into Path-based `ch_versions`
+- This pipeline is **not** official nf-core: `manifest.name` / `.nf-core.yml` template use org `SiYangming` and `is_nfcore: false` (name may contain digits)
+- New `$defs` groups in `nextflow_schema.json` must be referenced from top-level `allOf`
+- Keep `subworkflows/nf-core/utils_*` at the **exact git SHAs in `modules.json`** (do not curl `master` — newer utils drop `imNotification` and break local includes / `check_local_copy`)
+- `nextflow lint .` may warn inside vendored `modules/nf-core` / `subworkflows/nf-core`; fix only local code unless a failure blocks the pipeline
+
+## After implementing a change
+
+Re-run the same lint commands on changed paths before considering the task done or opening/updating a PR.

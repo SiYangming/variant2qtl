@@ -415,6 +415,9 @@
             "$ref": "#/$defs/gwas_benchmark_options"
         },
         {
+            "$ref": "#/$defs/omiga_cis_options"
+        },
+        {
             "$ref": "#/$defs/reference_genome_options"
         },
         {

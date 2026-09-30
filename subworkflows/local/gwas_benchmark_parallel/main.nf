@@ -29,12 +29,12 @@ workflow GWAS_BENCHMARK_PARALLEL {
     main:
     // Local / nf-core plink modules publish versions via topic("versions").
     // Do not mix those tuples into Path-based ch_versions (breaks softwareVersionsToYAML).
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     def engines = (params.gwas_benchmark_engines ?: 'gemma,emmax,tassel,rmvp,omiga')
         .tokenize(',')
-        .collect { it.trim().toLowerCase() }
-        .findAll { it }
+        .collect { token -> token.trim().toLowerCase() }
+        .findAll { token -> token }
 
     // Align optional covariates to phenotype meta (empty path list if absent)
     ch_cov_aligned = ch_phenotype
@@ -45,12 +45,12 @@ workflow GWAS_BENCHMARK_PARALLEL {
 
     GENOTYPE_TO_GWAS_FORMATS(ch_plink, ch_vcf)
 
-    ch_gemma_assoc    = Channel.empty()
-    ch_emmax_assoc    = Channel.empty()
-    ch_tassel_results = Channel.empty()
-    ch_rmvp_results   = Channel.empty()
-    ch_omiga_gwas     = Channel.empty()
-    ch_raw_assoc      = Channel.empty()
+    ch_gemma_assoc    = channel.empty()
+    ch_emmax_assoc    = channel.empty()
+    ch_tassel_results = channel.empty()
+    ch_rmvp_results   = channel.empty()
+    ch_omiga_gwas     = channel.empty()
+    ch_raw_assoc      = channel.empty()
 
     // --- GEMMA: relatedness → LMM ---
     if (engines.contains('gemma')) {
@@ -129,7 +129,7 @@ workflow GWAS_BENCHMARK_PARALLEL {
         ASSOC_STANDARDIZE(ch_raw_assoc)
         ch_standardized = ASSOC_STANDARDIZE.out.standardized
     } else {
-        ch_standardized = Channel.empty()
+        ch_standardized = channel.empty()
     }
 
     emit:

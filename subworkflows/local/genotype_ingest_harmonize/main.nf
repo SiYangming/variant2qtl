@@ -12,7 +12,7 @@ workflow GENOTYPE_INGEST_HARMONIZE {
 
     main:
     // PLINK_VCF uses topic("versions") — keep Path YAML channel empty
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // Drop optional tbi; PLINK_VCF only needs [ meta, vcf ]
     ch_vcf_in = ch_vcf.map { row ->

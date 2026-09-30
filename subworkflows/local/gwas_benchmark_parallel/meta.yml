@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "GWAS_BENCHMARK_PARALLEL"
+description: Local subworkflow gwas_benchmark_parallel for SiYangming/variant2qtl
+keywords:
+  - gwas
+  - qtl
+  - local
+components: []
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

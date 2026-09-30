@@ -83,7 +83,7 @@ bash scripts/make_omiga_cis_mini_testdata.sh
 ```
 """
 )
-print(f"Wrote {outdir}/geno.{{bed,bim,fam}}")
+print(f"Wrote {outdir}/geno.bed, geno.bim, geno.fam")
 print(f"Wrote {pheno} ({pheno.stat().st_size} bytes)")
 print(f"Wrote {cov_path} ({cov_path.stat().st_size} bytes)")
 PY

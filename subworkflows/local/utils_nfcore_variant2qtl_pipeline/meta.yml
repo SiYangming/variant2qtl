@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "UTILS_NFCORE_VARIANT2QTL_PIPELINE"
+description: Local subworkflow utils_nfcore_variant2qtl_pipeline for SiYangming/variant2qtl
+keywords:
+  - gwas
+  - qtl
+  - local
+components: []
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

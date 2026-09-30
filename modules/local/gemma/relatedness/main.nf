@@ -21,8 +21,6 @@ process GEMMA_RELATEDNESS {
     script:
     def args = task.ext.args ?: '-gk 1'
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def bfile = bed.baseName.replaceFirst(/\\.bed$/, '')
-    // bed path may be sample.bed -> baseName sample; use file without extension via getBaseName in Nextflow
     """
     # PLINK bfile prefix: strip .bed suffix from filename
     BFILE=\$(echo ${bed} | sed 's/\\.bed\$//')

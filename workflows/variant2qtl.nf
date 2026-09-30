@@ -46,14 +46,14 @@ workflow VARIANT2QTL {
     if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark) {
         def gwas_meta = [id: params.gwas_benchmark_id ?: 'gwas_benchmark']
 
-        def ch_gwas_plink_raw = Channel.empty()
-        def ch_gwas_vcf = Channel.empty()
+        def ch_gwas_plink_raw = channel.empty()
+        def ch_gwas_vcf = channel.empty()
 
         if (params.run_genotype_ingest) {
             if (!params.genotype_ingest_vcf) {
                 log.warn "run_genotype_ingest=true but missing --genotype_ingest_vcf; channels empty."
             } else {
-                def ch_ingest_vcf = Channel.of([
+                def ch_ingest_vcf = channel.of([
                     gwas_meta,
                     file(params.genotype_ingest_vcf, checkIfExists: true)
                 ])
@@ -64,17 +64,17 @@ workflow VARIANT2QTL {
             }
         } else {
             ch_gwas_plink_raw = (params.gwas_benchmark_bed && params.gwas_benchmark_bim && params.gwas_benchmark_fam)
-                ? Channel.of([
+                ? channel.of([
                     gwas_meta,
                     file(params.gwas_benchmark_bed, checkIfExists: true),
                     file(params.gwas_benchmark_bim, checkIfExists: true),
                     file(params.gwas_benchmark_fam, checkIfExists: true)
                 ])
-                : Channel.empty()
+                : channel.empty()
 
             ch_gwas_vcf = params.gwas_benchmark_vcf
-                ? Channel.of([gwas_meta, file(params.gwas_benchmark_vcf, checkIfExists: true)])
-                : Channel.empty()
+                ? channel.of([gwas_meta, file(params.gwas_benchmark_vcf, checkIfExists: true)])
+                : channel.empty()
 
             if ((params.run_genotype_qc || params.run_gwas_benchmark) &&
                 (!params.gwas_benchmark_bed || !params.gwas_benchmark_bim || !params.gwas_benchmark_fam)) {
@@ -83,12 +83,12 @@ workflow VARIANT2QTL {
         }
 
         def ch_gwas_pheno = params.gwas_benchmark_phenotype
-            ? Channel.of([gwas_meta, file(params.gwas_benchmark_phenotype, checkIfExists: true)])
-            : Channel.empty()
+            ? channel.of([gwas_meta, file(params.gwas_benchmark_phenotype, checkIfExists: true)])
+            : channel.empty()
 
         def ch_gwas_covar = params.gwas_benchmark_covariates
-            ? Channel.of([gwas_meta, file(params.gwas_benchmark_covariates, checkIfExists: true)])
-            : Channel.empty()
+            ? channel.of([gwas_meta, file(params.gwas_benchmark_covariates, checkIfExists: true)])
+            : channel.empty()
 
         def ch_gwas_plink = ch_gwas_plink_raw
         if (params.run_genotype_qc) {
@@ -96,7 +96,7 @@ workflow VARIANT2QTL {
             ch_versions = ch_versions.mix(GENOTYPE_QC.out.versions)
             ch_gwas_plink = GENOTYPE_QC.out.bed
             // QC changes SNP set — force VCF rebuild from filtered bed
-            ch_gwas_vcf = Channel.empty()
+            ch_gwas_vcf = channel.empty()
         }
 
         if (params.run_gwas_benchmark) {
@@ -121,21 +121,21 @@ workflow VARIANT2QTL {
         def omiga_meta = [id: params.omiga_cis_id ?: 'omiga_cis']
 
         def ch_omiga_plink = (params.omiga_cis_bed && params.omiga_cis_bim && params.omiga_cis_fam)
-            ? Channel.of([
+            ? channel.of([
                 omiga_meta,
                 file(params.omiga_cis_bed, checkIfExists: true),
                 file(params.omiga_cis_bim, checkIfExists: true),
                 file(params.omiga_cis_fam, checkIfExists: true)
             ])
-            : Channel.empty()
+            : channel.empty()
 
         def ch_omiga_pheno = params.omiga_cis_phenotype
-            ? Channel.of([omiga_meta, file(params.omiga_cis_phenotype, checkIfExists: true)])
-            : Channel.empty()
+            ? channel.of([omiga_meta, file(params.omiga_cis_phenotype, checkIfExists: true)])
+            : channel.empty()
 
         def ch_omiga_covar = params.omiga_cis_covariates
-            ? Channel.of([omiga_meta, file(params.omiga_cis_covariates, checkIfExists: true)])
-            : Channel.empty()
+            ? channel.of([omiga_meta, file(params.omiga_cis_covariates, checkIfExists: true)])
+            : channel.empty()
 
         if (!params.omiga_cis_bed || !params.omiga_cis_bim || !params.omiga_cis_fam) {
             log.warn "run_omiga_cis=true but missing --omiga_cis_bed/bim/fam; channels empty."

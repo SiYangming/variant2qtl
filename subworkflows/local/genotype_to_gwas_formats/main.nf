@@ -17,7 +17,7 @@ workflow GENOTYPE_TO_GWAS_FORMATS {
 
     main:
     // versions via topic("versions") on PLINK_RECODE — keep Path YAML channel empty
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // Passthrough PLINK binary
     ch_bed = ch_plink

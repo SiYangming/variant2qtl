@@ -15,7 +15,7 @@ workflow MOLQTL_MAP_OMIGA {
     main:
     // Local omiga modules publish versions via topic("versions").
     // Do not mix those tuples into Path-based ch_versions (breaks softwareVersionsToYAML).
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     ch_cov_aligned = ch_phenotype
         .join(ch_covariates, remainder: true)
