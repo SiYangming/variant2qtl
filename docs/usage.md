@@ -1,10 +1,79 @@
-# nf-core/variant2qtl: Usage
+# SiYangming/variant2qtl: Usage
 
 > _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
 
 ## Introduction
 
 <!-- NOTE: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+
+## Genotype ingest, QC, GWAS benchmark, and OmiGA cis
+
+These branches are **off by default**. Enable them with boolean params; they do not replace the FASTQC/MultiQC template path (still driven by `--input`).
+
+### Feature flags
+
+| Param                 | Default | What it does                                                                                                                                           |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `run_genotype_ingest` | `false` | VCF → (optional liftover/norm/samples) → PLINK bed via `genotype_ingest_harmonize`. When on, this bed feeds QC/GWAS instead of `--gwas_benchmark_bed`. |
+| `run_genotype_qc`     | `false` | MAF/HWE/geno filter (`PLINK2_FILTER`); optional het / relatedness / PCA via `genotype_qc_run_*`. Filtered bed feeds GWAS when both are on.             |
+| `run_gwas_benchmark`  | `false` | Parallel engines via `gwas_benchmark_parallel` (pheno adapt → formats → engines → optional `assoc_standardize`).                                       |
+| `run_omiga_cis`       | `false` | OmiGA cis-molQTL (`molqtl_map_omiga`). Use dedicated bed/bim/fam or reuse QC bed.                                                                      |
+
+### Related file / option params
+
+**GWAS benchmark**
+
+- `gwas_benchmark_id` — meta id (default `gwas_benchmark`)
+- `gwas_benchmark_bed` / `_bim` / `_fam` — PLINK inputs when ingest is off
+- `gwas_benchmark_vcf` — optional VCF (else rebuilt from bed)
+- `gwas_benchmark_phenotype` — PLINK-style `FID IID Trait` (header required)
+- `gwas_benchmark_covariates` — optional `FID IID cov...`
+- `gwas_benchmark_engines` — comma list, e.g. `gemma,emmax` (default includes tassel/rmvp/omiga)
+- `gwas_benchmark_standardize` — run `assoc_standardize` on engine outputs (default `true`)
+
+**Genotype ingest**
+
+- `genotype_ingest_vcf` — required when ingest is on
+- `genotype_ingest_args`, `genotype_ingest_fasta`, `genotype_ingest_norm_args`
+- `genotype_ingest_samples`, `genotype_ingest_view_args`
+- `genotype_ingest_liftover_chain` / `_fasta` / `_dict`
+
+**Genotype QC**
+
+- `genotype_qc_args` — PLINK2 filter args
+- `genotype_qc_run_het` / `genotype_qc_het_sd`
+- `genotype_qc_run_relatedness` / `genotype_qc_pi_hat`
+- `genotype_qc_run_pca` / `genotype_qc_pca_n`
+
+**OmiGA cis**
+
+- `omiga_cis_id`, `omiga_cis_bed` / `_bim` / `_fam`, `omiga_cis_vcf`
+- `omiga_cis_phenotype`, `omiga_cis_covariates`
+- `omiga_cis_use_qc_bed` — reuse shared QC bed from the GWAS/QC branch instead of `omiga_cis_bed/bim/fam`
+
+### Recommended combinations
+
+1. **Bed → QC → GWAS** (no ingest): `--run_genotype_qc --run_gwas_benchmark` + `--gwas_benchmark_{bed,bim,fam,phenotype}` (+ optional covariates). Limit engines with `--gwas_benchmark_engines gemma,emmax`.
+2. **VCF ingest → QC → GWAS**: `--run_genotype_ingest --genotype_ingest_vcf ...` plus QC/GWAS flags (omit `gwas_benchmark_bed`; ingest supplies bed).
+3. **QC bed → OmiGA cis**: enable QC (and usually GWAS or at least QC) with `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`.
+
+Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`.
+
+### Example: `test_gwas` profile
+
+Smoke-tests the genotype path with nf-core `plink_simulated` popgen data (bed + quantitative phenotype + covariates), QC on, engines `gemma,emmax`, standardize on. Prefer `-stub` for CI:
+
+```bash
+nextflow run . -profile test_gwas,docker -stub --outdir results_test_gwas
+```
+
+Without stub (amd64 docker recommended if including EMMAX):
+
+```bash
+nextflow run . -profile test_gwas,docker --outdir results_test_gwas
+```
+
+The existing `-profile test,docker` FASTQC-only path is unchanged.
 
 ## Samplesheet input
 
@@ -55,7 +124,7 @@ An [example samplesheet](../assets/samplesheet.csv) has been provided with the p
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/variant2qtl --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
+nextflow run SiYangming/variant2qtl --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -74,12 +143,12 @@ If you wish to repeatedly use the same parameters for multiple runs, rather than
 Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <file>`.
 
 > [!WARNING]
-> Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files specified with `-c` must only be used for [tuning process resource specifications](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources), other infrastructural tweaks (such as output directories), or module arguments (args).
+> Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files specified with `-c` must only be used for [tuning process resource specifications](https://nf-co.re/docs/running/run-pipelines#configuring-pipelines), other infrastructural tweaks (such as output directories), or module arguments (args).
 
 The above pipeline run specified with a params file in yaml format:
 
 ```bash
-nextflow run nf-core/variant2qtl -profile docker -params-file params.yaml
+nextflow run SiYangming/variant2qtl -profile docker -params-file params.yaml
 ```
 
 with:
@@ -98,14 +167,14 @@ You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-c
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
-nextflow pull nf-core/variant2qtl
+nextflow pull SiYangming/variant2qtl
 ```
 
 ### Reproducibility
 
 It is a good idea to specify the pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
 
-First, go to the [nf-core/variant2qtl releases page](https://github.com/nf-core/variant2qtl/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
+First, go to the [SiYangming/variant2qtl releases page](https://github.com/SiYangming/variant2qtl/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
 
@@ -138,6 +207,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test`
   - A profile with a complete configuration for automated testing
   - Includes links to test data so needs no other parameters
+- `test_gwas`
+  - Genotype QC + GWAS benchmark smoke test (`gemma,emmax`) on `plink_simulated`
+  - Prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, and OmiGA cis](#genotype-ingest-qc-gwas-benchmark-and-omiga-cis)
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)
 - `singularity`
@@ -151,7 +223,7 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `apptainer`
   - A generic configuration profile to be used with [Apptainer](https://apptainer.org/)
 - `wave`
-  - A generic configuration profile to enable [Wave](https://seqera.io/wave/) containers. Use together with one of the above (requires Nextflow ` 24.03.0-edge` or later).
+  - A generic configuration profile to enable [Wave](https://seqera.io/wave/) containers. Use together with one of the above (requires Nextflow `24.03.0-edge` or later).
 - `conda`
   - A generic configuration profile to be used with [Conda](https://conda.io/docs/). Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity, Podman, Shifter, Charliecloud, or Apptainer.
 
@@ -171,19 +243,19 @@ Specify the path to a specific config file (this is a core Nextflow command). Se
 
 Whilst the default requirements set within the pipeline will hopefully work for most people and with most input data, you may find that you want to customise the compute resources that the pipeline requests. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the pipeline steps, if the job exits with any of the error codes specified [here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher resources request (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
 
-To change the resource requests, please see the [max resources](https://nf-co.re/docs/usage/configuration#max-resources) and [tuning workflow resources](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources) section of the nf-core website.
+To change the resource requests, please see the [max resources](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#set-max-resources) and [customise process resources](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#customize-process-resources) section of the nf-core website.
 
 ### Custom Containers
 
 In some cases, you may wish to change the container or conda environment used by a pipeline steps for a particular tool. By default, nf-core pipelines use containers and software from the [biocontainers](https://biocontainers.pro/) or [bioconda](https://bioconda.github.io/) projects. However, in some cases the pipeline specified version maybe out of date.
 
-To use a different container from the default container or conda environment specified in a pipeline, please see the [updating tool versions](https://nf-co.re/docs/usage/configuration#updating-tool-versions) section of the nf-core website.
+To use a different container from the default container or conda environment specified in a pipeline, please see the [updating tool versions](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#update-tool-versions) section of the nf-core website.
 
 ### Custom Tool Arguments
 
 A pipeline might not always support every possible argument or option of a particular tool used in pipeline. Fortunately, nf-core pipelines provide some freedom to users to insert additional parameters that the pipeline does not include by default.
 
-To learn how to provide additional arguments to a particular tool of the pipeline, please see the [customising tool arguments](https://nf-co.re/docs/usage/configuration#customising-tool-arguments) section of the nf-core website.
+To learn how to provide additional arguments to a particular tool of the pipeline, please see the [customising tool arguments](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#modifying-tool-arguments) section of the nf-core website.
 
 ### nf-core/configs
 

@@ -28,14 +28,14 @@ input:
         description: Tool key guiding column map (gemma|emmax|tassel|rmvp|omiga|generic)
 
 output:
-  - standardized:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.std.tsv":
-          type: file
-          description: Standardized TSV with columns CHR POS SNP P
-          pattern: "*.std.tsv"
+  standardized:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.std.tsv":
+        type: file
+        description: Standardized TSV with columns CHR POS SNP P
+        pattern: "*.std.tsv"
   versions_gawk:
     description: Software versions
 

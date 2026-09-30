@@ -35,22 +35,22 @@ input:
         pattern: "*.fam"
 
 output:
-  - relatedness:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.cXX.txt":
-          type: file
-          description: GEMMA relatedness / kinship matrix
-          pattern: "*.cXX.txt"
-  - log:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.log.txt":
-          type: file
-          description: GEMMA log
-          pattern: "*.log.txt"
+  relatedness:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cXX.txt":
+        type: file
+        description: GEMMA relatedness / kinship matrix
+        pattern: "*.cXX.txt"
+  log:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.log.txt":
+        type: file
+        description: GEMMA log
+        pattern: "*.log.txt"
   versions_gemma:
     description: Software versions
     pattern: "versions.yml"

@@ -1,6 +1,6 @@
 repository_type: pipeline
 
-nf_core_version: 3.5.2
+nf_core_version: 4.1.0
 
 lint:
   # Skip template recreate check: personal org + digit in name makes create flaky/hangy
@@ -20,6 +20,10 @@ lint:
   # AWS test workflows not used for this personal pipeline
   actions_awstest: false
   actions_awsfulltest: false
+  # No tagged release yet — keep 0.0.1dev; skip release-only numeric/version gates
+  version_consistency: false
+  # No institutional pipeline-specific config published for this personal pipeline
+  included_configs: false
   files_exist:
     - CODE_OF_CONDUCT.md
     - assets/nf-core-variant2qtl_logo_light.png
@@ -35,7 +39,7 @@ template:
   description: An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.
   author: siyangming
   version: 0.0.1dev
-  force: true
+  force: false
   outdir: .
   skip_features: []
   is_nfcore: false

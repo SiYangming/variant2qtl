@@ -51,22 +51,22 @@ input:
         pattern: "*.{txt,cov,covar}"
 
 output:
-  - assoc:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.ps":
-          type: file
-          description: EMMAX association results (SNP beta p)
-          pattern: "*.ps"
-  - reml:
-      - meta:
-          type: map
-          description: Groovy map containing sample information
-      - "*.reml":
-          type: file
-          description: REML / heritability output
-          pattern: "*.reml"
+  assoc:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.ps":
+        type: file
+        description: EMMAX association results (SNP beta p)
+        pattern: "*.ps"
+  reml:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.reml":
+        type: file
+        description: REML / heritability output
+        pattern: "*.reml"
   versions_emmax:
     description: Software versions
 
