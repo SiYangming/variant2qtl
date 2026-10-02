@@ -61,10 +61,19 @@ workflow VARIANT2QTL {
                 .fromList(samplesheetToList(params.genotype_input, "${projectDir}/assets/schema_genotype_input.json"))
                 .map { meta, vcf, bed, bim, fam, phenotype, covariates ->
                     def paths = [vcf, bed, bim, fam, phenotype, covariates].collect { pathish ->
+                        // Prefer toUriString(): Path.toString() strips remote schemes
                         if (pathish == null || pathish instanceof List || pathish instanceof Collection) {
                             return null
                         }
-                        def s = pathish.toString()?.trim()
+                        def s = null
+                        try {
+                            s = pathish.toUriString()?.trim()
+                        }
+                        catch (Throwable _ignored) {
+                        }
+                        if (!s) {
+                            s = pathish.toString()?.trim()
+                        }
                         if (!s || s == 'null' || s == '[]') {
                             return null
                         }

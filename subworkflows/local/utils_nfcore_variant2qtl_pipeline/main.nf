@@ -95,26 +95,7 @@ workflow PIPELINE_INITIALISATION {
         .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
         .map { meta, fastq_1, fastq_2 ->
             def resolved = [fastq_1, fastq_2].collect { pathish ->
-                if (pathish == null || pathish instanceof List || pathish instanceof Collection) {
-                    return null
-                }
-                def s = pathish.toString()?.trim()
-                if (!s || s == 'null' || s == '[]') {
-                    return null
-                }
-                if (s.contains('://')) {
-                    return file(s, checkIfExists: true)
-                }
-                def candidates = [file(s), file("${projectDir}/${s}")]
-                def assetsIdx = s.indexOf('assets/')
-                if (assetsIdx >= 0) {
-                    candidates << file("${projectDir}/${s.substring(assetsIdx)}")
-                }
-                def f = candidates.find { cand -> cand.exists() }
-                if (!f) {
-                    error("input FastQ path not found: ${s}")
-                }
-                return f
+                return resolvePipelinePath(pathish, 'input FastQ path')
             }
             def fq1 = resolved[0]
             def fq2 = resolved[1]
@@ -188,6 +169,44 @@ workflow PIPELINE_COMPLETION {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+//
+// Resolve samplesheet paths: keep remote https:// / s3:// URIs intact, and map
+// relative assets/... entries onto ${projectDir}. Prefer toUriString() because
+// Nextflow Path.toString() strips remote schemes (https://host/x → /host/x).
+//
+def resolvePipelinePath(pathish, label='path') {
+    if (pathish == null || pathish instanceof List || pathish instanceof Collection) {
+        return null
+    }
+    def s = null
+    try {
+        s = pathish.toUriString()?.trim()
+    }
+    catch (Throwable _ignored) {
+        // Not a Path-like object; fall back to toString()
+    }
+    if (!s) {
+        s = pathish.toString()?.trim()
+    }
+    if (!s || s == 'null' || s == '[]') {
+        return null
+    }
+    if (s.contains('://')) {
+        return file(s, checkIfExists: true)
+    }
+    def candidates = [file(s), file("${projectDir}/${s}")]
+    def assetsIdx = s.indexOf('assets/')
+    if (assetsIdx >= 0) {
+        candidates << file("${projectDir}/${s.substring(assetsIdx)}")
+    }
+    def f = candidates.find { cand -> cand.exists() }
+    if (!f) {
+        error("${label} not found: ${s}")
+    }
+    return f
+}
+
 //
 // Check and validate pipeline parameters
 //
