@@ -30,8 +30,8 @@
                     "schema": "assets/schema_genotype_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Optional cohort genotype samplesheet (id + phenotype; VCF and/or bed/bim/fam; optional covariates).",
-                    "help_text": "One row per analysis cohort. Provide either `vcf` (ingest→bed) or `bed`+`bim`+`fam`. When set, this drives genotype ingest/QC/GWAS inputs instead of the scattered `--gwas_benchmark_*` / `--genotype_ingest_vcf` file params. FASTQC still uses `--input`.",
+                    "description": "Optional cohort genotype samplesheet (id; VCF and/or bed/bim/fam; optional GWAS phenotype/covariates and molQTL phenotype/covariates).",
+                    "help_text": "One row per analysis cohort. Provide either `vcf` (ingest→bed) or `bed`+`bim`+`fam`. Optional `phenotype`/`covariates` for GWAS; optional `molqtl_phenotype`/`molqtl_covariates` for OmiGA cis. When set, this drives genotype ingest/QC/GWAS/OmiGA inputs instead of scattered file params. FASTQC still uses `--input`.",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
@@ -277,7 +277,7 @@
                     "default": false,
                     "description": "Run OmiGA cis-molQTL via molqtl_map_omiga. Default: false.",
                     "fa_icon": "fas fa-toggle-off",
-                    "help_text": "When true, runs OMIGA_CIS on the supplied PLINK genotype + molecular phenotype BED/OPF. Main FastQC path is unchanged when false. Prefer a params-file for boolean flags."
+                    "help_text": "When true, runs OMIGA_CIS on PLINK genotype + molecular phenotype BED/OPF. Prefer `--genotype_input` with `molqtl_phenotype` (and optional `molqtl_covariates`), or legacy `--omiga_cis_*` params. Main FastQC path is unchanged when false. Prefer a params-file for boolean flags."
                 },
                 "omiga_cis_id": {
                     "type": "string",

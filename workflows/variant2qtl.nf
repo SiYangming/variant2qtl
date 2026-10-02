@@ -45,10 +45,14 @@ workflow VARIANT2QTL {
     // Optional genotype ingest → QC → GWAS benchmark (all default OFF).
     // Prefer --genotype_input samplesheet (one row per cohort) over scattered
     // --gwas_benchmark_* / --genotype_ingest_vcf params. Rows with VCF (no bed)
-    // are ingested; rows with bed/bim/fam skip ingest. Shared QC bed can feed
-    // OmiGA cis via --omiga_cis_use_qc_bed.
+    // are ingested; rows with bed/bim/fam skip ingest. Shared QC / geno bed and
+    // molqtl_* columns can feed OmiGA cis when --run_omiga_cis is set.
     //
     def ch_shared_qc_bed = channel.empty()
+    def ch_shared_geno_plink = channel.empty()
+    def ch_shared_geno_vcf = channel.empty()
+    def ch_molqtl_pheno = channel.empty()
+    def ch_molqtl_covar = channel.empty()
 
     if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
@@ -59,8 +63,8 @@ workflow VARIANT2QTL {
         if (params.genotype_input) {
             def ch_geno_rows = channel
                 .fromList(samplesheetToList(params.genotype_input, "${projectDir}/assets/schema_genotype_input.json"))
-                .map { meta, vcf, bed, bim, fam, phenotype, covariates ->
-                    def paths = [vcf, bed, bim, fam, phenotype, covariates].collect { pathish ->
+                .map { meta, vcf, bed, bim, fam, phenotype, covariates, molqtl_phenotype, molqtl_covariates ->
+                    def paths = [vcf, bed, bim, fam, phenotype, covariates, molqtl_phenotype, molqtl_covariates].collect { pathish ->
                         // Prefer toUriString(): Path.toString() strips remote schemes
                         if (pathish == null || pathish instanceof List || pathish instanceof Collection) {
                             return null
@@ -97,6 +101,8 @@ workflow VARIANT2QTL {
                     def fam_p = paths[3]
                     def phe_p = paths[4]
                     def cov_p = paths[5]
+                    def mol_phe_p = paths[6]
+                    def mol_cov_p = paths[7]
                     def has_bed = bed_p && bim_p && fam_p
                     def has_vcf = vcf_p != null
                     if (!has_bed && !has_vcf) {
@@ -105,32 +111,40 @@ workflow VARIANT2QTL {
                     if ((bed_p || bim_p || fam_p) && !has_bed) {
                         error("genotype_input row '${meta.id}': bed, bim, and fam must all be set together")
                     }
-                    [meta, vcf_p, bed_p, bim_p, fam_p, phe_p, cov_p, has_bed, has_vcf]
+                    [meta, vcf_p, bed_p, bim_p, fam_p, phe_p, cov_p, mol_phe_p, mol_cov_p, has_bed, has_vcf]
                 }
 
             def ch_geno_branched = ch_geno_rows.branch { row ->
-                from_bed: row[7]
-                from_vcf: row[8] && !row[7]
+                from_bed: row[9]
+                from_vcf: row[10] && !row[9]
             }
 
-            ch_gwas_pheno = ch_geno_rows.map { meta, _vcf, _bed, _bim, _fam, phe, _cov, _hb, _hv -> [meta, phe] }
+            ch_gwas_pheno = ch_geno_rows
+                .filter { row -> row[5] != null }
+                .map { meta, _vcf, _bed, _bim, _fam, phe, _cov, _mp, _mc, _hb, _hv -> [meta, phe] }
             ch_gwas_covar = ch_geno_rows
                 .filter { row -> row[6] != null }
-                .map { meta, _vcf, _bed, _bim, _fam, _phe, cov, _hb, _hv -> [meta, cov] }
+                .map { meta, _vcf, _bed, _bim, _fam, _phe, cov, _mp, _mc, _hb, _hv -> [meta, cov] }
+            ch_molqtl_pheno = ch_geno_rows
+                .filter { row -> row[7] != null }
+                .map { meta, _vcf, _bed, _bim, _fam, _phe, _cov, mp, _mc, _hb, _hv -> [meta, mp] }
+            ch_molqtl_covar = ch_geno_rows
+                .filter { row -> row[8] != null }
+                .map { meta, _vcf, _bed, _bim, _fam, _phe, _cov, _mp, mc, _hb, _hv -> [meta, mc] }
 
-            ch_gwas_plink_raw = ch_geno_branched.from_bed.map { meta, _vcf, bed, bim, fam, _phe, _cov, _hb, _hv ->
+            ch_gwas_plink_raw = ch_geno_branched.from_bed.map { meta, _vcf, bed, bim, fam, _phe, _cov, _mp, _mc, _hb, _hv ->
                 [meta, bed, bim, fam]
             }
             ch_gwas_vcf = ch_geno_branched.from_bed
                 .filter { row -> row[1] != null }
-                .map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _hb, _hv -> [meta, vcf] }
+                .map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _mp, _mc, _hb, _hv -> [meta, vcf] }
                 .mix(
-                    ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _hb, _hv -> [meta, vcf] }
+                    ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _mp, _mc, _hb, _hv -> [meta, vcf] }
                 )
 
             // VCF-only rows always go through ingest; empty channel is a no-op.
             GENOTYPE_INGEST_HARMONIZE(
-                ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _hb, _hv -> [meta, vcf] }
+                ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _mp, _mc, _hb, _hv -> [meta, vcf] }
             )
             ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
             ch_gwas_plink_raw = ch_gwas_plink_raw.mix(GENOTYPE_INGEST_HARMONIZE.out.bed)
@@ -190,6 +204,9 @@ workflow VARIANT2QTL {
             ch_gwas_vcf = channel.empty()
         }
 
+        ch_shared_geno_plink = ch_gwas_plink
+        ch_shared_geno_vcf = ch_gwas_vcf
+
         if (params.run_gwas_benchmark) {
             if (!params.genotype_input && !params.gwas_benchmark_phenotype) {
                 log.warn "run_gwas_benchmark=true but missing --gwas_benchmark_phenotype (or --genotype_input)."
@@ -206,44 +223,83 @@ workflow VARIANT2QTL {
 
     //
     // Optional OmiGA cis-molQTL (default OFF)
-    // Inputs: --omiga_cis_bed/bim/fam + --omiga_cis_phenotype (+ optional covariates),
-    // or --omiga_cis_use_qc_bed to reuse the shared QC bed from the GWAS/QC branch.
+    // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
+    // Legacy: --omiga_cis_bed/bim/fam + --omiga_cis_phenotype, or --omiga_cis_use_qc_bed.
     //
     if (params.run_omiga_cis) {
         def omiga_meta = [id: params.omiga_cis_id ?: 'omiga_cis']
-
         def ch_omiga_plink = channel.empty()
-        if (params.omiga_cis_use_qc_bed) {
-            ch_omiga_plink = ch_shared_qc_bed.map { _meta, bed, bim, fam ->
-                [omiga_meta, bed, bim, fam]
+        def ch_omiga_pheno = channel.empty()
+        def ch_omiga_covar = channel.empty()
+        def ch_omiga_vcf = channel.empty()
+
+        if (params.genotype_input) {
+            if (params.omiga_cis_use_qc_bed) {
+                if (params.run_genotype_qc) {
+                    ch_omiga_plink = ch_shared_qc_bed
+                } else {
+                    log.warn "omiga_cis_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
+                    ch_omiga_plink = ch_shared_geno_plink
+                }
+            } else {
+                ch_omiga_plink = ch_shared_geno_plink
             }
-        } else if (params.omiga_cis_bed && params.omiga_cis_bim && params.omiga_cis_fam) {
-            ch_omiga_plink = channel.of([
-                omiga_meta,
-                file(params.omiga_cis_bed, checkIfExists: true),
-                file(params.omiga_cis_bim, checkIfExists: true),
-                file(params.omiga_cis_fam, checkIfExists: true)
-            ])
-        }
 
-        def ch_omiga_pheno = params.omiga_cis_phenotype
-            ? channel.of([omiga_meta, file(params.omiga_cis_phenotype, checkIfExists: true)])
-            : channel.empty()
+            def ch_param_molqtl_pheno = params.omiga_cis_phenotype
+                ? ch_omiga_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.omiga_cis_phenotype, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_omiga_pheno = ch_molqtl_pheno.ifEmpty(ch_param_molqtl_pheno)
 
-        def ch_omiga_covar = params.omiga_cis_covariates
-            ? channel.of([omiga_meta, file(params.omiga_cis_covariates, checkIfExists: true)])
-            : channel.empty()
+            def ch_param_molqtl_covar = params.omiga_cis_covariates
+                ? ch_omiga_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.omiga_cis_covariates, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_omiga_covar = ch_molqtl_covar.ifEmpty(ch_param_molqtl_covar)
 
-        def ch_omiga_vcf = params.omiga_cis_vcf
-            ? channel.of([omiga_meta, file(params.omiga_cis_vcf, checkIfExists: true)])
-            : channel.empty()
+            ch_omiga_vcf = ch_shared_geno_vcf
+            if (params.omiga_cis_vcf) {
+                ch_omiga_vcf = ch_omiga_vcf.ifEmpty(
+                    ch_omiga_plink.map { meta, _bed, _bim, _fam ->
+                        [meta, file(params.omiga_cis_vcf, checkIfExists: true)]
+                    }
+                )
+            }
+        } else {
+            if (params.omiga_cis_use_qc_bed) {
+                ch_omiga_plink = ch_shared_qc_bed.map { _meta, bed, bim, fam ->
+                    [omiga_meta, bed, bim, fam]
+                }
+            } else if (params.omiga_cis_bed && params.omiga_cis_bim && params.omiga_cis_fam) {
+                ch_omiga_plink = channel.of([
+                    omiga_meta,
+                    file(params.omiga_cis_bed, checkIfExists: true),
+                    file(params.omiga_cis_bim, checkIfExists: true),
+                    file(params.omiga_cis_fam, checkIfExists: true)
+                ])
+            }
 
-        if (!params.omiga_cis_use_qc_bed &&
-            (!params.omiga_cis_bed || !params.omiga_cis_bim || !params.omiga_cis_fam)) {
-            log.warn "run_omiga_cis=true but missing --omiga_cis_bed/bim/fam (or --omiga_cis_use_qc_bed); channels empty."
-        }
-        if (!params.omiga_cis_phenotype) {
-            log.warn "run_omiga_cis=true but missing --omiga_cis_phenotype."
+            ch_omiga_pheno = params.omiga_cis_phenotype
+                ? channel.of([omiga_meta, file(params.omiga_cis_phenotype, checkIfExists: true)])
+                : channel.empty()
+
+            ch_omiga_covar = params.omiga_cis_covariates
+                ? channel.of([omiga_meta, file(params.omiga_cis_covariates, checkIfExists: true)])
+                : channel.empty()
+
+            ch_omiga_vcf = params.omiga_cis_vcf
+                ? channel.of([omiga_meta, file(params.omiga_cis_vcf, checkIfExists: true)])
+                : channel.empty()
+
+            if (!params.omiga_cis_use_qc_bed &&
+                (!params.omiga_cis_bed || !params.omiga_cis_bim || !params.omiga_cis_fam)) {
+                log.warn "run_omiga_cis=true but missing --omiga_cis_bed/bim/fam (or --omiga_cis_use_qc_bed); channels empty."
+            }
+            if (!params.omiga_cis_phenotype) {
+                log.warn "run_omiga_cis=true but missing --omiga_cis_phenotype."
+            }
         }
 
         MOLQTL_MAP_OMIGA(

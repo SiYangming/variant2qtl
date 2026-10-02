@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/SiYangming/variant2qtl/master/assets/schema_genotype_input.json",
     "title": "SiYangming/variant2qtl pipeline - params.genotype_input schema",
-    "description": "Cohort-level genotype samplesheet: one row per analysis set (VCF and/or PLINK + phenotype).",
+    "description": "Cohort-level genotype samplesheet: one row per analysis set (VCF and/or PLINK + GWAS and/or molQTL phenotypes).",
     "type": "array",
     "items": {
         "type": "object",
@@ -40,16 +40,28 @@
             "phenotype": {
                 "type": "string",
                 "format": "file-path",
-                "pattern": "^\\S+$",
-                "errorMessage": "Phenotype file is required (plink-style FID IID trait)"
+                "pattern": "^$|^\\S+$",
+                "errorMessage": "Optional GWAS phenotype (plink-style FID IID trait); required when running gwas_benchmark"
             },
             "covariates": {
                 "type": "string",
                 "format": "file-path",
                 "pattern": "^$|^\\S+$",
-                "errorMessage": "Optional covariates file path cannot contain spaces"
+                "errorMessage": "Optional GWAS covariates file path cannot contain spaces"
+            },
+            "molqtl_phenotype": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^$|^\\S+$",
+                "errorMessage": "Optional molQTL phenotype BED/OPF path cannot contain spaces"
+            },
+            "molqtl_covariates": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^$|^\\S+$",
+                "errorMessage": "Optional molQTL covariates file path cannot contain spaces"
             }
         },
-        "required": ["id", "phenotype"]
+        "required": ["id"]
     }
 }
