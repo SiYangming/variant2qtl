@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "QTL_FINEMAP_SUSIE"
+description: Local subworkflow qtl_finemap_susie for SiYangming/variant2qtl
+keywords:
+  - qtl
+  - finemap
+  - susie
+  - local
+components:
+  - susie/finemap
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

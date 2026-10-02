@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Synced pipeline template to nf-core/tools v4.1.0.
 - Optional `--genotype_input` cohort samplesheet (`assets/schema_genotype_input.json`): VCF ingest and/or bed+bim+fam + phenotype/covariates; `test_gwas` now exercises ingest→QC→GWAS via samplesheet.
 - `--genotype_input` `molqtl_phenotype` / `molqtl_covariates` columns drive OmiGA cis; profile `test_omiga` + nf-test for samplesheet → QC → cis.
+- Local **tensorQTL** cis (`modules/local/tensorqtl/cis`, `molqtl_map_tensorqtl`) behind `params.run_tensorqtl_cis` (default OFF); PyPI pin `tensorqtl==1.0.10` (no bioconda); profile `test_tensorqtl` + stub nf-test; reuses `omiga_cis_mini` geno/pheno + `covariates_tensorqtl.txt`.
+- Local **SuSiE** fine-mapping (`modules/local/susie/finemap`, `qtl_finemap_susie`) behind `params.run_finemap_susie` (default OFF); conda-forge `r-susier=0.14.2`; mini sumstats under `assets/testdata/finemap_susie_mini/`; profile `test_finemap` + stub nf-test. Coloc deferred (see `docs/modules_prebuild.md`).
 
 ### `Fixed`
 

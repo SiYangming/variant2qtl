@@ -1,0 +1,2 @@
+id,vcf,bed,bim,fam,phenotype,covariates,molqtl_phenotype,molqtl_covariates
+tensorqtl_cis_mini,,assets/testdata/omiga_cis_mini/geno.bed,assets/testdata/omiga_cis_mini/geno.bim,assets/testdata/omiga_cis_mini/geno.fam,,,assets/testdata/omiga_cis_mini/phenotype.bed.gz,assets/testdata/omiga_cis_mini/covariates_tensorqtl.txt

@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "MOLQTL_MAP_TENSORQTL"
+description: Local subworkflow molqtl_map_tensorqtl for SiYangming/variant2qtl
+keywords:
+  - qtl
+  - tensorqtl
+  - local
+components:
+  - tensorqtl/cis
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

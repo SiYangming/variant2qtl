@@ -62,6 +62,23 @@ nf-test test modules/local/omiga/cis/tests/main.nf.test --tag omiga_cis_real --p
 nextflow run . -profile test,docker -params-file params_omiga_cis.json
 ```
 
+### P0 — tensorQTL 模块状态（已建 / 已接入 workflow）
+
+| 模块路径                      | 状态                                                                         | Conda / 容器 pin                                                                           |
+| ----------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `modules/local/tensorqtl/cis` | **已建，已挂入** `molqtl_map_tensorqtl`（`params.run_tensorqtl_cis` 默认关） | PyPI `tensorqtl==1.0.10` via conda `pip`（无 bioconda/biocontainers）；stub / wave / conda |
+
+- Official bioconda/biocontainers package **absent** — pin strategy mirrors other local engines: document version in `environment.yml`; CI uses `-stub`; real runs prefer `-profile conda` or `wave`.
+- Phenotype: FastQTL BED (reuse `assets/testdata/omiga_cis_mini/`). Covariates: **sample × covariate** (`covariates_tensorqtl.txt`).
+- GPU: not required; pass CUDA-related flags via `ext.args` if the environment provides GPU PyTorch.
+
+**nf-test / smoke:**
+
+```bash
+nf-test test modules/local/tensorqtl/cis/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_tensorqtl,docker -stub --outdir results_test_tensorqtl
+```
+
 ## P1 — 协变量与 sQTL 表型准备
 
 | 建议模块名                        | 说明                                         |
@@ -122,6 +139,22 @@ Adapters: `modules/local/utils/phenocovar_adapt`, `modules/local/utils/assoc_sta
 | `metal`                        | 跨队列 meta        |
 | `smr`                          | SMR / HEIDI        |
 | `torus`                        | QTL 富集先验       |
+
+### P2 — SuSiE 模块状态（已建 / 已接入 workflow）
+
+| 模块路径                      | 状态                                                                      | Conda / 容器 pin                                                      |
+| ----------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `modules/local/susie/finemap` | **已建，已挂入** `qtl_finemap_susie`（`params.run_finemap_susie` 默认关） | `conda-forge::r-susier=0.14.2` / biocontainers `r-base:4.3.1` + conda |
+
+- Input: association/QTL sumstats (`variant_id`/`snp`, `beta`+`se` and/or `z`); optional LD matrix. Without LD, identity matrix is used (smoke / limited interpretation).
+- Mini testdata: [`assets/testdata/finemap_susie_mini/`](../assets/testdata/finemap_susie_mini/).
+- Can consume OmiGA/tensorQTL `cis_qtl` outputs when `--finemap_susie_sumstats` is unset and those branches ran.
+- **Coloc** (`coloc` / `hyprcoloc`) and other fine-mappers (FINEMAP/CAVIAR/DAP-G) are **follow-ups** — not in this PR.
+
+```bash
+nf-test test modules/local/susie/finemap/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_finemap,docker -stub --outdir results_test_finemap
+```
 
 ## P3 — 可选互补
 

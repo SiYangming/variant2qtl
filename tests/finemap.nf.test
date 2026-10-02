@@ -1,0 +1,41 @@
+nextflow_pipeline {
+
+    name "Test pipeline SuSiE fine-mapping path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "finemap"
+    tag "susie"
+    tag "stub"
+
+    // SuSiE from mini sumstats under -stub.
+    test("-profile test_finemap path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_genotype_ingest    = false
+                run_genotype_qc        = false
+                run_gwas_benchmark     = false
+                run_omiga_cis          = false
+                run_tensorqtl_cis      = false
+                run_finemap_susie      = true
+                finemap_susie_sumstats = "${projectDir}/assets/testdata/finemap_susie_mini/sumstats.tsv"
+                finemap_susie_ld       = "${projectDir}/assets/testdata/finemap_susie_mini/ld.txt"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/qtl_finemap_susie/susie_finemap").exists() }
+            )
+        }
+    }
+}

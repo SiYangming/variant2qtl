@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "susie_finemap"
+description: SuSiE fine-mapping from QTL/GWAS summary statistics (susieR::susie_rss)
+keywords:
+  - susie
+  - susier
+  - fine-mapping
+  - qtl
+tools:
+  - "susieR":
+      description: "Sum of Single Effects (SuSiE) regression in R"
+      homepage: "https://github.com/stephenslab/susieR"
+      documentation: "https://stephenslab.github.io/susieR/"
+      tool_dev_url: "https://github.com/stephenslab/susieR"
+      licence: ["BSD-3-Clause"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - sumstats:
+        type: file
+        description: Association summary statistics (variant_id, beta, se and/or z)
+        pattern: "*.{tsv,txt,csv,tsv.gz,txt.gz}"
+  - - meta2:
+        type: map
+        description: LD metadata; pass [] when absent (identity LD used)
+    - ld:
+        type: file
+        description: Optional square LD / correlation matrix (no header)
+        pattern: "*.{txt,tsv,ld}"
+
+output:
+  pip:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.pip.tsv":
+        type: file
+        description: Per-variant posterior inclusion probabilities
+        pattern: "*.pip.tsv"
+  credible_sets:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cs.tsv":
+        type: file
+        description: Credible set membership
+        pattern: "*.cs.tsv"
+  log:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.susie.log":
+        type: file
+        description: Run log
+        pattern: "*.susie.log"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Full SuSiE output directory
+  versions_susier:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"
