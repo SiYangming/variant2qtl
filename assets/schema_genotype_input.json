@@ -1,0 +1,55 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/SiYangming/variant2qtl/master/assets/schema_genotype_input.json",
+    "title": "SiYangming/variant2qtl pipeline - params.genotype_input schema",
+    "description": "Cohort-level genotype samplesheet: one row per analysis set (VCF and/or PLINK + phenotype).",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Cohort id must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "vcf": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^$|^\\S+\\.(vcf|vcf\\.gz)$",
+                "errorMessage": "Optional VCF must have extension '.vcf' or '.vcf.gz'"
+            },
+            "bed": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^$|^\\S+\\.bed$",
+                "errorMessage": "Optional PLINK bed must have extension '.bed'"
+            },
+            "bim": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^$|^\\S+\\.bim$",
+                "errorMessage": "Optional PLINK bim must have extension '.bim'"
+            },
+            "fam": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^$|^\\S+\\.fam$",
+                "errorMessage": "Optional PLINK fam must have extension '.fam'"
+            },
+            "phenotype": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^\\S+$",
+                "errorMessage": "Phenotype file is required (plink-style FID IID trait)"
+            },
+            "covariates": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^$|^\\S+$",
+                "errorMessage": "Optional covariates file path cannot contain spaces"
+            }
+        },
+        "required": ["id", "phenotype"]
+    }
+}

@@ -10,18 +10,34 @@
 
 These branches are **off by default**. Enable them with boolean params; they do not replace the FASTQC/MultiQC template path (still driven by `--input`).
 
+### Preferred input: `--genotype_input`
+
+Cohort CSV (schema: `assets/schema_genotype_input.json`). One row per analysis set:
+
+| Column            | Required | Notes                                            |
+| ----------------- | -------- | ------------------------------------------------ |
+| `id`              | yes      | Cohort / meta id                                 |
+| `phenotype`       | yes      | PLINK-style `FID IID Trait`                      |
+| `vcf`             | xor bed  | When set without bed → ingest (VCF→PLINK)        |
+| `bed`/`bim`/`fam` | xor vcf  | All three required together when skipping ingest |
+| `covariates`      | no       | Optional `FID IID cov...`                        |
+
+Examples: `assets/genotype_samplesheet.csv` (VCF ingest), `assets/genotype_samplesheet_bed.csv` (bed-only).
+
+When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed/bim/fam/vcf/phenotype/covariates` and `--genotype_ingest_vcf` for the GWAS path.
+
 ### Feature flags
 
-| Param                 | Default | What it does                                                                                                                                           |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `run_genotype_ingest` | `false` | VCF → (optional liftover/norm/samples) → PLINK bed via `genotype_ingest_harmonize`. When on, this bed feeds QC/GWAS instead of `--gwas_benchmark_bed`. |
-| `run_genotype_qc`     | `false` | MAF/HWE/geno filter (`PLINK2_FILTER`); optional het / relatedness / PCA via `genotype_qc_run_*`. Filtered bed feeds GWAS when both are on.             |
-| `run_gwas_benchmark`  | `false` | Parallel engines via `gwas_benchmark_parallel` (pheno adapt → formats → engines → optional `assoc_standardize`).                                       |
-| `run_omiga_cis`       | `false` | OmiGA cis-molQTL (`molqtl_map_omiga`). Use dedicated bed/bim/fam or reuse QC bed.                                                                      |
+| Param                 | Default | What it does                                                                                                                               |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `run_genotype_ingest` | `false` | Legacy single-VCF ingest via `--genotype_ingest_vcf` when **not** using `--genotype_input`. VCF-only samplesheet rows always ingest.       |
+| `run_genotype_qc`     | `false` | MAF/HWE/geno filter (`PLINK2_FILTER`); optional het / relatedness / PCA via `genotype_qc_run_*`. Filtered bed feeds GWAS when both are on. |
+| `run_gwas_benchmark`  | `false` | Parallel engines via `gwas_benchmark_parallel` (pheno adapt → formats → engines → optional `assoc_standardize`).                           |
+| `run_omiga_cis`       | `false` | OmiGA cis-molQTL (`molqtl_map_omiga`). Use dedicated bed/bim/fam or reuse QC bed.                                                          |
 
 ### Related file / option params
 
-**GWAS benchmark**
+**GWAS benchmark** (legacy single-cohort; ignored for genotype files when `--genotype_input` is set)
 
 - `gwas_benchmark_id` — meta id (default `gwas_benchmark`)
 - `gwas_benchmark_bed` / `_bim` / `_fam` — PLINK inputs when ingest is off
@@ -33,7 +49,7 @@ These branches are **off by default**. Enable them with boolean params; they do 
 
 **Genotype ingest**
 
-- `genotype_ingest_vcf` — required when ingest is on
+- `genotype_ingest_vcf` — required when ingest is on **without** `--genotype_input`
 - `genotype_ingest_args`, `genotype_ingest_fasta`, `genotype_ingest_norm_args`
 - `genotype_ingest_samples`, `genotype_ingest_view_args`
 - `genotype_ingest_liftover_chain` / `_fasta` / `_dict`
@@ -53,15 +69,16 @@ These branches are **off by default**. Enable them with boolean params; they do 
 
 ### Recommended combinations
 
-1. **Bed → QC → GWAS** (no ingest): `--run_genotype_qc --run_gwas_benchmark` + `--gwas_benchmark_{bed,bim,fam,phenotype}` (+ optional covariates). Limit engines with `--gwas_benchmark_engines gemma,emmax`.
-2. **VCF ingest → QC → GWAS**: `--run_genotype_ingest --genotype_ingest_vcf ...` plus QC/GWAS flags (omit `gwas_benchmark_bed`; ingest supplies bed).
-3. **QC bed → OmiGA cis**: enable QC (and usually GWAS or at least QC) with `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`.
+1. **Samplesheet VCF → ingest → QC → GWAS**: `--genotype_input assets/genotype_samplesheet.csv --run_genotype_qc --run_gwas_benchmark --gwas_benchmark_engines gemma,emmax`
+2. **Samplesheet bed → QC → GWAS**: `--genotype_input assets/genotype_samplesheet_bed.csv --run_genotype_qc --run_gwas_benchmark`
+3. **Legacy params bed → QC → GWAS**: `--run_genotype_qc --run_gwas_benchmark` + `--gwas_benchmark_{bed,bim,fam,phenotype}`
+4. **QC bed → OmiGA cis**: `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`.
 
 ### Example: `test_gwas` profile
 
-Smoke-tests the genotype path with nf-core `plink_simulated` popgen data (bed + quantitative phenotype + covariates), QC on, engines `gemma,emmax`, standardize on. Prefer `-stub` for CI:
+Smoke-tests samplesheet **VCF ingest → QC → gemma/emmax → standardize** (`assets/genotype_samplesheet.csv`). Prefer `-stub` for CI:
 
 ```bash
 nextflow run . -profile test_gwas,docker -stub --outdir results_test_gwas
