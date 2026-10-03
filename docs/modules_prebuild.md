@@ -85,13 +85,13 @@ bash scripts/run_real_nf_tests.sh tensorqtl
 
 ### P0 — QTLtools 模块状态（已建 / 已接入 workflow）
 
-| 模块路径                     | 状态                                                                       | Conda / 容器 pin                                                                                                     |
-| ---------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `modules/local/qtltools/cis` | **已建，已挂入** `molqtl_map_qtltools`（`params.run_qtltools_cis` 默认关） | `YangmingSi::qtltools=1.3.1` / `quay.io/bioinfortools/qtltools:1.3.1`（linux/amd64；Quay 需 `docker login` 后 push） |
+| 模块路径                     | 状态                                                                       | Conda / 容器 pin                                                      |
+| ---------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `modules/local/qtltools/cis` | **已建，已挂入** `molqtl_map_qtltools`（`params.run_qtltools_cis` 默认关） | `YangmingSi::qtltools=1.3.1` / `quay.io/bioinfortools/qtltools:1.3.1` |
 
 - Converts PLINK bed → bgzipped VCF inside the process (`plink2 --export vcf bgz`).
 - Phenotype: FastQTL BED (reuse `assets/testdata/omiga_cis_mini/`).
-- Packaging fork: https://github.com/SiYangming/qtltools (`PACKAGING.md`). Conda `YangmingSi::qtltools=1.3.1` is published; Docker image is built locally as `quay.io/bioinfortools/qtltools:1.3.1` (`docker login quay.io && docker push`).
+- Packaging fork: https://github.com/SiYangming/qtltools (`PACKAGING.md`). Pins: `YangmingSi::qtltools=1.3.1` and `quay.io/bioinfortools/qtltools:1.3.1`.
 - CI: `-stub`; real runs prefer `-profile conda` or `wave`.
 
 ```bash
