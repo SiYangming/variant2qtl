@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "tensorqtl_cis"
+description: Run tensorQTL cis-molQTL mapping (CPU path; GPU via ext.args if available)
+keywords:
+  - tensorqtl
+  - cis-qtl
+  - eqtl
+  - molqtl
+tools:
+  - "tensorqtl":
+      description: "tensorQTL: ultrafast GPU/CPU QTL mapper (GTEx)"
+      homepage: "https://github.com/broadinstitute/tensorqtl"
+      documentation: "https://github.com/broadinstitute/tensorqtl"
+      tool_dev_url: "https://github.com/broadinstitute/tensorqtl"
+      licence: ["BSD-3-Clause"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - bed:
+        type: file
+        description: PLINK bed
+        pattern: "*.bed"
+    - bim:
+        type: file
+        description: PLINK bim
+        pattern: "*.bim"
+    - fam:
+        type: file
+        description: PLINK fam
+        pattern: "*.fam"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: FastQTL-style phenotype BED (gene × sample)
+        pattern: "*.{bed.gz,bed,txt.gz,txt}"
+  - - meta3:
+        type: map
+        description: Covariate metadata; pass [] when absent
+    - covariates:
+        type: file
+        description: Optional covariates (tensorQTL orientation sample × covariate)
+        pattern: "*.{txt,tsv,cov,covar}"
+
+output:
+  cis_qtl:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cis_qtl*.txt.gz":
+        type: file
+        description: Cis-QTL summary statistics
+        pattern: "*.cis_qtl*.txt.gz"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Full tensorQTL output directory
+  versions_tensorqtl:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

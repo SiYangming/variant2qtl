@@ -31,7 +31,7 @@
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Optional cohort genotype samplesheet (id; VCF and/or bed/bim/fam; optional GWAS phenotype/covariates and molQTL phenotype/covariates).",
-                    "help_text": "One row per analysis cohort. Provide either `vcf` (ingest→bed) or `bed`+`bim`+`fam`. Optional `phenotype`/`covariates` for GWAS; optional `molqtl_phenotype`/`molqtl_covariates` for OmiGA cis. When set, this drives genotype ingest/QC/GWAS/OmiGA inputs instead of scattered file params. FASTQC still uses `--input`.",
+                    "help_text": "One row per analysis cohort. Provide either `vcf` (ingest→bed) or `bed`+`bim`+`fam`. Optional `phenotype`/`covariates` for GWAS; optional `molqtl_phenotype`/`molqtl_covariates` for OmiGA/tensorQTL cis. When set, this drives genotype ingest/QC/GWAS/molQTL inputs instead of scattered file params. FASTQC still uses `--input`.",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
@@ -336,6 +336,105 @@
                 }
             }
         },
+        "tensorqtl_cis_options": {
+            "title": "tensorQTL cis molQTL options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Optional tensorQTL cis-molQTL mapping (molqtl_map_tensorqtl). Disabled by default.",
+            "properties": {
+                "run_tensorqtl_cis": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run tensorQTL cis-molQTL via molqtl_map_tensorqtl. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "When true, runs TENSORQTL_CIS on PLINK genotype + FastQTL-style phenotype BED. Prefer `--genotype_input` with `molqtl_phenotype` (and optional `molqtl_covariates` in sample×covariate orientation), or legacy `--tensorqtl_cis_*` params. Main FastQC path is unchanged when false. Prefer a params-file for boolean flags."
+                },
+                "tensorqtl_cis_id": {
+                    "type": "string",
+                    "default": "tensorqtl_cis",
+                    "description": "Sample meta.id for the tensorQTL cis branch.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "tensorqtl_cis_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .bed for tensorQTL cis (required when --run_tensorqtl_cis without samplesheet/QC reuse).",
+                    "fa_icon": "fas fa-file"
+                },
+                "tensorqtl_cis_bim": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .bim for tensorQTL cis.",
+                    "fa_icon": "fas fa-file"
+                },
+                "tensorqtl_cis_fam": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .fam for tensorQTL cis (required unless --tensorqtl_use_qc_bed).",
+                    "fa_icon": "fas fa-file"
+                },
+                "tensorqtl_use_qc_bed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Reuse the shared genotype_qc bed for tensorQTL cis instead of --tensorqtl_cis_bed/bim/fam.",
+                    "fa_icon": "fas fa-link"
+                },
+                "tensorqtl_cis_phenotype": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Molecular phenotype BED for tensorQTL cis (gene × sample).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "tensorqtl_cis_covariates": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional covariates for tensorQTL (sample × covariate orientation).",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "finemap_susie_options": {
+            "title": "SuSiE fine-mapping options",
+            "type": "object",
+            "fa_icon": "fas fa-crosshairs",
+            "description": "Optional SuSiE fine-mapping (qtl_finemap_susie). Disabled by default.",
+            "properties": {
+                "run_finemap_susie": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run SuSiE fine-mapping via qtl_finemap_susie. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "When true, runs SUSIE_FINEMAP on `--finemap_susie_sumstats`, or on cis QTL outputs if OmiGA/tensorQTL ran in the same workflow. Optional `--finemap_susie_ld` supplies an LD/correlation matrix; otherwise identity LD is used (smoke / limited interpretation)."
+                },
+                "finemap_susie_id": {
+                    "type": "string",
+                    "default": "finemap_susie",
+                    "description": "Sample meta.id for the SuSiE fine-mapping branch.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "finemap_susie_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Association summary statistics TSV/CSV (variant_id, beta, se and/or z).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "finemap_susie_ld": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional square LD/correlation matrix (no header). Identity used when omitted.",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -534,6 +633,12 @@
         },
         {
             "$ref": "#/$defs/omiga_cis_options"
+        },
+        {
+            "$ref": "#/$defs/tensorqtl_cis_options"
+        },
+        {
+            "$ref": "#/$defs/finemap_susie_options"
         },
         {
             "$ref": "#/$defs/reference_genome_options"

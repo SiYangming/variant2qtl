@@ -11,3 +11,13 @@ testing*
 *.pyc
 null/
 .lineage/
+
+# Official tensorQTL GEUVADIS example cache (fetched by scripts/fetch_tensorqtl_geuvadis_testdata.sh)
+assets/testdata/tensorqtl_geuvadis/raw/
+assets/testdata/tensorqtl_geuvadis/geno.*
+assets/testdata/tensorqtl_geuvadis/phenotype.bed.gz
+assets/testdata/tensorqtl_geuvadis/covariates.txt
+assets/testdata/tensorqtl_geuvadis/SOURCE.txt
+assets/testdata/tensorqtl_geuvadis/*.log
+assets/testdata/tensorqtl_geuvadis/*.hh
+!assets/testdata/tensorqtl_geuvadis/README.md

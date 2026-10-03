@@ -14,6 +14,8 @@ include { GWAS_BENCHMARK_PARALLEL   } from '../subworkflows/local/gwas_benchmark
 include { GENOTYPE_QC               } from '../subworkflows/local/genotype_qc/main'
 include { GENOTYPE_INGEST_HARMONIZE } from '../subworkflows/local/genotype_ingest_harmonize/main'
 include { MOLQTL_MAP_OMIGA          } from '../subworkflows/local/molqtl_map_omiga/main'
+include { MOLQTL_MAP_TENSORQTL      } from '../subworkflows/local/molqtl_map_tensorqtl/main'
+include { QTL_FINEMAP_SUSIE         } from '../subworkflows/local/qtl_finemap_susie/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,13 +48,14 @@ workflow VARIANT2QTL {
     // Prefer --genotype_input samplesheet (one row per cohort) over scattered
     // --gwas_benchmark_* / --genotype_ingest_vcf params. Rows with VCF (no bed)
     // are ingested; rows with bed/bim/fam skip ingest. Shared QC / geno bed and
-    // molqtl_* columns can feed OmiGA cis when --run_omiga_cis is set.
+    // molqtl_* columns can feed OmiGA / tensorQTL cis when those flags are set.
     //
     def ch_shared_qc_bed = channel.empty()
     def ch_shared_geno_plink = channel.empty()
     def ch_shared_geno_vcf = channel.empty()
     def ch_molqtl_pheno = channel.empty()
     def ch_molqtl_covar = channel.empty()
+    def ch_qtl_cis_for_finemap = channel.empty()
 
     if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
@@ -309,6 +312,117 @@ workflow VARIANT2QTL {
             ch_omiga_vcf
         )
         ch_versions = ch_versions.mix(MOLQTL_MAP_OMIGA.out.versions)
+        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(MOLQTL_MAP_OMIGA.out.cis_qtl)
+    }
+
+    //
+    // Optional tensorQTL cis-molQTL (default OFF)
+    // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
+    // Legacy: --tensorqtl_cis_bed/bim/fam + --tensorqtl_cis_phenotype, or --tensorqtl_use_qc_bed.
+    //
+    if (params.run_tensorqtl_cis) {
+        def tensorqtl_meta = [id: params.tensorqtl_cis_id ?: 'tensorqtl_cis']
+        def ch_tensorqtl_plink = channel.empty()
+        def ch_tensorqtl_pheno = channel.empty()
+        def ch_tensorqtl_covar = channel.empty()
+
+        if (params.genotype_input) {
+            if (params.tensorqtl_use_qc_bed) {
+                if (params.run_genotype_qc) {
+                    ch_tensorqtl_plink = ch_shared_qc_bed
+                } else {
+                    log.warn "tensorqtl_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
+                    ch_tensorqtl_plink = ch_shared_geno_plink
+                }
+            } else {
+                ch_tensorqtl_plink = ch_shared_geno_plink
+            }
+
+            def ch_param_tqtl_pheno = params.tensorqtl_cis_phenotype
+                ? ch_tensorqtl_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.tensorqtl_cis_phenotype, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_tensorqtl_pheno = ch_molqtl_pheno.ifEmpty(ch_param_tqtl_pheno)
+
+            def ch_param_tqtl_covar = params.tensorqtl_cis_covariates
+                ? ch_tensorqtl_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.tensorqtl_cis_covariates, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_tensorqtl_covar = ch_molqtl_covar.ifEmpty(ch_param_tqtl_covar)
+        } else {
+            if (params.tensorqtl_use_qc_bed) {
+                ch_tensorqtl_plink = ch_shared_qc_bed.map { _meta, bed, bim, fam ->
+                    [tensorqtl_meta, bed, bim, fam]
+                }
+            } else if (params.tensorqtl_cis_bed && params.tensorqtl_cis_bim && params.tensorqtl_cis_fam) {
+                ch_tensorqtl_plink = channel.of([
+                    tensorqtl_meta,
+                    file(params.tensorqtl_cis_bed, checkIfExists: true),
+                    file(params.tensorqtl_cis_bim, checkIfExists: true),
+                    file(params.tensorqtl_cis_fam, checkIfExists: true)
+                ])
+            }
+
+            ch_tensorqtl_pheno = params.tensorqtl_cis_phenotype
+                ? channel.of([tensorqtl_meta, file(params.tensorqtl_cis_phenotype, checkIfExists: true)])
+                : channel.empty()
+
+            ch_tensorqtl_covar = params.tensorqtl_cis_covariates
+                ? channel.of([tensorqtl_meta, file(params.tensorqtl_cis_covariates, checkIfExists: true)])
+                : channel.empty()
+
+            if (!params.tensorqtl_use_qc_bed &&
+                (!params.tensorqtl_cis_bed || !params.tensorqtl_cis_bim || !params.tensorqtl_cis_fam)) {
+                log.warn "run_tensorqtl_cis=true but missing --tensorqtl_cis_bed/bim/fam (or --tensorqtl_use_qc_bed); channels empty."
+            }
+            if (!params.tensorqtl_cis_phenotype) {
+                log.warn "run_tensorqtl_cis=true but missing --tensorqtl_cis_phenotype."
+            }
+        }
+
+        MOLQTL_MAP_TENSORQTL(
+            ch_tensorqtl_plink,
+            ch_tensorqtl_pheno,
+            ch_tensorqtl_covar
+        )
+        ch_versions = ch_versions.mix(MOLQTL_MAP_TENSORQTL.out.versions)
+        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(MOLQTL_MAP_TENSORQTL.out.cis_qtl)
+    }
+
+    //
+    // Optional SuSiE fine-mapping (default OFF)
+    // Prefer --finemap_susie_sumstats; else reuse cis QTL outputs from OmiGA/tensorQTL when those ran.
+    //
+    if (params.run_finemap_susie) {
+        def finemap_meta = [id: params.finemap_susie_id ?: 'finemap_susie']
+        def ch_finemap_sumstats = channel.empty()
+        def ch_finemap_ld = channel.empty()
+
+        if (params.finemap_susie_sumstats) {
+            ch_finemap_sumstats = channel.of([
+                finemap_meta,
+                file(params.finemap_susie_sumstats, checkIfExists: true)
+            ])
+        } else {
+            ch_finemap_sumstats = ch_qtl_cis_for_finemap
+            if (!params.run_omiga_cis && !params.run_tensorqtl_cis) {
+                log.warn "run_finemap_susie=true but missing --finemap_susie_sumstats (and no OmiGA/tensorQTL cis outputs)."
+            }
+        }
+
+        if (params.finemap_susie_ld) {
+            ch_finemap_ld = ch_finemap_sumstats.map { meta, _sumstats ->
+                [meta, file(params.finemap_susie_ld, checkIfExists: true)]
+            }
+        }
+
+        QTL_FINEMAP_SUSIE(
+            ch_finemap_sumstats,
+            ch_finemap_ld
+        )
+        ch_versions = ch_versions.mix(QTL_FINEMAP_SUSIE.out.versions)
     }
 
     //

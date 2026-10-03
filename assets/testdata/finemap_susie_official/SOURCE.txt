@@ -1,0 +1,2 @@
+susieR vignette simulation recipe (python fallback; n=200,p=100,causal=1:4)
+generated: 2026-10-03T02:37:51.617618+00:00
