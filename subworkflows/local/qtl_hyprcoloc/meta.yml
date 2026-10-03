@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "QTL_HYPRCOLOC"
+description: Multi-trait colocalisation clustering
+components:
+  - HYPRCOLOC
+input:
+  - ch_traits
+output:
+  - clusters
+  - pairs
+  - outdir
+  - versions
+authors:
+  - "@SiYangming"

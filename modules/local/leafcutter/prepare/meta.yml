@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "leafcutter_prepare"
+description: Intron ratios, INV, FastQTL BED and phenotype_group from LeafCutter counts
+keywords:
+  - leafcutter
+  - sqtl
+  - splicing
+tools:
+  - "python":
+      description: "Python intron-ratio / FastQTL BED helper"
+      homepage: "https://www.python.org/"
+      documentation: "https://docs.python.org/3/"
+      licence: ["PSF-2.0"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - counts:
+        type: file
+        description: LeafCutter perind counts (count/total or ratios)
+        pattern: "*.{tsv,txt,gz,counts.gz}"
+  - - meta2:
+        type: map
+        description: Gene map metadata
+    - genes:
+        type: file
+        description: Optional gene BED chr/start/end/gene_id
+        pattern: "*.{bed,gtf,tsv}"
+
+output:
+  bed:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.phenotype.bed.gz":
+        type: file
+        description: FastQTL sQTL phenotype BED
+        pattern: "*.phenotype.bed.gz"
+  phenotype_group:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.phenotype_group.tsv":
+        type: file
+        description: phenotype_id to gene/cluster group
+        pattern: "*.phenotype_group.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

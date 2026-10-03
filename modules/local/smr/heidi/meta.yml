@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "smr_heidi"
+description: Summary-data SMR and HEIDI from QTL and GWAS sumstats (Zhu et al. 2016)
+keywords:
+  - smr
+  - heidi
+  - qtl
+  - gwas
+tools:
+  - "python":
+      description: "Summary-stat SMR/HEIDI when official SMR binary is absent from bioconda"
+      homepage: "https://yanglab.westlake.edu.cn/software/smr/"
+      documentation: "https://yanglab.westlake.edu.cn/software/smr/"
+      licence: ["MIT"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - qtl_sumstats:
+        type: file
+        description: QTL summary statistics (snp, beta, se; optional gene, p)
+        pattern: "*.{tsv,txt,csv}"
+  - - meta2:
+        type: map
+        description: GWAS metadata
+    - gwas_sumstats:
+        type: file
+        description: GWAS summary statistics (snp, beta, se)
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  smr:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.smr.tsv":
+        type: file
+        description: SMR effect, p, and HEIDI heterogeneity
+        pattern: "*.smr.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

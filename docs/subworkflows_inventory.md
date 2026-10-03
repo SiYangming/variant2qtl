@@ -71,20 +71,21 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P1 — 协变量与 sQTL 表型（表型矩阵侧）
 
-| 建议名              | 职责                                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| `covariate_peer`    | **已实现**；PEER 隐因子 → tensorQTL / OmiGA 协变量表；`params.run_peer` 默认关              |
-| `sqtl_leafcutter`   | junction → cluster → normalize → annotate（phenotype + phenotype_group）                    |
-| `phenotype_prepare` | **已实现**；样本交集、缺失过滤、quantile/INV、BED 化；`params.run_phenotype_prepare` 默认关 |
+| 建议名              | 职责                                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `covariate_peer`    | **已实现**；PEER 隐因子 → tensorQTL / OmiGA 协变量表；`params.run_peer` 默认关                       |
+| `sqtl_leafcutter`   | **已实现**；counts → ratio/INV/annotate → BED + phenotype_group；`params.run_sqtl_leafcutter` 默认关 |
+| `phenotype_prepare` | **已实现**；样本交集、缺失过滤、quantile/INV、BED 化；`params.run_phenotype_prepare` 默认关          |
 
 ### P2 — 精细定位 / 共定位 / 富集
 
-| 建议名                              | 职责                                            |
-| ----------------------------------- | ----------------------------------------------- |
-| `qtl_finemap` / `qtl_finemap_susie` | SuSiE（已实现）/ FINEMAP / CAVIAR / DAP-G       |
-| `qtl_coloc`                         | coloc.abf（已实现；hyprcoloc 后补）             |
-| `qtl_meta_mashr`                    | 多组织 mashr / METAL                            |
-| `qtl_enrichment`                    | TORUS / 富集（可与 OmiGA 自带富集二选一或串联） |
+| 建议名                              | 职责                                                           |
+| ----------------------------------- | -------------------------------------------------------------- |
+| `qtl_finemap` / `qtl_finemap_susie` | SuSiE（已实现）/ FINEMAP / CAVIAR / DAP-G                      |
+| `qtl_coloc`                         | coloc.abf（已实现）+ HyPrColoc-style（`params.run_hyprcoloc`） |
+| `qtl_smr`                           | **已实现**；SMR/HEIDI；`params.run_smr` 默认关                 |
+| `qtl_meta_mashr`                    | 多组织 mashr / METAL                                           |
+| `qtl_enrichment`                    | TORUS / 富集（可与 OmiGA 自带富集二选一或串联）                |
 
 ### P2b — GWAS 基准并行（已实现）
 
@@ -112,7 +113,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：LeafCutter sQTL，或 hyprcoloc / SMR，或 P3 编排层（SV/STR）。
+## 建议下一步：mashr/METAL、TWAS，或 P3 编排层（SV/STR）。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

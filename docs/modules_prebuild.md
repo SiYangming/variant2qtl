@@ -104,8 +104,8 @@ nextflow run . -profile test_qtltools,docker -stub --outdir results_test_qtltool
 | 建议模块名                        | 说明                                                                                   |
 | --------------------------------- | -------------------------------------------------------------------------------------- |
 | `peer`                            | **已建**：隐因子协变量（`params.run_peer` 默认关）                                     |
-| `leafcutter/normalize`            | intron ratio 过滤 + 分位数归一化（sQTL）                                               |
-| `leafcutter/annotate`             | intron→基因注释，供 phenotype group                                                    |
+| `leafcutter/normalize`            | **已建**（`leafcutter/prepare`：intron ratio + INV）                                   |
+| `leafcutter/annotate`             | **已建**（intron→基因 + `phenotype_group`）                                            |
 | `leafcutter/differentialsplicing` | 官方有开放 PR，尚未合入；可先 local 或等上游                                           |
 | `phenotype_prepare`               | **已建**：样本交集 / 缺失 / INV / FastQTL BED（`params.run_phenotype_prepare` 默认关） |
 
@@ -137,6 +137,21 @@ nextflow run . -profile test_pheno,docker -stub --outdir results_test_pheno
 ```bash
 nf-test test modules/local/peer/factors/tests/main.nf.test --tag stub --profile test,docker
 nextflow run . -profile test_peer,docker -stub --outdir results_test_peer
+```
+
+### P1 — LeafCutter sQTL prepare（已建 / 已接入 workflow）
+
+| 模块路径                           | 状态                                                                      | Conda / 容器 pin              |
+| ---------------------------------- | ------------------------------------------------------------------------- | ----------------------------- |
+| `modules/local/leafcutter/prepare` | **已建，已挂入** `sqtl_leafcutter`（`params.run_sqtl_leafcutter` 默认关） | biocontainers `python:3.9--1` |
+
+- Input: LeafCutter `perind` counts (`count/total`) + optional gene BED. Cluster step remains nf-core `leafcutter/clusterregtools`.
+- Emits FastQTL BED and `phenotype_group` (intron → gene). Mixes into cis engines like phenotype_prepare.
+- Mini testdata: [`assets/testdata/sqtl_leafcutter_mini/`](../assets/testdata/sqtl_leafcutter_mini/).
+
+```bash
+nf-test test modules/local/leafcutter/prepare/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_sqtl,docker -stub --outdir results_test_sqtl
 ```
 
 ## P1b — GWAS/QTL 基准对照（已建模块 / 已挂入 `gwas_benchmark_parallel`）
@@ -210,11 +225,38 @@ Adapters: `modules/local/utils/phenocovar_adapt`, `modules/local/utils/assoc_sta
 
 - Input: QTL + GWAS sumstats with overlapping `snp`/`variant_id`, `beta`, `se` (optional `maf`, `n`). Mini files: [`assets/testdata/coloc_mini/`](../assets/testdata/coloc_mini/).
 - Can consume OmiGA/tensorQTL/QTLtools `cis_qtl` plus GWAS standardized tables when `--coloc_*_sumstats` unset.
-- **hyprcoloc** remains a follow-up.
 
 ```bash
 nf-test test modules/local/coloc/abf/tests/main.nf.test --tag stub --profile test,docker
 nextflow run . -profile test_coloc,docker -stub --outdir results_test_coloc
+```
+
+### P2 — HyPrColoc-style（已建 / 已接入 workflow）
+
+| 模块路径                        | 状态                                                              | Conda / 容器 pin              |
+| ------------------------------- | ----------------------------------------------------------------- | ----------------------------- |
+| `modules/local/coloc/hyprcoloc` | **已建，已挂入** `qtl_hyprcoloc`（`params.run_hyprcoloc` 默认关） | biocontainers `python:3.9--1` |
+
+- Official `r-hyprcoloc` is not on bioconda. Long-format `snp/trait/beta/se` clustered with pairwise Wakefield ABF.
+- Mini testdata: [`assets/testdata/hyprcoloc_mini/`](../assets/testdata/hyprcoloc_mini/).
+
+```bash
+nf-test test modules/local/coloc/hyprcoloc/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_hyprcoloc,docker -stub --outdir results_test_hyprcoloc
+```
+
+### P2 — SMR / HEIDI（已建 / 已接入 workflow）
+
+| 模块路径                  | 状态                                                  | Conda / 容器 pin              |
+| ------------------------- | ----------------------------------------------------- | ----------------------------- |
+| `modules/local/smr/heidi` | **已建，已挂入** `qtl_smr`（`params.run_smr` 默认关） | biocontainers `python:3.9--1` |
+
+- Official SMR binary is not on bioconda. Summary-stat SMR + HEIDI (Zhu et al. 2016); can reuse cis + GWAS standardised tables.
+- Mini testdata: coloc_mini sumstats.
+
+```bash
+nf-test test modules/local/smr/heidi/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_smr,docker -stub --outdir results_test_smr
 ```
 
 ### P2 — cis postprocess（已建 / 已接入 workflow）

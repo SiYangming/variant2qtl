@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "hyprcoloc"
+description: Multi-trait colocalisation clustering (HyPrColoc-style pairwise ABF)
+keywords:
+  - hyprcoloc
+  - coloc
+  - multi-trait
+tools:
+  - "python":
+      description: "Pairwise Wakefield ABF clustering when official r-hyprcoloc is absent from bioconda"
+      homepage: "https://github.com/jrs95/hyprcoloc"
+      documentation: "https://github.com/jrs95/hyprcoloc"
+      licence: ["GPL-3.0-or-later"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - traits:
+        type: file
+        description: Long-format snp/trait/beta/se table
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  clusters:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.clusters.tsv":
+        type: file
+        description: Trait clusters
+        pattern: "*.clusters.tsv"
+  pairs:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.pairs.tsv":
+        type: file
+        description: Pairwise PP.H4
+        pattern: "*.pairs.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

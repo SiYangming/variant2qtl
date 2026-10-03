@@ -1,0 +1,41 @@
+nextflow_process {
+
+    name "Test Process LEAFCUTTER_PREPARE"
+    script "../main.nf"
+    process "LEAFCUTTER_PREPARE"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "leafcutter"
+    tag "leafcutter/prepare"
+
+    test("sqtl_leafcutter_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'sqtl_mini' ],
+                    file("${projectDir}/assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'sqtl_mini' ],
+                    file("${projectDir}/assets/testdata/sqtl_leafcutter_mini/genes.bed", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bed.size() == 1 },
+                { assert process.out.phenotype_group.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

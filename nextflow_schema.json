@@ -660,6 +660,106 @@
                 }
             }
         },
+        "sqtl_leafcutter_options": {
+            "title": "LeafCutter sQTL options",
+            "type": "object",
+            "fa_icon": "fas fa-cut",
+            "description": "Optional LeafCutter intron-ratio FastQTL BED. Disabled by default.",
+            "properties": {
+                "run_sqtl_leafcutter": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Normalise LeafCutter counts, annotate genes, write FastQTL BED + phenotype_group. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "sqtl_id": {
+                    "type": "string",
+                    "default": "sqtl_leafcutter",
+                    "description": "Sample meta.id for sQTL prepare.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "sqtl_counts": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "LeafCutter perind counts (count/total).",
+                    "fa_icon": "fas fa-file"
+                },
+                "sqtl_genes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional gene BED for intron→gene annotation.",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
+        "hyprcoloc_options": {
+            "title": "HyPrColoc options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "Optional multi-trait colocalisation clustering. Disabled by default.",
+            "properties": {
+                "run_hyprcoloc": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Cluster traits by pairwise ABF PP.H4 (HyPrColoc-style). Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Official r-hyprcoloc is not on bioconda; this module clusters long-format snp/trait/beta/se tables with Wakefield ABF."
+                },
+                "hyprcoloc_id": {
+                    "type": "string",
+                    "default": "hyprcoloc",
+                    "description": "Sample meta.id for HyPrColoc.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "hyprcoloc_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Long-format table with snp, trait, beta, se.",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "smr_options": {
+            "title": "SMR / HEIDI options",
+            "type": "object",
+            "fa_icon": "fas fa-link",
+            "description": "Optional SMR and HEIDI from QTL+GWAS sumstats. Disabled by default.",
+            "properties": {
+                "run_smr": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run summary-stat SMR and HEIDI. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Official SMR binary is not on bioconda; this module implements Zhu et al. 2016 SMR/HEIDI on overlapping sumstats. Prefers --smr_*_sumstats or cis QTL + GWAS standardised tables."
+                },
+                "smr_id": {
+                    "type": "string",
+                    "default": "smr",
+                    "description": "Sample meta.id for SMR.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "smr_qtl_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "QTL sumstats (snp, beta, se; optional gene, p).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "smr_gwas_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "GWAS sumstats (snp, beta, se).",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -879,6 +979,15 @@
         },
         {
             "$ref": "#/$defs/peer_options"
+        },
+        {
+            "$ref": "#/$defs/sqtl_leafcutter_options"
+        },
+        {
+            "$ref": "#/$defs/hyprcoloc_options"
+        },
+        {
+            "$ref": "#/$defs/smr_options"
         },
         {
             "$ref": "#/$defs/reference_genome_options"

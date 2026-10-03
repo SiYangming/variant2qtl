@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local **cis-QTL postprocess** (`modules/local/utils/qtl_postprocess`, `qtl_postprocess_cis`) behind `params.run_qtl_postprocess` (default OFF); BH q-values + standard table; profile `test_postprocess` + stub nf-test.
 - Local **phenotype_prepare** (`modules/local/utils/phenotype_prepare`) behind `params.run_phenotype_prepare` (default OFF); sample intersect, missingness filter, INV/quantile, FastQTL BED; profile `test_pheno` + stub nf-test.
 - Local **PEER** covariates (`modules/local/peer/factors`, `covariate_peer`) behind `params.run_peer` (default OFF); bioconda `r-peer=1.3` / `quay.io/biocontainers/peer:1.3--h503566f_1`; feeds OmiGA/QTLtools and tensorQTL `--cov` when those branches have no explicit covariates; profile `test_peer` + stub nf-test.
+- Local **LeafCutter sQTL prepare** (`modules/local/leafcutter/prepare`, `sqtl_leafcutter`) behind `params.run_sqtl_leafcutter` (default OFF); intron ratios + INV + gene annotation → FastQTL BED and `phenotype_group`; profile `test_sqtl` + stub nf-test.
+- Local **HyPrColoc-style** clustering (`modules/local/coloc/hyprcoloc`) behind `params.run_hyprcoloc` (default OFF); pairwise Wakefield ABF (official `r-hyprcoloc` is not on bioconda); profile `test_hyprcoloc` + stub nf-test.
+- Local **SMR/HEIDI** (`modules/local/smr/heidi`) behind `params.run_smr` (default OFF); Zhu et al. 2016 on overlapping sumstats (official SMR binary is not on bioconda); profile `test_smr` + stub nf-test.
 
 ### `Fixed`
 
