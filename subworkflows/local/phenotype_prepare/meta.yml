@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "PHENOTYPE_PREPARE_SWF"
+description: Prepare a FastQTL phenotype BED from a molecular trait matrix
+components:
+  - PHENOTYPE_PREPARE
+input:
+  - ch_matrix
+  - ch_gene_map
+  - ch_samples
+output:
+  - bed
+  - outdir
+  - versions
+authors:
+  - "@SiYangming"

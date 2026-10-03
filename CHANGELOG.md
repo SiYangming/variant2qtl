@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local **coloc.abf** (`modules/local/coloc/abf`, `qtl_coloc`) behind `params.run_coloc` (default OFF); conda-forge `r-coloc=5.2.3`; mini overlapping sumstats under `assets/testdata/coloc_mini/`; profile `test_coloc` + stub nf-test. hyprcoloc not included.
 - Local **QTLtools** cis (`modules/local/qtltools/cis`, `molqtl_map_qtltools`) behind `params.run_qtltools_cis` (default OFF); conda pin `YangmingSi::qtltools=1.3.1` and Docker `quay.io/bioinfortools/qtltools:1.3.1` (fork https://github.com/SiYangming/qtltools; no official bioconda/biocontainers); profile `test_qtltools` + stub nf-test.
 - Local **cis-QTL postprocess** (`modules/local/utils/qtl_postprocess`, `qtl_postprocess_cis`) behind `params.run_qtl_postprocess` (default OFF); BH q-values + standard table; profile `test_postprocess` + stub nf-test.
+- Local **phenotype_prepare** (`modules/local/utils/phenotype_prepare`) behind `params.run_phenotype_prepare` (default OFF); sample intersect, missingness filter, INV/quantile, FastQTL BED; profile `test_pheno` + stub nf-test.
+- Local **PEER** covariates (`modules/local/peer/factors`, `covariate_peer`) behind `params.run_peer` (default OFF); bioconda `r-peer=1.3` / `quay.io/biocontainers/peer:1.3--h503566f_1`; feeds OmiGA/QTLtools and tensorQTL `--cov` when those branches have no explicit covariates; profile `test_peer` + stub nf-test.
 
 ### `Fixed`
 

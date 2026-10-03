@@ -1,0 +1,43 @@
+nextflow_process {
+
+    name "Test Process PHENOTYPE_PREPARE"
+    script "../main.nf"
+    process "PHENOTYPE_PREPARE"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "phenotype_prepare"
+
+    test("phenotype_prepare_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'pheno_mini' ],
+                    file("${projectDir}/assets/testdata/phenotype_prepare_mini/expr.tsv", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'pheno_mini' ],
+                    file("${projectDir}/assets/testdata/phenotype_prepare_mini/genes.bed", checkIfExists: true)
+                ]
+                input[2] = [
+                    [ id:'pheno_mini' ],
+                    file("${projectDir}/assets/testdata/phenotype_prepare_mini/samples.txt", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bed.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

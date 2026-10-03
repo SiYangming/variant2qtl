@@ -19,6 +19,8 @@ include { MOLQTL_MAP_QTLTOOLS       } from '../subworkflows/local/molqtl_map_qtl
 include { QTL_FINEMAP_SUSIE         } from '../subworkflows/local/qtl_finemap_susie/main'
 include { QTL_COLOC                 } from '../subworkflows/local/qtl_coloc/main'
 include { QTL_POSTPROCESS_CIS       } from '../subworkflows/local/qtl_postprocess_cis/main'
+include { PHENOTYPE_PREPARE_SWF     } from '../subworkflows/local/phenotype_prepare/main'
+include { COVARIATE_PEER            } from '../subworkflows/local/covariate_peer/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,6 +62,9 @@ workflow VARIANT2QTL {
     def ch_molqtl_covar = channel.empty()
     def ch_qtl_cis_for_finemap = channel.empty()
     def ch_gwas_std = channel.empty()
+    def ch_prepared_pheno = channel.empty()
+    def ch_peer_cov_omiga = channel.empty()
+    def ch_peer_cov_tensor = channel.empty()
 
     if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
@@ -230,6 +235,48 @@ workflow VARIANT2QTL {
     }
 
     //
+    // Optional phenotype_prepare → FastQTL BED (default OFF)
+    //
+    if (params.run_phenotype_prepare) {
+        def pheno_meta = [id: params.phenotype_prepare_id ?: 'phenotype_prepare']
+        if (!params.phenotype_matrix) {
+            log.warn "run_phenotype_prepare=true but missing --phenotype_matrix."
+        } else {
+            def ch_pheno_matrix = channel.of([pheno_meta, file(params.phenotype_matrix, checkIfExists: true)])
+            def ch_pheno_genes = params.phenotype_gene_bed
+                ? channel.of([pheno_meta, file(params.phenotype_gene_bed, checkIfExists: true)])
+                : channel.empty()
+            def ch_pheno_samples = params.phenotype_samples
+                ? channel.of([pheno_meta, file(params.phenotype_samples, checkIfExists: true)])
+                : channel.empty()
+            PHENOTYPE_PREPARE_SWF(ch_pheno_matrix, ch_pheno_genes, ch_pheno_samples)
+            ch_versions = ch_versions.mix(PHENOTYPE_PREPARE_SWF.out.versions)
+            ch_prepared_pheno = PHENOTYPE_PREPARE_SWF.out.bed
+        }
+    }
+
+    //
+    // Optional PEER hidden covariates (default OFF)
+    // Prefer --peer_phenotype; else reuse phenotype_prepare BED.
+    //
+    if (params.run_peer) {
+        def peer_meta = [id: params.peer_id ?: 'peer']
+        def ch_peer_pheno = params.peer_phenotype
+            ? channel.of([peer_meta, file(params.peer_phenotype, checkIfExists: true)])
+            : ch_prepared_pheno.map { _meta, bed -> [peer_meta, bed] }
+        def ch_peer_known = params.peer_covariates
+            ? channel.of([peer_meta, file(params.peer_covariates, checkIfExists: true)])
+            : channel.empty()
+        if (!params.peer_phenotype && !params.run_phenotype_prepare) {
+            log.warn "run_peer=true but missing --peer_phenotype (and phenotype_prepare did not run)."
+        }
+        COVARIATE_PEER(ch_peer_pheno, ch_peer_known)
+        ch_versions = ch_versions.mix(COVARIATE_PEER.out.versions)
+        ch_peer_cov_omiga = COVARIATE_PEER.out.cov_omiga
+        ch_peer_cov_tensor = COVARIATE_PEER.out.cov_tensorqtl
+    }
+
+    //
     // Optional OmiGA cis-molQTL (default OFF)
     // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
     // Legacy: --omiga_cis_bed/bim/fam + --omiga_cis_phenotype, or --omiga_cis_use_qc_bed.
@@ -305,10 +352,17 @@ workflow VARIANT2QTL {
                 (!params.omiga_cis_bed || !params.omiga_cis_bim || !params.omiga_cis_fam)) {
                 log.warn "run_omiga_cis=true but missing --omiga_cis_bed/bim/fam (or --omiga_cis_use_qc_bed); channels empty."
             }
-            if (!params.omiga_cis_phenotype) {
-                log.warn "run_omiga_cis=true but missing --omiga_cis_phenotype."
+            if (!params.omiga_cis_phenotype && !params.run_phenotype_prepare) {
+                log.warn "run_omiga_cis=true but missing --omiga_cis_phenotype (and phenotype_prepare did not run)."
             }
         }
+
+        ch_omiga_pheno = ch_omiga_pheno.ifEmpty(
+            ch_prepared_pheno.map { _meta, bed -> [omiga_meta, bed] }
+        )
+        ch_omiga_covar = ch_omiga_covar.ifEmpty(
+            ch_peer_cov_omiga.map { _meta, cov -> [omiga_meta, cov] }
+        )
 
         MOLQTL_MAP_OMIGA(
             ch_omiga_plink,
@@ -384,10 +438,17 @@ workflow VARIANT2QTL {
                 (!params.tensorqtl_cis_bed || !params.tensorqtl_cis_bim || !params.tensorqtl_cis_fam)) {
                 log.warn "run_tensorqtl_cis=true but missing --tensorqtl_cis_bed/bim/fam (or --tensorqtl_use_qc_bed); channels empty."
             }
-            if (!params.tensorqtl_cis_phenotype) {
-                log.warn "run_tensorqtl_cis=true but missing --tensorqtl_cis_phenotype."
+            if (!params.tensorqtl_cis_phenotype && !params.run_phenotype_prepare) {
+                log.warn "run_tensorqtl_cis=true but missing --tensorqtl_cis_phenotype (and phenotype_prepare did not run)."
             }
         }
+
+        ch_tensorqtl_pheno = ch_tensorqtl_pheno.ifEmpty(
+            ch_prepared_pheno.map { _meta, bed -> [tensorqtl_meta, bed] }
+        )
+        ch_tensorqtl_covar = ch_tensorqtl_covar.ifEmpty(
+            ch_peer_cov_tensor.map { _meta, cov -> [tensorqtl_meta, cov] }
+        )
 
         MOLQTL_MAP_TENSORQTL(
             ch_tensorqtl_plink,
@@ -461,10 +522,17 @@ workflow VARIANT2QTL {
                 (!params.qtltools_cis_bed || !params.qtltools_cis_bim || !params.qtltools_cis_fam)) {
                 log.warn "run_qtltools_cis=true but missing --qtltools_cis_bed/bim/fam (or --qtltools_use_qc_bed); channels empty."
             }
-            if (!params.qtltools_cis_phenotype) {
-                log.warn "run_qtltools_cis=true but missing --qtltools_cis_phenotype."
+            if (!params.qtltools_cis_phenotype && !params.run_phenotype_prepare) {
+                log.warn "run_qtltools_cis=true but missing --qtltools_cis_phenotype (and phenotype_prepare did not run)."
             }
         }
+
+        ch_qtltools_pheno = ch_qtltools_pheno.ifEmpty(
+            ch_prepared_pheno.map { _meta, bed -> [qtltools_meta, bed] }
+        )
+        ch_qtltools_covar = ch_qtltools_covar.ifEmpty(
+            ch_peer_cov_omiga.map { _meta, cov -> [qtltools_meta, cov] }
+        )
 
         MOLQTL_MAP_QTLTOOLS(
             ch_qtltools_plink,

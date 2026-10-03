@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "phenotype_prepare"
+description: Sample intersect, missingness filter, INV/quantile, FastQTL BED
+keywords:
+  - phenotype
+  - qtl
+  - invnorm
+  - bed
+tools:
+  - "python":
+      description: "Python interpreter used for phenotype matrix QC"
+      homepage: "https://www.python.org/"
+      documentation: "https://docs.python.org/3/"
+      licence: ["PSF-2.0"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - matrix:
+        type: file
+        description: Genes×samples TSV/CSV or FastQTL BED
+        pattern: "*.{tsv,txt,csv,bed,bed.gz}"
+  - - meta2:
+        type: map
+        description: Gene map metadata
+    - gene_map:
+        type: file
+        description: Optional BED chr/start/end/gene_id
+        pattern: "*.{bed,tsv,txt}"
+  - - meta3:
+        type: map
+        description: Sample-keep metadata
+    - samples:
+        type: file
+        description: Optional sample keep list or PLINK FAM
+        pattern: "*.{txt,fam,tsv}"
+
+output:
+  bed:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.phenotype.bed.gz":
+        type: file
+        description: FastQTL phenotype BED
+        pattern: "*.phenotype.bed.gz"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

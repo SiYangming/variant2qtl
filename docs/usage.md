@@ -107,6 +107,22 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `qtl_postprocess_input` — optional cis table; else uses OmiGA/tensorQTL/QTLtools `cis_qtl`
 - Writes `*.cis_std.tsv` with BH q-values (`gene variant_id chr pos p q beta se engine`)
 
+**Phenotype prepare**
+
+- `phenotype_matrix` — genes×samples TSV/CSV or FastQTL BED
+- `phenotype_gene_bed` — optional `chr start end gene_id`
+- `phenotype_samples` — optional keep list or FAM
+- `phenotype_transform` — `invnorm` (default) / `quantile` / `none`; `phenotype_max_missing` (default 0.2)
+- Writes `*.phenotype.bed.gz` for OmiGA/tensorQTL/QTLtools when those branches have no explicit phenotype
+
+**PEER covariates**
+
+- `peer_phenotype` — FastQTL BED (else uses phenotype_prepare output)
+- `peer_covariates` — optional known covariates (either orientation)
+- `peer_nk` — hidden factor count (default 10)
+- Writes sample×factor (`*.peer.tensor.tsv`) for tensorQTL and factor×sample (`*.peer.omiga.tsv`) for OmiGA/QTLtools when those branches have no explicit covariates
+- Pin: `bioconda::r-peer=1.3` / `quay.io/biocontainers/peer:1.3--h503566f_1`
+
 ### Recommended combinations
 
 1. **Samplesheet VCF → ingest → QC → GWAS**: `--genotype_input assets/genotype_samplesheet.csv --run_genotype_qc --run_gwas_benchmark --gwas_benchmark_engines gemma,emmax`
@@ -119,6 +135,8 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 8. **Samplesheet bed → QC → QTLtools cis**: `--genotype_input assets/genotype_samplesheet_qtltools.csv --run_genotype_qc --run_qtltools_cis --qtltools_use_qc_bed`
 9. **coloc from mini sumstats**: `--run_coloc --coloc_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --coloc_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
 10. **cis postprocess from a table**: `--run_qtl_postprocess --qtl_postprocess_input assets/testdata/qtl_postprocess_mini/cis_qtl.tsv`
+11. **Phenotype matrix → FastQTL BED**: `--run_phenotype_prepare --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
+12. **PEER factors from a BED**: `--run_peer --peer_phenotype assets/testdata/peer_mini/phenotype.bed --peer_nk 2`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA/tensorQTL mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
@@ -194,6 +212,22 @@ Smoke-tests **BH q-value** standardisation of a cis table:
 
 ```bash
 nextflow run . -profile test_postprocess,docker -stub --outdir results_test_postprocess
+```
+
+### Example: `test_pheno` profile
+
+Smoke-tests **phenotype_prepare** (intersect / missing / INV → FastQTL BED):
+
+```bash
+nextflow run . -profile test_pheno,docker -stub --outdir results_test_pheno
+```
+
+### Example: `test_peer` profile
+
+Smoke-tests **PEER** factors from a mini FastQTL BED:
+
+```bash
+nextflow run . -profile test_peer,docker -stub --outdir results_test_peer
 ```
 
 The existing `-profile test,docker` FASTQC-only path is unchanged.
@@ -337,6 +371,8 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_qtltools`
 - `test_coloc`
 - `test_postprocess`
+- `test_pheno`
+- `test_peer`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)
