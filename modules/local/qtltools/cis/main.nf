@@ -3,8 +3,9 @@ process QTLTOOLS_CIS {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
-    // Official bioconda/biocontainers QTLtools is absent; conda pin is dnachun::qtltools=1.3.1.
-    // Use biocontainers python for stub/CI (registry default is quay.io).
+    // Official bioconda/biocontainers QTLtools is absent. Conda: YangmingSi::qtltools=1.3.1.
+    // Docker image is built as quay.io/bioinfortools/qtltools:1.3.1 (see SiYangming/qtltools PACKAGING.md).
+    // CI -stub uses python until that Quay tag is pushed (401 without docker login).
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/python:3.9--1' :
         'quay.io/biocontainers/python:3.9--1' }"

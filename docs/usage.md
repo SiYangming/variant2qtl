@@ -94,7 +94,7 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - Prefer samplesheet `molqtl_phenotype` / `molqtl_covariates`
 - Legacy: `qtltools_cis_id`, `qtltools_cis_bed` / `_bim` / `_fam`, `qtltools_cis_phenotype`, `qtltools_cis_covariates`
 - `qtltools_use_qc_bed` — reuse shared QC bed
-- Converts PLINK bed → VCF inside the process. Official bioconda/biocontainers package is absent; conda pin `dnachun::qtltools=1.3.1`; `-stub` for CI
+- Converts PLINK bed → VCF inside the process. Official bioconda/biocontainers package is absent; conda pin `YangmingSi::qtltools=1.3.1`; Docker `quay.io/bioinfortools/qtltools:1.3.1`; `-stub` for CI
 
 **QTL–GWAS coloc**
 

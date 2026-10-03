@@ -59,15 +59,15 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P0 — 核心业务（必须自建）
 
-| 建议名                                    | 职责                                                                                | 依赖模块（多为 local）                                                                               |
-| ----------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `genotype_ingest_harmonize`               | 多源变异入口（SNP/Indel）→ 标准化 VCF/PLINK；可选 liftover、bcftools norm、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**已深化**（SV/STR 仍在 P3 编排）   |
-| `genotype_qc`                             | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                       | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关） |
-| `genotype_to_analysis_format`             | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                           | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                               |
-| `molqtl_map_omiga`                        | **OmiGA** cis（经 analysis-format）                                                 | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                    |
-| `molqtl_map_tensorqtl`                    | tensorQTL 备用/对照引擎                                                             | **已实现**；`params.run_tensorqtl_cis`；可 `--tensorqtl_use_qc_bed`；PyPI `1.0.10`                   |
-| `molqtl_map_qtltools`                     | QTLtools cis 对照引擎                                                               | **已实现**；`params.run_qtltools_cis`；可 `--qtltools_use_qc_bed`；conda `dnachun::qtltools=1.3.1`   |
-| `qtl_postprocess` / `qtl_postprocess_cis` | 多引擎 cis 结果合并、BH FDR、标准表                                                 | **已实现**；`params.run_qtl_postprocess` 默认关                                                      |
+| 建议名                                    | 职责                                                                                | 依赖模块（多为 local）                                                                                |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `genotype_ingest_harmonize`               | 多源变异入口（SNP/Indel）→ 标准化 VCF/PLINK；可选 liftover、bcftools norm、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**已深化**（SV/STR 仍在 P3 编排）    |
+| `genotype_qc`                             | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                       | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关）  |
+| `genotype_to_analysis_format`             | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                           | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                                |
+| `molqtl_map_omiga`                        | **OmiGA** cis（经 analysis-format）                                                 | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                     |
+| `molqtl_map_tensorqtl`                    | tensorQTL 备用/对照引擎                                                             | **已实现**；`params.run_tensorqtl_cis`；可 `--tensorqtl_use_qc_bed`；PyPI `1.0.10`                    |
+| `molqtl_map_qtltools`                     | QTLtools cis 对照引擎                                                               | **已实现**；`params.run_qtltools_cis`；可 `--qtltools_use_qc_bed`；conda `YangmingSi::qtltools=1.3.1` |
+| `qtl_postprocess` / `qtl_postprocess_cis` | 多引擎 cis 结果合并、BH FDR、标准表                                                 | **已实现**；`params.run_qtl_postprocess` 默认关                                                       |
 
 ### P1 — 协变量与 sQTL 表型（表型矩阵侧）
 
