@@ -69,14 +69,18 @@ nextflow run . -profile test,docker -params-file params_omiga_cis.json
 | `modules/local/tensorqtl/cis` | **已建，已挂入** `molqtl_map_tensorqtl`（`params.run_tensorqtl_cis` 默认关） | PyPI `tensorqtl==1.0.10` via conda `pip`（无 bioconda/biocontainers）；stub / wave / conda |
 
 - Official bioconda/biocontainers package **absent** — pin strategy mirrors other local engines: document version in `environment.yml`; CI uses `-stub`; real runs prefer `-profile conda` or `wave`.
-- Phenotype: FastQTL BED (reuse `assets/testdata/omiga_cis_mini/`). Covariates: **sample × covariate** (`covariates_tensorqtl.txt`).
-- GPU: not required; pass CUDA-related flags via `ext.args` if the environment provides GPU PyTorch.
+- Stub phenotype: FastQTL BED (reuse `assets/testdata/omiga_cis_mini/`). Covariates: **sample × covariate** (`covariates_tensorqtl.txt`).
+- **Official real testdata:** GEUVADIS chr18 example from [broadinstitute/tensorqtl `example/data`](https://github.com/broadinstitute/tensorqtl/tree/master/example/data). Fetch (gitignored binaries): `bash scripts/fetch_tensorqtl_geuvadis_testdata.sh` → `assets/testdata/tensorqtl_geuvadis/`.
+- GPU: full official notebook targets GPU/~50GB; tagged real nf-test uses phenotype subset + `--mode cis_nominal` for CPU smoke. Pass CUDA flags via `ext.args` when available.
 
 **nf-test / smoke:**
 
 ```bash
 nf-test test modules/local/tensorqtl/cis/tests/main.nf.test --tag stub --profile test,docker
 nextflow run . -profile test_tensorqtl,docker -stub --outdir results_test_tensorqtl
+
+# Real (conda; downloads ~80MB GEUVADIS example on first run; ignored by default CI)
+bash scripts/run_real_nf_tests.sh tensorqtl
 ```
 
 ## P1 — 协变量与 sQTL 表型准备
@@ -147,13 +151,17 @@ Adapters: `modules/local/utils/phenocovar_adapt`, `modules/local/utils/assoc_sta
 | `modules/local/susie/finemap` | **已建，已挂入** `qtl_finemap_susie`（`params.run_finemap_susie` 默认关） | `conda-forge::r-susier=0.14.2` / biocontainers `r-base:4.3.1` + conda |
 
 - Input: association/QTL sumstats (`variant_id`/`snp`, `beta`+`se` and/or `z`); optional LD matrix. Without LD, identity matrix is used (smoke / limited interpretation).
-- Mini testdata: [`assets/testdata/finemap_susie_mini/`](../assets/testdata/finemap_susie_mini/).
+- Stub mini testdata: [`assets/testdata/finemap_susie_mini/`](../assets/testdata/finemap_susie_mini/).
+- **Official-style real testdata:** [`assets/testdata/finemap_susie_official/`](../assets/testdata/finemap_susie_official/) from `susieR::N3finemapping` or the susieR vignette simulation recipe (`scripts/make_finemap_susie_official_testdata.R` / `.py`).
 - Can consume OmiGA/tensorQTL `cis_qtl` outputs when `--finemap_susie_sumstats` is unset and those branches ran.
 - **Coloc** (`coloc` / `hyprcoloc`) and other fine-mappers (FINEMAP/CAVIAR/DAP-G) are **follow-ups** — not in this PR.
 
 ```bash
 nf-test test modules/local/susie/finemap/tests/main.nf.test --tag stub --profile test,docker
 nextflow run . -profile test_finemap,docker -stub --outdir results_test_finemap
+
+# Real (conda; uses committed official-style sumstats+LD; ignored by default CI)
+bash scripts/run_real_nf_tests.sh susie
 ```
 
 ## P3 — 可选互补

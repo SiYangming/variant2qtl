@@ -1,0 +1,58 @@
+nextflow_process {
+
+    name "Test Process TENSORQTL_CIS (GEUVADIS official, real)"
+    script "../main.nf"
+    process "TENSORQTL_CIS"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "tensorqtl"
+    tag "tensorqtl/cis"
+    tag "tensorqtl_real"
+
+    // Real tensorQTL on official GEUVADIS example (subset phenotypes).
+    // Prefetch: bash scripts/fetch_tensorqtl_geuvadis_testdata.sh
+    //   (or: bash scripts/run_real_nf_tests.sh tensorqtl)
+    // Prefer conda so PyPI tensorqtl from environment.yml is available.
+    test("geuvadis official subset - real conda") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'tensorqtl_geuvadis' ],
+                    file("${projectDir}/assets/testdata/tensorqtl_geuvadis/geno.bed", checkIfExists: true),
+                    file("${projectDir}/assets/testdata/tensorqtl_geuvadis/geno.bim", checkIfExists: true),
+                    file("${projectDir}/assets/testdata/tensorqtl_geuvadis/geno.fam", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'tensorqtl_geuvadis' ],
+                    file("${projectDir}/assets/testdata/tensorqtl_geuvadis/phenotype.bed.gz", checkIfExists: true)
+                ]
+                input[2] = [
+                    [ id:'tensorqtl_geuvadis' ],
+                    file("${projectDir}/assets/testdata/tensorqtl_geuvadis/covariates.txt", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.outdir.size() == 1 },
+                { assert process.out.outdir.get(0).get(0).id == "tensorqtl_geuvadis" },
+                { assert path(process.out.outdir.get(0).get(1)).exists() },
+                {
+                    // cis_nominal / cis emit parquet or txt.gz; module normalizes to *.cis_qtl*.txt.gz
+                    assert process.out.cis_qtl
+                    def cis = process.out.cis_qtl.get(0).get(1)
+                    def files = cis instanceof List ? cis : [cis]
+                    assert files.every { f -> path(f.toString()).exists() }
+                    assert files.any { f -> path(f.toString()).size() > 0 }
+                }
+            )
+        }
+    }
+}

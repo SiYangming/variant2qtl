@@ -1,0 +1,44 @@
+nextflow_process {
+
+    name "Test Process SUSIE_FINEMAP (official-style, real)"
+    script "../main.nf"
+    process "SUSIE_FINEMAP"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "susie"
+    tag "susie/finemap"
+    tag "susie_real"
+
+    // Real susieR run on vignette/N3finemapping-derived sumstats+LD (not stub).
+    // Prefer conda so r-susier from environment.yml is available.
+    test("finemap_susie_official - real conda") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'finemap_susie_official' ],
+                    file("${projectDir}/assets/testdata/finemap_susie_official/sumstats.tsv", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'finemap_susie_official' ],
+                    file("${projectDir}/assets/testdata/finemap_susie_official/ld.txt", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.pip.size() == 1 },
+                { assert process.out.credible_sets.size() == 1 },
+                { assert path(process.out.pip.get(0).get(1)).size() > 0 },
+                { assert path(process.out.credible_sets.get(0).get(1)).size() > 0 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

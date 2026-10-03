@@ -128,12 +128,24 @@ Smoke-tests samplesheet **bed → QC → tensorQTL cis** (`assets/genotype_sampl
 nextflow run . -profile test_tensorqtl,docker -stub --outdir results_test_tensorqtl
 ```
 
+Optional **real** module test on official GEUVADIS example (downloads ~80MB; not in default CI):
+
+```bash
+bash scripts/run_real_nf_tests.sh tensorqtl
+```
+
 ### Example: `test_finemap` profile
 
 Smoke-tests **SuSiE** on mini sumstats:
 
 ```bash
 nextflow run . -profile test_finemap,docker -stub --outdir results_test_finemap
+```
+
+Optional **real** module test on susieR vignette / `N3finemapping`-style sumstats (not in default CI):
+
+```bash
+bash scripts/run_real_nf_tests.sh susie
 ```
 
 The existing `-profile test,docker` FASTQC-only path is unchanged.

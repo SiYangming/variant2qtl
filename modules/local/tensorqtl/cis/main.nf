@@ -30,6 +30,10 @@ process TENSORQTL_CIS {
     GENO_PREFIX=\$(echo ${bed} | sed 's/\\.bed\$//')
     mkdir -p ${prefix}_out
 
+    # Avoid OpenMP dual-runtime abort (common on macOS conda + pytorch/numpy).
+    export KMP_DUPLICATE_LIB_OK="\${KMP_DUPLICATE_LIB_OK:-TRUE}"
+    export OMP_NUM_THREADS="\${OMP_NUM_THREADS:-${task.cpus}}"
+
     python3 -m tensorqtl \\
         \${GENO_PREFIX} \\
         ${phenotype} \\
@@ -37,7 +41,8 @@ process TENSORQTL_CIS {
         ${cov_arg} \\
         ${args}
 
-    find ${prefix}_out -type f \\( -name '*.cis_qtl*.txt.gz' -o -name '*.cis_qtl*.parquet' \\) -exec cp -t . {} + 2>/dev/null || true
+    # Portable copy (macOS BSD cp has no -t); then normalize parquet → txt.gz for emit.
+    find ${prefix}_out -type f \\( -name '*.cis_qtl*.txt.gz' -o -name '*.cis_qtl*.parquet' \\) -exec cp {} . \\; 2>/dev/null || true
     if ! ls *.cis_qtl*.txt.gz >/dev/null 2>&1; then
         if ls *.cis_qtl*.parquet >/dev/null 2>&1; then
             python3 - <<PY
@@ -45,11 +50,15 @@ import glob
 try:
     import pandas as pd
 except Exception:
-    open('${prefix}.cis_qtl.txt.gz', 'wb').close()
+    open("${prefix}.cis_qtl.txt.gz", "wb").close()
 else:
-    for p in glob.glob('*.cis_qtl*.parquet'):
-        out = p.replace('.parquet', '.txt.gz')
-        pd.read_parquet(p).to_csv(out, sep='\\t', index=False, compression='gzip')
+    wrote = False
+    for p in glob.glob("*.cis_qtl*.parquet"):
+        out = p.replace(".parquet", ".txt.gz")
+        pd.read_parquet(p).to_csv(out, sep="\\t", index=False, compression="gzip")
+        wrote = True
+    if not wrote:
+        open("${prefix}.cis_qtl.txt.gz", "wb").close()
 PY
         else
             touch ${prefix}.cis_qtl.txt.gz

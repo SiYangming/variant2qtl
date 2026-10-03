@@ -2,6 +2,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
 # tensorQTL is not on bioconda/biocontainers (as of 2026-10).
 # Pin via PyPI; prefer -profile conda or wave for real runs. Stub for CI.
+# Real bed/bim/fam runs need pandas-plink + torch (imported by tensorqtl.genotypeio).
 channels:
   - conda-forge
   - bioconda
@@ -13,4 +14,6 @@ dependencies:
   - scipy
   - pyarrow
   - pip:
+      - torch
+      - pandas-plink
       - tensorqtl==1.0.10
