@@ -1,2 +1,2 @@
-id,vcf,bed,bim,fam,phenotype,covariates
-plink_simulated,assets/testdata/plink_simulated/plink_simulated.vcf.gz,,,,assets/testdata/plink_simulated/plink_simulated_quantitative_phenoname.phe,assets/testdata/plink_simulated/plink_simulated_covariates.txt
+id,vcf,bed,bim,fam,phenotype,covariates,molqtl_phenotype,molqtl_covariates
+plink_simulated,assets/testdata/plink_simulated/plink_simulated.vcf.gz,,,,assets/testdata/plink_simulated/plink_simulated_quantitative_phenoname.phe,assets/testdata/plink_simulated/plink_simulated_covariates.txt,,

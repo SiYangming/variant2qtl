@@ -14,17 +14,21 @@ These branches are **off by default**. Enable them with boolean params; they do 
 
 Cohort CSV (schema: `assets/schema_genotype_input.json`). One row per analysis set:
 
-| Column            | Required | Notes                                            |
-| ----------------- | -------- | ------------------------------------------------ |
-| `id`              | yes      | Cohort / meta id                                 |
-| `phenotype`       | yes      | PLINK-style `FID IID Trait`                      |
-| `vcf`             | xor bed  | When set without bed → ingest (VCF→PLINK)        |
-| `bed`/`bim`/`fam` | xor vcf  | All three required together when skipping ingest |
-| `covariates`      | no       | Optional `FID IID cov...`                        |
+| Column              | Required | Notes                                                           |
+| ------------------- | -------- | --------------------------------------------------------------- |
+| `id`                | yes      | Cohort / meta id                                                |
+| `vcf`               | xor bed  | When set without bed → ingest (VCF→PLINK)                       |
+| `bed`/`bim`/`fam`   | xor vcf  | All three required together when skipping ingest                |
+| `phenotype`         | no\*     | PLINK-style `FID IID Trait` (needed for `--run_gwas_benchmark`) |
+| `covariates`        | no       | Optional GWAS `FID IID cov...`                                  |
+| `molqtl_phenotype`  | no\*     | FastQTL-style BED/OPF (needed for `--run_omiga_cis`)            |
+| `molqtl_covariates` | no       | Optional OmiGA covariates (covariate × sample)                  |
 
-Examples: `assets/genotype_samplesheet.csv` (VCF ingest), `assets/genotype_samplesheet_bed.csv` (bed-only).
+\*Provide the phenotype column matching the branch you enable (GWAS and/or OmiGA).
 
-When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed/bim/fam/vcf/phenotype/covariates` and `--genotype_ingest_vcf` for the GWAS path.
+Examples: `assets/genotype_samplesheet.csv` (VCF ingest + GWAS), `assets/genotype_samplesheet_bed.csv` (bed-only GWAS), `assets/genotype_samplesheet_omiga.csv` (bed + OmiGA cis).
+
+When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed/bim/fam/vcf/phenotype/covariates`, `--genotype_ingest_vcf`, and (for molQTL) `--omiga_cis_bed/bim/fam/phenotype/covariates` when the matching samplesheet columns are present.
 
 ### Feature flags
 
@@ -63,18 +67,19 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 **OmiGA cis**
 
-- `omiga_cis_id`, `omiga_cis_bed` / `_bim` / `_fam`, `omiga_cis_vcf`
-- `omiga_cis_phenotype`, `omiga_cis_covariates`
-- `omiga_cis_use_qc_bed` — reuse shared QC bed from the GWAS/QC branch instead of `omiga_cis_bed/bim/fam`
+- Prefer samplesheet `molqtl_phenotype` / `molqtl_covariates` with `--genotype_input`
+- Legacy: `omiga_cis_id`, `omiga_cis_bed` / `_bim` / `_fam`, `omiga_cis_vcf`, `omiga_cis_phenotype`, `omiga_cis_covariates`
+- `omiga_cis_use_qc_bed` — reuse shared QC bed from the genotype QC branch instead of samplesheet/legacy bed
 
 ### Recommended combinations
 
 1. **Samplesheet VCF → ingest → QC → GWAS**: `--genotype_input assets/genotype_samplesheet.csv --run_genotype_qc --run_gwas_benchmark --gwas_benchmark_engines gemma,emmax`
 2. **Samplesheet bed → QC → GWAS**: `--genotype_input assets/genotype_samplesheet_bed.csv --run_genotype_qc --run_gwas_benchmark`
 3. **Legacy params bed → QC → GWAS**: `--run_genotype_qc --run_gwas_benchmark` + `--gwas_benchmark_{bed,bim,fam,phenotype}`
-4. **QC bed → OmiGA cis**: `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`
+4. **Samplesheet bed → QC → OmiGA cis**: `--genotype_input assets/genotype_samplesheet_omiga.csv --run_genotype_qc --run_omiga_cis --omiga_cis_use_qc_bed`
+5. **Legacy QC bed → OmiGA cis**: `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`
 
-Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`.
+Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA cis mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
 ### Example: `test_gwas` profile
 
@@ -88,6 +93,14 @@ Without stub (amd64 docker recommended if including EMMAX):
 
 ```bash
 nextflow run . -profile test_gwas,docker --outdir results_test_gwas
+```
+
+### Example: `test_omiga` profile
+
+Smoke-tests samplesheet **bed → QC → OmiGA cis** (`assets/genotype_samplesheet_omiga.csv`):
+
+```bash
+nextflow run . -profile test_omiga,docker -stub --outdir results_test_omiga
 ```
 
 The existing `-profile test,docker` FASTQC-only path is unchanged.
@@ -225,6 +238,7 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
   - A profile with a complete configuration for automated testing
   - Includes links to test data so needs no other parameters
 - `test_gwas`
+- `test_omiga`
   - Genotype QC + GWAS benchmark smoke test (`gemma,emmax`) on `plink_simulated`
   - Prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, and OmiGA cis](#genotype-ingest-qc-gwas-benchmark-and-omiga-cis)
 - `docker`
