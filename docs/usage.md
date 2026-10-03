@@ -14,19 +14,19 @@ These branches are **off by default**. Enable them with boolean params; they do 
 
 Cohort CSV (schema: `assets/schema_genotype_input.json`). One row per analysis set:
 
-| Column              | Required | Notes                                                                         |
-| ------------------- | -------- | ----------------------------------------------------------------------------- |
-| `id`                | yes      | Cohort / meta id                                                              |
-| `vcf`               | xor bed  | When set without bed → ingest (VCF→PLINK)                                     |
-| `bed`/`bim`/`fam`   | xor vcf  | All three required together when skipping ingest                              |
-| `phenotype`         | no\*     | PLINK-style `FID IID Trait` (needed for `--run_gwas_benchmark`)               |
-| `covariates`        | no       | Optional GWAS `FID IID cov...`                                                |
-| `molqtl_phenotype`  | no\*     | FastQTL-style BED/OPF (needed for `--run_omiga_cis` / `--run_tensorqtl_cis`)  |
-| `molqtl_covariates` | no       | Optional molQTL covariates (OmiGA: covariate×sample; tensorQTL: sample×covar) |
+| Column              | Required | Notes                                                                                               |
+| ------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `id`                | yes      | Cohort / meta id                                                                                    |
+| `vcf`               | xor bed  | When set without bed → ingest (VCF→PLINK)                                                           |
+| `bed`/`bim`/`fam`   | xor vcf  | All three required together when skipping ingest                                                    |
+| `phenotype`         | no\*     | PLINK-style `FID IID Trait` (needed for `--run_gwas_benchmark`)                                     |
+| `covariates`        | no       | Optional GWAS `FID IID cov...`                                                                      |
+| `molqtl_phenotype`  | no\*     | FastQTL-style BED/OPF (needed for `--run_omiga_cis` / `--run_tensorqtl_cis` / `--run_qtltools_cis`) |
+| `molqtl_covariates` | no       | Optional molQTL covariates (OmiGA: covariate×sample; tensorQTL: sample×covar)                       |
 
 \*Provide the phenotype column matching the branch you enable (GWAS and/or molQTL).
 
-Examples: `assets/genotype_samplesheet.csv` (VCF ingest + GWAS), `assets/genotype_samplesheet_bed.csv` (bed-only GWAS), `assets/genotype_samplesheet_omiga.csv` (bed + OmiGA cis), `assets/genotype_samplesheet_tensorqtl.csv` (bed + tensorQTL cis).
+Examples: `assets/genotype_samplesheet.csv` (VCF ingest + GWAS), `assets/genotype_samplesheet_bed.csv` (bed-only GWAS), `assets/genotype_samplesheet_omiga.csv` (bed + OmiGA cis), `assets/genotype_samplesheet_tensorqtl.csv` (bed + tensorQTL cis), `assets/genotype_samplesheet_qtltools.csv` (bed + QTLtools cis).
 
 When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed/bim/fam/vcf/phenotype/covariates`, `--genotype_ingest_vcf`, and (for molQTL) `--omiga_cis_*` / `--tensorqtl_cis_*` file params when the matching samplesheet columns are present.
 
@@ -39,7 +39,10 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 | `run_gwas_benchmark`  | `false` | Parallel engines via `gwas_benchmark_parallel` (pheno adapt → formats → engines → optional `assoc_standardize`).                           |
 | `run_omiga_cis`       | `false` | OmiGA cis-molQTL (`molqtl_map_omiga`). Use dedicated bed/bim/fam or reuse QC bed.                                                          |
 | `run_tensorqtl_cis`   | `false` | tensorQTL cis-molQTL (`molqtl_map_tensorqtl`). Prefer samplesheet molQTL columns or `--tensorqtl_use_qc_bed`.                              |
-| `run_finemap_susie`   | `false` | SuSiE fine-mapping (`qtl_finemap_susie`) from `--finemap_susie_sumstats` or cis QTL outputs from OmiGA/tensorQTL.                          |
+| `run_finemap_susie`   | `false` | SuSiE fine-mapping (`qtl_finemap_susie`) from `--finemap_susie_sumstats` or cis QTL outputs from OmiGA/tensorQTL/QTLtools.                 |
+| `run_coloc`           | `false` | QTL–GWAS `coloc.abf` (`qtl_coloc`) from `--coloc_*_sumstats` or cis QTL + GWAS standardized tables. hyprcoloc not wired.                   |
+| `run_qtltools_cis`    | `false` | QTLtools cis-molQTL (`molqtl_map_qtltools`). Prefer samplesheet molQTL columns or `--qtltools_use_qc_bed`.                                 |
+| `run_qtl_postprocess` | `false` | Harmonise cis tables from any engine and add BH q-values (`qtl_postprocess_cis`).                                                          |
 
 ### Related file / option params
 
@@ -84,7 +87,25 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 - `finemap_susie_sumstats` — TSV/CSV with `variant_id`/`snp`, `beta`+`se` and/or `z`
 - `finemap_susie_ld` — optional square LD matrix (identity used when omitted)
-- When sumstats unset, reuses OmiGA/tensorQTL `cis_qtl` outputs if those branches ran
+- When sumstats unset, reuses OmiGA/tensorQTL/QTLtools `cis_qtl` outputs if those branches ran
+
+**QTLtools cis**
+
+- Prefer samplesheet `molqtl_phenotype` / `molqtl_covariates`
+- Legacy: `qtltools_cis_id`, `qtltools_cis_bed` / `_bim` / `_fam`, `qtltools_cis_phenotype`, `qtltools_cis_covariates`
+- `qtltools_use_qc_bed` — reuse shared QC bed
+- Converts PLINK bed → VCF inside the process. Official bioconda/biocontainers package is absent; conda pin `YangmingSi::qtltools=1.3.1`; Docker `quay.io/bioinfortools/qtltools:1.3.1`; `-stub` for CI
+
+**QTL–GWAS coloc**
+
+- `coloc_qtl_sumstats` / `coloc_gwas_sumstats` — `snp`/`variant_id`, `beta`, `se` (optional `maf`, `n`)
+- When unset, reuses cis QTL outputs and GWAS `assoc_standardize` tables if those branches ran
+- `coloc.abf` only; hyprcoloc is not wired
+
+**cis-QTL postprocess**
+
+- `qtl_postprocess_input` — optional cis table; else uses OmiGA/tensorQTL/QTLtools `cis_qtl`
+- Writes `*.cis_std.tsv` with BH q-values (`gene variant_id chr pos p q beta se engine`)
 
 ### Recommended combinations
 
@@ -95,6 +116,9 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 5. **Legacy QC bed → OmiGA cis**: `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`
 6. **Samplesheet bed → QC → tensorQTL cis**: `--genotype_input assets/genotype_samplesheet_tensorqtl.csv --run_genotype_qc --run_tensorqtl_cis --tensorqtl_use_qc_bed`
 7. **SuSiE from sumstats**: `--run_finemap_susie --finemap_susie_sumstats assets/testdata/finemap_susie_mini/sumstats.tsv`
+8. **Samplesheet bed → QC → QTLtools cis**: `--genotype_input assets/genotype_samplesheet_qtltools.csv --run_genotype_qc --run_qtltools_cis --qtltools_use_qc_bed`
+9. **coloc from mini sumstats**: `--run_coloc --coloc_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --coloc_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
+10. **cis postprocess from a table**: `--run_qtl_postprocess --qtl_postprocess_input assets/testdata/qtl_postprocess_mini/cis_qtl.tsv`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA/tensorQTL mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
@@ -146,6 +170,30 @@ Optional **real** module test on susieR vignette / `N3finemapping`-style sumstat
 
 ```bash
 bash scripts/run_real_nf_tests.sh susie
+```
+
+### Example: `test_qtltools` profile
+
+Smoke-tests samplesheet **bed → QC → QTLtools cis** (`assets/genotype_samplesheet_qtltools.csv`):
+
+```bash
+nextflow run . -profile test_qtltools,docker -stub --outdir results_test_qtltools
+```
+
+### Example: `test_coloc` profile
+
+Smoke-tests **coloc.abf** on mini overlapping sumstats:
+
+```bash
+nextflow run . -profile test_coloc,docker -stub --outdir results_test_coloc
+```
+
+### Example: `test_postprocess` profile
+
+Smoke-tests **BH q-value** standardisation of a cis table:
+
+```bash
+nextflow run . -profile test_postprocess,docker -stub --outdir results_test_postprocess
 ```
 
 The existing `-profile test,docker` FASTQC-only path is unchanged.
@@ -286,6 +334,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_omiga`
 - `test_tensorqtl`
 - `test_finemap`
+- `test_qtltools`
+- `test_coloc`
+- `test_postprocess`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)

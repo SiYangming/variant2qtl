@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "QTL_POSTPROCESS_CIS"
+description: Local subworkflow qtl_postprocess_cis for SiYangming/variant2qtl
+keywords:
+  - qtl
+  - fdr
+  - local
+components:
+  - utils/qtl_postprocess
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

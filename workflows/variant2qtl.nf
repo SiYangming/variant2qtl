@@ -15,7 +15,10 @@ include { GENOTYPE_QC               } from '../subworkflows/local/genotype_qc/ma
 include { GENOTYPE_INGEST_HARMONIZE } from '../subworkflows/local/genotype_ingest_harmonize/main'
 include { MOLQTL_MAP_OMIGA          } from '../subworkflows/local/molqtl_map_omiga/main'
 include { MOLQTL_MAP_TENSORQTL      } from '../subworkflows/local/molqtl_map_tensorqtl/main'
+include { MOLQTL_MAP_QTLTOOLS       } from '../subworkflows/local/molqtl_map_qtltools/main'
 include { QTL_FINEMAP_SUSIE         } from '../subworkflows/local/qtl_finemap_susie/main'
+include { QTL_COLOC                 } from '../subworkflows/local/qtl_coloc/main'
+include { QTL_POSTPROCESS_CIS       } from '../subworkflows/local/qtl_postprocess_cis/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,6 +59,7 @@ workflow VARIANT2QTL {
     def ch_molqtl_pheno = channel.empty()
     def ch_molqtl_covar = channel.empty()
     def ch_qtl_cis_for_finemap = channel.empty()
+    def ch_gwas_std = channel.empty()
 
     if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
@@ -221,6 +225,7 @@ workflow VARIANT2QTL {
                 ch_gwas_covar
             )
             ch_versions = ch_versions.mix(GWAS_BENCHMARK_PARALLEL.out.versions)
+            ch_gwas_std = GWAS_BENCHMARK_PARALLEL.out.standardized
         }
     }
 
@@ -312,7 +317,9 @@ workflow VARIANT2QTL {
             ch_omiga_vcf
         )
         ch_versions = ch_versions.mix(MOLQTL_MAP_OMIGA.out.versions)
-        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(MOLQTL_MAP_OMIGA.out.cis_qtl)
+        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(
+            MOLQTL_MAP_OMIGA.out.cis_qtl.map { meta, cis -> [meta + [engine: 'omiga'], cis] }
+        )
     }
 
     //
@@ -388,7 +395,86 @@ workflow VARIANT2QTL {
             ch_tensorqtl_covar
         )
         ch_versions = ch_versions.mix(MOLQTL_MAP_TENSORQTL.out.versions)
-        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(MOLQTL_MAP_TENSORQTL.out.cis_qtl)
+        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(
+            MOLQTL_MAP_TENSORQTL.out.cis_qtl.map { meta, cis -> [meta + [engine: 'tensorqtl'], cis] }
+        )
+    }
+
+    //
+    // Optional QTLtools cis-molQTL (default OFF)
+    // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
+    //
+    if (params.run_qtltools_cis) {
+        def qtltools_meta = [id: params.qtltools_cis_id ?: 'qtltools_cis']
+        def ch_qtltools_plink = channel.empty()
+        def ch_qtltools_pheno = channel.empty()
+        def ch_qtltools_covar = channel.empty()
+
+        if (params.genotype_input) {
+            if (params.qtltools_use_qc_bed) {
+                if (params.run_genotype_qc) {
+                    ch_qtltools_plink = ch_shared_qc_bed
+                } else {
+                    log.warn "qtltools_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
+                    ch_qtltools_plink = ch_shared_geno_plink
+                }
+            } else {
+                ch_qtltools_plink = ch_shared_geno_plink
+            }
+
+            def ch_param_qt_pheno = params.qtltools_cis_phenotype
+                ? ch_qtltools_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.qtltools_cis_phenotype, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_qtltools_pheno = ch_molqtl_pheno.ifEmpty(ch_param_qt_pheno)
+
+            def ch_param_qt_covar = params.qtltools_cis_covariates
+                ? ch_qtltools_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.qtltools_cis_covariates, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_qtltools_covar = ch_molqtl_covar.ifEmpty(ch_param_qt_covar)
+        } else {
+            if (params.qtltools_use_qc_bed) {
+                ch_qtltools_plink = ch_shared_qc_bed.map { _meta, bed, bim, fam ->
+                    [qtltools_meta, bed, bim, fam]
+                }
+            } else if (params.qtltools_cis_bed && params.qtltools_cis_bim && params.qtltools_cis_fam) {
+                ch_qtltools_plink = channel.of([
+                    qtltools_meta,
+                    file(params.qtltools_cis_bed, checkIfExists: true),
+                    file(params.qtltools_cis_bim, checkIfExists: true),
+                    file(params.qtltools_cis_fam, checkIfExists: true)
+                ])
+            }
+
+            ch_qtltools_pheno = params.qtltools_cis_phenotype
+                ? channel.of([qtltools_meta, file(params.qtltools_cis_phenotype, checkIfExists: true)])
+                : channel.empty()
+
+            ch_qtltools_covar = params.qtltools_cis_covariates
+                ? channel.of([qtltools_meta, file(params.qtltools_cis_covariates, checkIfExists: true)])
+                : channel.empty()
+
+            if (!params.qtltools_use_qc_bed &&
+                (!params.qtltools_cis_bed || !params.qtltools_cis_bim || !params.qtltools_cis_fam)) {
+                log.warn "run_qtltools_cis=true but missing --qtltools_cis_bed/bim/fam (or --qtltools_use_qc_bed); channels empty."
+            }
+            if (!params.qtltools_cis_phenotype) {
+                log.warn "run_qtltools_cis=true but missing --qtltools_cis_phenotype."
+            }
+        }
+
+        MOLQTL_MAP_QTLTOOLS(
+            ch_qtltools_plink,
+            ch_qtltools_pheno,
+            ch_qtltools_covar
+        )
+        ch_versions = ch_versions.mix(MOLQTL_MAP_QTLTOOLS.out.versions)
+        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(
+            MOLQTL_MAP_QTLTOOLS.out.cis_qtl.map { meta, cis -> [meta + [engine: 'qtltools'], cis] }
+        )
     }
 
     //
@@ -407,8 +493,8 @@ workflow VARIANT2QTL {
             ])
         } else {
             ch_finemap_sumstats = ch_qtl_cis_for_finemap
-            if (!params.run_omiga_cis && !params.run_tensorqtl_cis) {
-                log.warn "run_finemap_susie=true but missing --finemap_susie_sumstats (and no OmiGA/tensorQTL cis outputs)."
+            if (!params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+                log.warn "run_finemap_susie=true but missing --finemap_susie_sumstats (and no cis QTL engine outputs)."
             }
         }
 
@@ -423,6 +509,49 @@ workflow VARIANT2QTL {
             ch_finemap_ld
         )
         ch_versions = ch_versions.mix(QTL_FINEMAP_SUSIE.out.versions)
+    }
+
+    //
+    // Optional QTL–GWAS coloc.abf (default OFF). hyprcoloc is not wired yet.
+    // Prefer --coloc_qtl_sumstats / --coloc_gwas_sumstats; else reuse cis QTL + GWAS standardized.
+    //
+    if (params.run_coloc) {
+        def coloc_meta = [id: params.coloc_id ?: 'coloc']
+        def ch_coloc_qtl = params.coloc_qtl_sumstats
+            ? channel.of([coloc_meta, file(params.coloc_qtl_sumstats, checkIfExists: true)])
+            : ch_qtl_cis_for_finemap
+        def ch_coloc_gwas = params.coloc_gwas_sumstats
+            ? channel.of([coloc_meta, file(params.coloc_gwas_sumstats, checkIfExists: true)])
+            : ch_gwas_std
+
+        if (!params.coloc_qtl_sumstats && !params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+            log.warn "run_coloc=true but missing --coloc_qtl_sumstats (and no cis QTL engine outputs)."
+        }
+        if (!params.coloc_gwas_sumstats && !params.run_gwas_benchmark) {
+            log.warn "run_coloc=true but missing --coloc_gwas_sumstats (and no GWAS standardized tables)."
+        }
+
+        QTL_COLOC(ch_coloc_qtl, ch_coloc_gwas)
+        ch_versions = ch_versions.mix(QTL_COLOC.out.versions)
+    }
+
+    //
+    // Optional cis-QTL postprocess: unified table + BH q-values (default OFF)
+    //
+    if (params.run_qtl_postprocess) {
+        def ch_post_in = params.qtl_postprocess_input
+            ? channel.of([
+                [id: params.qtl_postprocess_id ?: 'qtl_postprocess'],
+                file(params.qtl_postprocess_input, checkIfExists: true)
+            ])
+            : ch_qtl_cis_for_finemap
+
+        if (!params.qtl_postprocess_input && !params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+            log.warn "run_qtl_postprocess=true but missing --qtl_postprocess_input (and no cis QTL engine outputs)."
+        }
+
+        QTL_POSTPROCESS_CIS(ch_post_in)
+        ch_versions = ch_versions.mix(QTL_POSTPROCESS_CIS.out.versions)
     }
 
     //

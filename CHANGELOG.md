@@ -18,8 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional `--genotype_input` cohort samplesheet (`assets/schema_genotype_input.json`): VCF ingest and/or bed+bim+fam + phenotype/covariates; `test_gwas` now exercises ingest→QC→GWAS via samplesheet.
 - `--genotype_input` `molqtl_phenotype` / `molqtl_covariates` columns drive OmiGA cis; profile `test_omiga` + nf-test for samplesheet → QC → cis.
 - Local **tensorQTL** cis (`modules/local/tensorqtl/cis`, `molqtl_map_tensorqtl`) behind `params.run_tensorqtl_cis` (default OFF); PyPI pin `tensorqtl==1.0.10` (no bioconda); profile `test_tensorqtl` + stub nf-test; reuses `omiga_cis_mini` geno/pheno + `covariates_tensorqtl.txt`.
-- Local **SuSiE** fine-mapping (`modules/local/susie/finemap`, `qtl_finemap_susie`) behind `params.run_finemap_susie` (default OFF); conda-forge `r-susier=0.14.2`; mini sumstats under `assets/testdata/finemap_susie_mini/`; profile `test_finemap` + stub nf-test. Coloc deferred (see `docs/modules_prebuild.md`).
+- Local **SuSiE** fine-mapping (`modules/local/susie/finemap`, `qtl_finemap_susie`) behind `params.run_finemap_susie` (default OFF); conda-forge `r-susier=0.14.2`; mini sumstats under `assets/testdata/finemap_susie_mini/`; profile `test_finemap` + stub nf-test.
 - Optional **real** module nf-tests (ignored by default CI): tensorQTL on official GEUVADIS example (`scripts/fetch_tensorqtl_geuvadis_testdata.sh`, `--tag tensorqtl_real`); SuSiE on susieR vignette/N3finemapping-derived sumstats (`assets/testdata/finemap_susie_official/`, `--tag susie_real`).
+- Local **coloc.abf** (`modules/local/coloc/abf`, `qtl_coloc`) behind `params.run_coloc` (default OFF); conda-forge `r-coloc=5.2.3`; mini overlapping sumstats under `assets/testdata/coloc_mini/`; profile `test_coloc` + stub nf-test. hyprcoloc not included.
+- Local **QTLtools** cis (`modules/local/qtltools/cis`, `molqtl_map_qtltools`) behind `params.run_qtltools_cis` (default OFF); conda pin `YangmingSi::qtltools=1.3.1` and Docker `quay.io/bioinfortools/qtltools:1.3.1` (fork https://github.com/SiYangming/qtltools; no official bioconda/biocontainers); profile `test_qtltools` + stub nf-test.
+- Local **cis-QTL postprocess** (`modules/local/utils/qtl_postprocess`, `qtl_postprocess_cis`) behind `params.run_qtl_postprocess` (default OFF); BH q-values + standard table; profile `test_postprocess` + stub nf-test.
 
 ### `Fixed`
 

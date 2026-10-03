@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process QTL_POSTPROCESS"
+    script "../main.nf"
+    process "QTL_POSTPROCESS"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "qtl_postprocess"
+
+    test("cis_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'postprocess_mini', engine:'omiga' ],
+                    file("${projectDir}/assets/testdata/qtl_postprocess_mini/cis_qtl.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.standardized.size() == 1 },
+                { assert path(process.out.standardized.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

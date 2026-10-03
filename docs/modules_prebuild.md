@@ -83,6 +83,22 @@ nextflow run . -profile test_tensorqtl,docker -stub --outdir results_test_tensor
 bash scripts/run_real_nf_tests.sh tensorqtl
 ```
 
+### P0 — QTLtools 模块状态（已建 / 已接入 workflow）
+
+| 模块路径                     | 状态                                                                       | Conda / 容器 pin                                                      |
+| ---------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `modules/local/qtltools/cis` | **已建，已挂入** `molqtl_map_qtltools`（`params.run_qtltools_cis` 默认关） | `YangmingSi::qtltools=1.3.1` / `quay.io/bioinfortools/qtltools:1.3.1` |
+
+- Converts PLINK bed → bgzipped VCF inside the process (`plink2 --export vcf bgz`).
+- Phenotype: FastQTL BED (reuse `assets/testdata/omiga_cis_mini/`).
+- Packaging fork: https://github.com/SiYangming/qtltools (`PACKAGING.md`). Pins: `YangmingSi::qtltools=1.3.1` and `quay.io/bioinfortools/qtltools:1.3.1`.
+- CI: `-stub`; real runs prefer `-profile conda` or `wave`.
+
+```bash
+nf-test test modules/local/qtltools/cis/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_qtltools,docker -stub --outdir results_test_qtltools
+```
+
 ## P1 — 协变量与 sQTL 表型准备
 
 | 建议模块名                        | 说明                                         |
@@ -123,12 +139,13 @@ Adapters: `modules/local/utils/phenocovar_adapt`, `modules/local/utils/assoc_sta
 
 ### 包装仓与发布账号
 
-| 工具           | Git 策略                               | 仓库                                | 发布                                       |
-| -------------- | -------------------------------------- | ----------------------------------- | ------------------------------------------ |
-| GEMMA / TASSEL | 官方 bioconda + biocontainers          | —                                   | 直接引用                                   |
-| OmiGA          | fork 官方仓 + Release 备份官方 tarball | https://github.com/SiYangming/OmiGA | Conda `YangmingSi`；Quay `bioinfortools`   |
-| rMVP           | fork 官方仓，Dockerfile 在 fork        | https://github.com/SiYangming/rMVP  | Quay `bioinfortools`；conda 用 conda-forge |
-| EMMAX          | 无官方 GitHub → 自建备份仓             | https://github.com/SiYangming/emmax | Conda `YangmingSi`；Quay `bioinfortools`   |
+| 工具           | Git 策略                               | 仓库                                   | 发布                                       |
+| -------------- | -------------------------------------- | -------------------------------------- | ------------------------------------------ |
+| GEMMA / TASSEL | 官方 bioconda + biocontainers          | —                                      | 直接引用                                   |
+| OmiGA          | fork 官方仓 + Release 备份官方 tarball | https://github.com/SiYangming/OmiGA    | Conda `YangmingSi`；Quay `bioinfortools`   |
+| rMVP           | fork 官方仓，Dockerfile 在 fork        | https://github.com/SiYangming/rMVP     | Quay `bioinfortools`；conda 用 conda-forge |
+| EMMAX          | 无官方 GitHub → 自建备份仓             | https://github.com/SiYangming/emmax    | Conda `YangmingSi`；Quay `bioinfortools`   |
+| QTLtools       | fork 官方仓 + 官方 source tarball      | https://github.com/SiYangming/qtltools | Conda `YangmingSi`；Quay `bioinfortools`   |
 
 构建环境：本地 `conda_build`。GitHub 操作：`gh` CLI。
 
@@ -153,8 +170,35 @@ Adapters: `modules/local/utils/phenocovar_adapt`, `modules/local/utils/assoc_sta
 - Input: association/QTL sumstats (`variant_id`/`snp`, `beta`+`se` and/or `z`); optional LD matrix. Without LD, identity matrix is used (smoke / limited interpretation).
 - Stub mini testdata: [`assets/testdata/finemap_susie_mini/`](../assets/testdata/finemap_susie_mini/).
 - **Official-style real testdata:** [`assets/testdata/finemap_susie_official/`](../assets/testdata/finemap_susie_official/) from `susieR::N3finemapping` or the susieR vignette simulation recipe (`scripts/make_finemap_susie_official_testdata.R` / `.py`).
-- Can consume OmiGA/tensorQTL `cis_qtl` outputs when `--finemap_susie_sumstats` is unset and those branches ran.
-- **Coloc** (`coloc` / `hyprcoloc`) and other fine-mappers (FINEMAP/CAVIAR/DAP-G) are **follow-ups** — not in this PR.
+- Can consume OmiGA/tensorQTL/QTLtools `cis_qtl` outputs when `--finemap_susie_sumstats` is unset and those branches ran.
+
+### P2 — coloc 模块状态（已建 / 已接入 workflow）
+
+| 模块路径                  | 状态                                                      | Conda / 容器 pin                                                    |
+| ------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------- |
+| `modules/local/coloc/abf` | **已建，已挂入** `qtl_coloc`（`params.run_coloc` 默认关） | `conda-forge::r-coloc=5.2.3` / biocontainers `r-base:4.3.1` + conda |
+
+- Input: QTL + GWAS sumstats with overlapping `snp`/`variant_id`, `beta`, `se` (optional `maf`, `n`). Mini files: [`assets/testdata/coloc_mini/`](../assets/testdata/coloc_mini/).
+- Can consume OmiGA/tensorQTL/QTLtools `cis_qtl` plus GWAS standardized tables when `--coloc_*_sumstats` unset.
+- **hyprcoloc** remains a follow-up.
+
+```bash
+nf-test test modules/local/coloc/abf/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_coloc,docker -stub --outdir results_test_coloc
+```
+
+### P2 — cis postprocess（已建 / 已接入 workflow）
+
+| 模块路径                              | 状态                                                                          | Conda / 容器 pin              |
+| ------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------- |
+| `modules/local/utils/qtl_postprocess` | **已建，已挂入** `qtl_postprocess_cis`（`params.run_qtl_postprocess` 默认关） | biocontainers `python:3.9--1` |
+
+```bash
+nf-test test modules/local/utils/qtl_postprocess/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_postprocess,docker -stub --outdir results_test_postprocess
+```
+
+Other fine-mappers (FINEMAP/CAVIAR/DAP-G) remain follow-ups.
 
 ```bash
 nf-test test modules/local/susie/finemap/tests/main.nf.test --tag stub --profile test,docker

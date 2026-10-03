@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "qtltools_cis"
+description: Run QTLtools cis-QTL mapping (nominal or permutation via ext.args)
+keywords:
+  - qtltools
+  - cis-qtl
+  - eqtl
+  - molqtl
+tools:
+  - "qtltools":
+      description: "QTLtools: a complete tool set for molecular QTL discovery"
+      homepage: "https://qtltools.github.io/qtltools/"
+      documentation: "https://qtltools.github.io/qtltools/"
+      tool_dev_url: "https://github.com/qtltools/qtltools"
+      licence: ["GPL-3.0-or-later"]
+      identifier: biotools:qtltools
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - bed:
+        type: file
+        description: PLINK bed
+        pattern: "*.bed"
+    - bim:
+        type: file
+        description: PLINK bim
+        pattern: "*.bim"
+    - fam:
+        type: file
+        description: PLINK fam
+        pattern: "*.fam"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: FastQTL-style phenotype BED
+        pattern: "*.{bed.gz,bed}"
+  - - meta3:
+        type: map
+        description: Covariate metadata; pass [] when absent
+    - covariates:
+        type: file
+        description: Optional QTLtools covariates (sample × covariate)
+        pattern: "*.{txt,tsv,cov}"
+
+output:
+  cis_qtl:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cis_qtl*.txt.gz":
+        type: file
+        description: Cis-QTL summary statistics
+        pattern: "*.cis_qtl*.txt.gz"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Full QTLtools output directory
+  versions_qtltools:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "qtl_postprocess"
+description: Harmonise cis-QTL tables and add Benjamini-Hochberg q-values
+keywords:
+  - qtl
+  - fdr
+  - postprocess
+tools:
+  - "python":
+      description: "Python interpreter"
+      homepage: "https://www.python.org/"
+      documentation: "https://docs.python.org/3/"
+      licence: ["Python-2.0"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map; optional meta.engine labels the source cis engine
+    - cis_qtl:
+        type: file
+        description: Cis-QTL summary statistics from OmiGA, tensorQTL, or QTLtools
+        pattern: "*.{txt,txt.gz,tsv,tsv.gz}"
+
+output:
+  standardized:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cis_std.tsv":
+        type: file
+        description: Standard cis table with BH q-values
+        pattern: "*.cis_std.tsv"
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "coloc_abf"
+description: Approximate Bayes Factor colocalisation of QTL and GWAS summary statistics
+keywords:
+  - coloc
+  - colocalisation
+  - qtl
+  - gwas
+tools:
+  - "coloc":
+      description: "coloc: genetic colocalisation analysis"
+      homepage: "https://chr1swallace.github.io/coloc/"
+      documentation: "https://chr1swallace.github.io/coloc/"
+      tool_dev_url: "https://github.com/chr1swallace/coloc"
+      licence: ["GPL-2.0-or-later"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - qtl_sumstats:
+        type: file
+        description: QTL summary statistics (snp/variant_id, beta, se; optional maf, n)
+        pattern: "*.{tsv,txt,csv,txt.gz}"
+  - - meta2:
+        type: map
+        description: GWAS metadata
+    - gwas_sumstats:
+        type: file
+        description: GWAS summary statistics (snp/variant_id, beta, se; optional maf, n)
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  summary:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.summary.tsv":
+        type: file
+        description: Coloc posterior probabilities (PP.H0–H4)
+        pattern: "*.summary.tsv"
+  abf:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.abf.tsv":
+        type: file
+        description: Per-SNP coloc ABF results
+        pattern: "*.abf.tsv"
+  log:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.coloc.log":
+        type: file
+        description: Coloc run log
+        pattern: "*.coloc.log"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Coloc output directory
+  versions_coloc:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"
