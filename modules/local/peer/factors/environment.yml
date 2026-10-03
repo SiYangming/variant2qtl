@@ -4,5 +4,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - conda-forge::r-base=4.3.1
+  # bioconda r-peer=1.3 only builds against R 3.3–3.4; r-base 4.x is unsatisfiable.
+  - conda-forge::r-base=3.4.1
   - bioconda::r-peer=1.3
