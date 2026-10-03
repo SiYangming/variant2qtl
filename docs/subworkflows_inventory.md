@@ -84,8 +84,9 @@ nf-core subworkflows install vcf_impute_minimac4
 | `qtl_finemap` / `qtl_finemap_susie` | SuSiE（已实现）/ FINEMAP / CAVIAR / DAP-G                      |
 | `qtl_coloc`                         | coloc.abf（已实现）+ HyPrColoc-style（`params.run_hyprcoloc`） |
 | `qtl_smr`                           | **已实现**；SMR/HEIDI；`params.run_smr` 默认关                 |
-| `qtl_meta_mashr`                    | 多组织 mashr / METAL                                           |
-| `qtl_enrichment`                    | TORUS / 富集（可与 OmiGA 自带富集二选一或串联）                |
+| `qtl_mashr`                         | **已实现**；多组织 mashr；`params.run_mashr` 默认关            |
+| `qtl_metal`                         | **已实现**；IVW meta；`params.run_metal` 默认关                |
+| `qtl_torus`                         | **已实现**；富集先验；`params.run_torus` 默认关                |
 
 ### P2b — GWAS 基准并行（已实现）
 
@@ -113,7 +114,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：mashr/METAL、TWAS，或 P3 编排层（SV/STR）。
+## 建议下一步：TWAS，或 P3 编排层（SV/STR）。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

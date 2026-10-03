@@ -259,6 +259,48 @@ nf-test test modules/local/smr/heidi/tests/main.nf.test --tag stub --profile tes
 nextflow run . -profile test_smr,docker -stub --outdir results_test_smr
 ```
 
+### P2 — mashr（已建 / 已接入 workflow）
+
+| 模块路径                  | 状态                                                      | Conda / 容器 pin                                        |
+| ------------------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| `modules/local/mashr/fit` | **已建，已挂入** `qtl_mashr`（`params.run_mashr` 默认关） | conda-forge `r-mashr=0.2.79` / `r-base:4.3.1` stub 容器 |
+
+- Long-format `snp/condition/beta/se`; canonical mash covariances. No biocontainers mashr image — Docker stub uses r-base like coloc.
+- Mini testdata: [`assets/testdata/mashr_mini/`](../assets/testdata/mashr_mini/).
+
+```bash
+nf-test test modules/local/mashr/fit/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_mashr,docker -stub --outdir results_test_mashr
+```
+
+### P2 — METAL（已建 / 已接入 workflow）
+
+| 模块路径                  | 状态                                                      | Conda / 容器 pin              |
+| ------------------------- | --------------------------------------------------------- | ----------------------------- |
+| `modules/local/metal/ivw` | **已建，已挂入** `qtl_metal`（`params.run_metal` 默认关） | biocontainers `python:3.9--1` |
+
+- Official METAL is not on bioconda. Inverse-variance weighted meta + Cochran Q on `snp/cohort/beta/se`.
+- Mini testdata: [`assets/testdata/metal_mini/`](../assets/testdata/metal_mini/).
+
+```bash
+nf-test test modules/local/metal/ivw/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_metal,docker -stub --outdir results_test_metal
+```
+
+### P2 — TORUS（已建 / 已接入 workflow）
+
+| 模块路径                     | 状态                                                      | Conda / 容器 pin              |
+| ---------------------------- | --------------------------------------------------------- | ----------------------------- |
+| `modules/local/torus/enrich` | **已建，已挂入** `qtl_torus`（`params.run_torus` 默认关） | biocontainers `python:3.9--1` |
+
+- Official TORUS is not on bioconda. Logistic enrichment of `|z|>=2` vs annotation columns; writes per-SNP prior.
+- Mini testdata: [`assets/testdata/torus_mini/`](../assets/testdata/torus_mini/).
+
+```bash
+nf-test test modules/local/torus/enrich/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_torus,docker -stub --outdir results_test_torus
+```
+
 ### P2 — cis postprocess（已建 / 已接入 workflow）
 
 | 模块路径                              | 状态                                                                          | Conda / 容器 pin              |

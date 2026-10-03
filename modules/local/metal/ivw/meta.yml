@@ -1,0 +1,49 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "metal_ivw"
+description: Inverse-variance meta-analysis of multi-cohort QTL/GWAS sumstats
+keywords:
+  - metal
+  - meta
+  - qtl
+  - gwas
+tools:
+  - "python":
+      description: "Inverse-variance weighted meta when official METAL is absent from bioconda"
+      homepage: "https://genome.sph.umich.edu/wiki/METAL_Documentation"
+      documentation: "https://genome.sph.umich.edu/wiki/METAL_Documentation"
+      licence: ["MIT"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - cohorts:
+        type: file
+        description: Long-format cohort sumstats (snp, cohort, beta, se)
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  metal:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.metal.tsv":
+        type: file
+        description: Inverse-variance meta beta, se, p, and heterogeneity
+        pattern: "*.metal.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "mashr_fit"
+description: Multi-condition mashr shrinkage of QTL effect sizes
+keywords:
+  - mashr
+  - qtl
+  - meta
+  - shrinkage
+tools:
+  - "mashr":
+      description: "Multivariate adaptive shrinkage (mash) for multi-condition QTL effects"
+      homepage: "https://github.com/stephenslab/mashr"
+      documentation: "https://stephenslab.github.io/mashr/"
+      licence: ["BSD-3-Clause"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - effects:
+        type: file
+        description: Long-format effects (snp, condition, beta, se)
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  mash:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.mash.tsv":
+        type: file
+        description: Posterior mean, sd, and LFSR per SNP and condition
+        pattern: "*.mash.tsv"
+  lfsr:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.lfsr.tsv":
+        type: file
+        description: LFSR matrix (SNPs x conditions)
+        pattern: "*.lfsr.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_mashr:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

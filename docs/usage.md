@@ -107,6 +107,21 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `smr_qtl_sumstats` / `smr_gwas_sumstats` — else cis QTL + GWAS standardised tables
 - Summary-stat SMR and HEIDI (Zhu et al. 2016); official SMR binary is not on bioconda
 
+**mashr**
+
+- `mashr_sumstats` — long `snp/condition/beta/se`
+- conda-forge `r-mashr=0.2.79`; Docker stub uses r-base (no biocontainers mashr image)
+
+**METAL IVW**
+
+- `metal_sumstats` — long `snp/cohort/beta/se`
+- Inverse-variance meta + Cochran Q; official METAL is not on bioconda
+
+**TORUS enrichment**
+
+- `torus_annot` — `snp`, `z`, plus annotation columns
+- Logistic `|z|>=2` enrichment prior; official TORUS is not on bioconda
+
 **LeafCutter sQTL**
 
 - `sqtl_counts` — LeafCutter perind `count/total`; `sqtl_genes` optional gene BED
@@ -151,8 +166,9 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 13. **LeafCutter sQTL BED**: `--run_sqtl_leafcutter --sqtl_counts assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv --sqtl_genes assets/testdata/sqtl_leafcutter_mini/genes.bed`
 14. **HyPrColoc-style clustering**: `--run_hyprcoloc --hyprcoloc_sumstats assets/testdata/hyprcoloc_mini/traits.tsv`
 15. **SMR/HEIDI from mini sumstats**: `--run_smr --smr_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --smr_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
-16. **Phenotype matrix → FastQTL BED**: `--run_phenotype_prepare --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
-17. **PEER factors from a BED**: `--run_peer --peer_phenotype assets/testdata/peer_mini/phenotype.bed --peer_nk 2`
+16. **mashr from mini effects**: `--run_mashr --mashr_sumstats assets/testdata/mashr_mini/effects.tsv`
+17. **METAL from mini cohorts**: `--run_metal --metal_sumstats assets/testdata/metal_mini/cohorts.tsv`
+18. **TORUS from mini annotations**: `--run_torus --torus_annot assets/testdata/torus_mini/annot.tsv`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA/tensorQTL mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
@@ -262,6 +278,24 @@ nextflow run . -profile test_hyprcoloc,docker -stub --outdir results_test_hyprco
 
 ```bash
 nextflow run . -profile test_smr,docker -stub --outdir results_test_smr
+```
+
+### Example: `test_mashr` profile
+
+```bash
+nextflow run . -profile test_mashr,docker -stub --outdir results_test_mashr
+```
+
+### Example: `test_metal` profile
+
+```bash
+nextflow run . -profile test_metal,docker -stub --outdir results_test_metal
+```
+
+### Example: `test_torus` profile
+
+```bash
+nextflow run . -profile test_torus,docker -stub --outdir results_test_torus
 ```
 
 The existing `-profile test,docker` FASTQC-only path is unchanged.
@@ -410,6 +444,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_sqtl`
 - `test_hyprcoloc`
 - `test_smr`
+- `test_mashr`
+- `test_metal`
+- `test_torus`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)
