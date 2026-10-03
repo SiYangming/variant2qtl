@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "QTL_TWAS"
+description: FUSION/PrediXcan-style TWAS from gene weights and GWAS sumstats
+components:
+  - TWAS_FUSION
+input:
+  - ch_weights
+  - ch_gwas
+output:
+  - twas
+  - outdir
+  - versions
+authors:
+  - "@SiYangming"

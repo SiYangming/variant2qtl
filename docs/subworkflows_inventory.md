@@ -79,14 +79,16 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P2 — 精细定位 / 共定位 / 富集
 
-| 建议名                              | 职责                                                           |
-| ----------------------------------- | -------------------------------------------------------------- |
-| `qtl_finemap` / `qtl_finemap_susie` | SuSiE（已实现）/ FINEMAP / CAVIAR / DAP-G                      |
-| `qtl_coloc`                         | coloc.abf（已实现）+ HyPrColoc-style（`params.run_hyprcoloc`） |
-| `qtl_smr`                           | **已实现**；SMR/HEIDI；`params.run_smr` 默认关                 |
-| `qtl_mashr`                         | **已实现**；多组织 mashr；`params.run_mashr` 默认关            |
-| `qtl_metal`                         | **已实现**；IVW meta；`params.run_metal` 默认关                |
-| `qtl_torus`                         | **已实现**；富集先验；`params.run_torus` 默认关                |
+| 建议名                              | 职责                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------ |
+| `qtl_finemap` / `qtl_finemap_susie` | SuSiE（已实现）+ FINEMAP/CAVIAR/DAP-G（`params.run_finemap_extra`）      |
+| `qtl_coloc`                         | coloc.abf（已实现）+ HyPrColoc-style（`params.run_hyprcoloc`）           |
+| `qtl_smr`                           | **已实现**；SMR/HEIDI；`params.run_smr` 默认关                           |
+| `qtl_mashr`                         | **已实现**；多组织 mashr；`params.run_mashr` 默认关                      |
+| `qtl_metal`                         | **已实现**；IVW meta；`params.run_metal` 默认关                          |
+| `qtl_torus`                         | **已实现**；富集先验；`params.run_torus` 默认关                          |
+| `qtl_twas`                          | **已实现**；FUSION 风格 TWAS；`params.run_twas` 默认关                   |
+| `qtl_finemap_extra`                 | **已实现**；FINEMAP/CAVIAR/DAP-G PIPs；`params.run_finemap_extra` 默认关 |
 
 ### P2b — GWAS 基准并行（已实现）
 
@@ -100,12 +102,12 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P3 — 编排层（pipeline 级）
 
-| 建议名                                           | 职责                                                   |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| `variant2qtl_snp_indel`                          | SNP/Indel 主路径：ingest → QC → annotate → map         |
-| `variant2qtl_sv`                                 | SV 路径（manta/delly/smoove 已装 module，缺编排）      |
-| `variant2qtl_str`                                | STR 路径（hipstr/gangstr/EH/trgt 已装 module，缺编排） |
-| `variant2qtl_eqtl` / `_sqtl` / `_pqtl` / `_gqtl` | 按 QTL 模态挂表型 + 引擎                               |
+| 建议名                                           | 职责                                                          |
+| ------------------------------------------------ | ------------------------------------------------------------- |
+| `variant2qtl_snp_indel`                          | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis |
+| `variant_sv`                                     | **已实现**；smoove/manta/delly；`params.run_sv` 默认关        |
+| `variant_str`                                    | **已实现**；EH/GangSTR/HipSTR/TRGT；`params.run_str` 默认关   |
+| `variant2qtl_eqtl` / `_sqtl` / `_pqtl` / `_gqtl` | 按 QTL 模态挂表型 + 引擎（仍可选）                            |
 
 ---
 
@@ -114,7 +116,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：TWAS，或 P3 编排层（SV/STR）。
+## 建议下一步：按 QTL 模态编排（eQTL/sQTL/pQTL），或 LDSC / PrediXcan 官方权重。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

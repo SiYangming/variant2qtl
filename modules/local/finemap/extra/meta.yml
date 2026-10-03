@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "finemap_extra"
+description: FINEMAP/CAVIAR/DAP-G style 1-causal PIPs from sumstats
+keywords:
+  - finemap
+  - caviar
+  - dap-g
+  - qtl
+tools:
+  - "python":
+      description: "Wakefield ABF PIPs for FINEMAP/CAVIAR/DAP-G when official binaries are not pinned"
+      homepage: "http://www.christianbenner.com/"
+      documentation: "http://www.christianbenner.com/"
+      licence: ["MIT"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - sumstats:
+        type: file
+        description: Association sumstats (variant_id, beta, se or z)
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  pip:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.pip.tsv":
+        type: file
+        description: Per-SNP Bayes factor and PIP
+        pattern: "*.pip.tsv"
+  credible_sets:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cs.tsv":
+        type: file
+        description: 95 percent credible set
+        pattern: "*.cs.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,34 @@
+nextflow_pipeline {
+
+    name "Test pipeline twas path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "twas"
+    tag "stub"
+
+    test("-profile test_twas path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_twas = true
+                twas_weights = "${projectDir}/assets/testdata/twas_mini/weights.tsv"
+                twas_gwas = "${projectDir}/assets/testdata/twas_mini/gwas.tsv"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/qtl_twas/twas_fusion").exists() }
+            )
+        }
+    }
+}

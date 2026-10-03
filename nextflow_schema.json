@@ -847,6 +847,230 @@
                 }
             }
         },
+        "twas_options": {
+            "title": "TWAS options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Optional FUSION/PrediXcan-style TWAS. Disabled by default.",
+            "properties": {
+                "run_twas": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run gene-level TWAS from QTL weights and GWAS z. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Independent-SNP FUSION-style score. Prefers --twas_weights and --twas_gwas, or GWAS standardised tables."
+                },
+                "twas_id": {
+                    "type": "string",
+                    "default": "twas",
+                    "description": "Sample meta.id for TWAS.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "twas_weights": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Gene SNP weights (gene, snp, weight).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "twas_gwas": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "GWAS sumstats (snp, beta, se or z).",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "finemap_extra_options": {
+            "title": "FINEMAP / CAVIAR / DAP-G options",
+            "type": "object",
+            "fa_icon": "fas fa-bullseye",
+            "description": "Optional FINEMAP/CAVIAR/DAP-G style PIPs. Disabled by default.",
+            "properties": {
+                "run_finemap_extra": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run FINEMAP/CAVIAR/DAP-G style 1-causal PIPs. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "finemap_extra_id": {
+                    "type": "string",
+                    "default": "finemap_extra",
+                    "description": "Sample meta.id for extra fine-mapping.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "finemap_extra_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Association sumstats (variant_id, beta, se or z).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "finemap_extra_method": {
+                    "type": "string",
+                    "default": "finemap",
+                    "enum": ["finemap", "caviar", "dapg"],
+                    "description": "PIP method: finemap, caviar, or dapg.",
+                    "fa_icon": "fas fa-sliders-h"
+                }
+            }
+        },
+        "snp_indel_options": {
+            "title": "SNP/Indel umbrella options",
+            "type": "object",
+            "fa_icon": "fas fa-route",
+            "description": "Optional ingest + QC + OmiGA cis in one switch. Disabled by default.",
+            "properties": {
+                "run_snp_indel": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run genotype ingest (if needed), QC, and OmiGA cis. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Convenience flag for the SNP/Indel map path. Uses --genotype_input like test_omiga."
+                }
+            }
+        },
+        "sv_options": {
+            "title": "SV calling options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "Optional germline SV calling. Disabled by default.",
+            "properties": {
+                "run_sv": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run smoove/manta/delly SV calling. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "sv_id": {
+                    "type": "string",
+                    "default": "sv",
+                    "description": "Sample meta.id for SV.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "sv_engines": {
+                    "type": "string",
+                    "default": "smoove",
+                    "description": "Comma-separated SV engines: smoove, manta, delly.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "sv_bam": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BAM/CRAM for SV calling.",
+                    "fa_icon": "fas fa-file"
+                },
+                "sv_bam_index": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BAM/CRAM index.",
+                    "fa_icon": "fas fa-file"
+                },
+                "sv_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Reference FASTA.",
+                    "fa_icon": "fas fa-file"
+                },
+                "sv_fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Reference FASTA index.",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
+        "str_options": {
+            "title": "STR genotyping options",
+            "type": "object",
+            "fa_icon": "fas fa-ellipsis-h",
+            "description": "Optional STR genotyping. Disabled by default.",
+            "properties": {
+                "run_str": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run ExpansionHunter/GangSTR/HipSTR/TRGT. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "str_id": {
+                    "type": "string",
+                    "default": "str",
+                    "description": "Sample meta.id for STR.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "str_engines": {
+                    "type": "string",
+                    "default": "expansionhunter",
+                    "description": "Comma-separated STR engines: expansionhunter, gangstr, hipstr, trgt.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "str_bam": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BAM/CRAM for STR genotyping.",
+                    "fa_icon": "fas fa-file"
+                },
+                "str_bam_index": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BAM/CRAM index.",
+                    "fa_icon": "fas fa-file"
+                },
+                "str_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Reference FASTA.",
+                    "fa_icon": "fas fa-file"
+                },
+                "str_fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Reference FASTA index.",
+                    "fa_icon": "fas fa-file"
+                },
+                "str_catalog": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "ExpansionHunter variant catalog JSON.",
+                    "fa_icon": "fas fa-file"
+                },
+                "str_regions": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "GangSTR regions BED.",
+                    "fa_icon": "fas fa-file"
+                },
+                "str_repeats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "TRGT repeats file.",
+                    "fa_icon": "fas fa-file"
+                },
+                "str_hipstr_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "HipSTR regions BED.",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -1084,6 +1308,21 @@
         },
         {
             "$ref": "#/$defs/torus_options"
+        },
+        {
+            "$ref": "#/$defs/twas_options"
+        },
+        {
+            "$ref": "#/$defs/finemap_extra_options"
+        },
+        {
+            "$ref": "#/$defs/snp_indel_options"
+        },
+        {
+            "$ref": "#/$defs/sv_options"
+        },
+        {
+            "$ref": "#/$defs/str_options"
         },
         {
             "$ref": "#/$defs/reference_genome_options"

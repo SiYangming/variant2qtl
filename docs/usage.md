@@ -122,6 +122,21 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `torus_annot` — `snp`, `z`, plus annotation columns
 - Logistic `|z|>=2` enrichment prior; official TORUS is not on bioconda
 
+**TWAS**
+
+- `twas_weights` — `gene/snp/weight`; `twas_gwas` — `snp/beta/se` or `z` (else GWAS standardised tables)
+- Independent-SNP FUSION/PrediXcan-style gene z
+
+**FINEMAP / CAVIAR / DAP-G**
+
+- `finemap_extra_sumstats` and `finemap_extra_method` (`finemap`/`caviar`/`dapg`); 1-causal PIPs (identity LD)
+
+**SNP/Indel umbrella / SV / STR**
+
+- `run_snp_indel` — ingest (if needed) + QC + OmiGA cis from `--genotype_input`
+- `run_sv` — `--sv_bam` + fasta; engines `smoove,manta,delly`
+- `run_str` — BAM + fasta + catalog/regions; engines `expansionhunter,gangstr,hipstr,trgt`
+
 **LeafCutter sQTL**
 
 - `sqtl_counts` — LeafCutter perind `count/total`; `sqtl_genes` optional gene BED
@@ -169,6 +184,11 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 16. **mashr from mini effects**: `--run_mashr --mashr_sumstats assets/testdata/mashr_mini/effects.tsv`
 17. **METAL from mini cohorts**: `--run_metal --metal_sumstats assets/testdata/metal_mini/cohorts.tsv`
 18. **TORUS from mini annotations**: `--run_torus --torus_annot assets/testdata/torus_mini/annot.tsv`
+19. **TWAS from mini weights**: `--run_twas --twas_weights assets/testdata/twas_mini/weights.tsv --twas_gwas assets/testdata/twas_mini/gwas.tsv`
+20. **FINEMAP/CAVIAR/DAP-G PIPs**: `--run_finemap_extra --finemap_extra_sumstats assets/testdata/finemap_susie_mini/sumstats.tsv --finemap_extra_method finemap`
+21. **SNP/Indel umbrella**: `--run_snp_indel --genotype_input assets/genotype_samplesheet_omiga.csv`
+22. **SV smoove**: `--run_sv --sv_bam assets/testdata/sv_mini/sample.bam --sv_bam_index assets/testdata/sv_mini/sample.bam.bai --sv_fasta assets/testdata/sv_mini/ref.fa --sv_fasta_fai assets/testdata/sv_mini/ref.fa.fai`
+23. **STR ExpansionHunter**: `--run_str --str_bam assets/testdata/str_mini/sample.bam --str_bam_index assets/testdata/str_mini/sample.bam.bai --str_fasta assets/testdata/str_mini/ref.fa --str_fasta_fai assets/testdata/str_mini/ref.fa.fai --str_catalog assets/testdata/str_mini/catalog.json`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA/tensorQTL mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
@@ -296,6 +316,16 @@ nextflow run . -profile test_metal,docker -stub --outdir results_test_metal
 
 ```bash
 nextflow run . -profile test_torus,docker -stub --outdir results_test_torus
+```
+
+### Example: `test_twas` / `test_finemap_extra` / `test_sv` / `test_str` / `test_snp_indel`
+
+```bash
+nextflow run . -profile test_twas,docker -stub --outdir results_test_twas
+nextflow run . -profile test_finemap_extra,docker -stub --outdir results_test_finemap_extra
+nextflow run . -profile test_sv,docker -stub --outdir results_test_sv
+nextflow run . -profile test_str,docker -stub --outdir results_test_str
+nextflow run . -profile test_snp_indel,docker -stub --outdir results_test_snp_indel
 ```
 
 The existing `-profile test,docker` FASTQC-only path is unchanged.
@@ -447,6 +477,11 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_mashr`
 - `test_metal`
 - `test_torus`
+- `test_twas`
+- `test_finemap_extra`
+- `test_sv`
+- `test_str`
+- `test_snp_indel`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)

@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local **mashr** (`modules/local/mashr/fit`, `qtl_mashr`) behind `params.run_mashr` (default OFF); conda-forge `r-mashr=0.2.79` / r-base stub container; profile `test_mashr` + stub nf-test.
 - Local **METAL-style IVW** (`modules/local/metal/ivw`, `qtl_metal`) behind `params.run_metal` (default OFF); official METAL is not on bioconda; profile `test_metal` + stub nf-test.
 - Local **TORUS-style enrichment** (`modules/local/torus/enrich`, `qtl_torus`) behind `params.run_torus` (default OFF); official TORUS is not on bioconda; profile `test_torus` + stub nf-test.
+- Local **TWAS** (`modules/local/twas/fusion`, `qtl_twas`) behind `params.run_twas` (default OFF); FUSION/PrediXcan-style independent-SNP gene score; profile `test_twas` + stub nf-test.
+- Extra fine-mapping (`modules/local/finemap/extra`) behind `params.run_finemap_extra` (default OFF); FINEMAP/CAVIAR/DAP-G style 1-causal PIPs; profile `test_finemap_extra` + stub nf-test.
+- P3 **SNP/Indel umbrella** `params.run_snp_indel` (default OFF) runs ingest (if needed) + QC + OmiGA cis; profile `test_snp_indel`.
+- P3 **SV** (`variant_sv`) behind `params.run_sv` (default OFF); nf-core smoove/manta/delly; profile `test_sv`.
+- P3 **STR** (`variant_str`) behind `params.run_str` (default OFF); nf-core ExpansionHunter/GangSTR/HipSTR/TRGT; profile `test_str`.
 
 ### `Fixed`
 
