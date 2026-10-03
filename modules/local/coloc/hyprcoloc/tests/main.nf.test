@@ -1,0 +1,37 @@
+nextflow_process {
+
+    name "Test Process HYPRCOLOC"
+    script "../main.nf"
+    process "HYPRCOLOC"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "coloc"
+    tag "coloc/hyprcoloc"
+
+    test("hyprcoloc_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'hyprcoloc_mini' ],
+                    file("${projectDir}/assets/testdata/hyprcoloc_mini/traits.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.clusters.size() == 1 },
+                { assert process.out.pairs.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

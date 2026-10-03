@@ -100,7 +100,18 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 - `coloc_qtl_sumstats` / `coloc_gwas_sumstats` — `snp`/`variant_id`, `beta`, `se` (optional `maf`, `n`)
 - When unset, reuses cis QTL outputs and GWAS `assoc_standardize` tables if those branches ran
-- `coloc.abf` only; hyprcoloc is not wired
+- `coloc.abf` pairwise; HyPrColoc-style clustering via `--run_hyprcoloc --hyprcoloc_sumstats` (long `snp/trait/beta/se`; official r-hyprcoloc is not on bioconda)
+
+**SMR / HEIDI**
+
+- `smr_qtl_sumstats` / `smr_gwas_sumstats` — else cis QTL + GWAS standardised tables
+- Summary-stat SMR and HEIDI (Zhu et al. 2016); official SMR binary is not on bioconda
+
+**LeafCutter sQTL**
+
+- `sqtl_counts` — LeafCutter perind `count/total`; `sqtl_genes` optional gene BED
+- Writes FastQTL BED + `phenotype_group`; feeds cis engines like phenotype_prepare
+- Cluster BAM junctions with nf-core `leafcutter/clusterregtools` upstream if needed
 
 **cis-QTL postprocess**
 
@@ -137,6 +148,11 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 10. **cis postprocess from a table**: `--run_qtl_postprocess --qtl_postprocess_input assets/testdata/qtl_postprocess_mini/cis_qtl.tsv`
 11. **Phenotype matrix → FastQTL BED**: `--run_phenotype_prepare --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
 12. **PEER factors from a BED**: `--run_peer --peer_phenotype assets/testdata/peer_mini/phenotype.bed --peer_nk 2`
+13. **LeafCutter sQTL BED**: `--run_sqtl_leafcutter --sqtl_counts assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv --sqtl_genes assets/testdata/sqtl_leafcutter_mini/genes.bed`
+14. **HyPrColoc-style clustering**: `--run_hyprcoloc --hyprcoloc_sumstats assets/testdata/hyprcoloc_mini/traits.tsv`
+15. **SMR/HEIDI from mini sumstats**: `--run_smr --smr_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --smr_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
+16. **Phenotype matrix → FastQTL BED**: `--run_phenotype_prepare --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
+17. **PEER factors from a BED**: `--run_peer --peer_phenotype assets/testdata/peer_mini/phenotype.bed --peer_nk 2`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA/tensorQTL mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
@@ -228,6 +244,24 @@ Smoke-tests **PEER** factors from a mini FastQTL BED:
 
 ```bash
 nextflow run . -profile test_peer,docker -stub --outdir results_test_peer
+```
+
+### Example: `test_sqtl` profile
+
+```bash
+nextflow run . -profile test_sqtl,docker -stub --outdir results_test_sqtl
+```
+
+### Example: `test_hyprcoloc` profile
+
+```bash
+nextflow run . -profile test_hyprcoloc,docker -stub --outdir results_test_hyprcoloc
+```
+
+### Example: `test_smr` profile
+
+```bash
+nextflow run . -profile test_smr,docker -stub --outdir results_test_smr
 ```
 
 The existing `-profile test,docker` FASTQC-only path is unchanged.
@@ -373,6 +407,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_postprocess`
 - `test_pheno`
 - `test_peer`
+- `test_sqtl`
+- `test_hyprcoloc`
+- `test_smr`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)

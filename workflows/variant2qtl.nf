@@ -21,6 +21,9 @@ include { QTL_COLOC                 } from '../subworkflows/local/qtl_coloc/main
 include { QTL_POSTPROCESS_CIS       } from '../subworkflows/local/qtl_postprocess_cis/main'
 include { PHENOTYPE_PREPARE_SWF     } from '../subworkflows/local/phenotype_prepare/main'
 include { COVARIATE_PEER            } from '../subworkflows/local/covariate_peer/main'
+include { SQTL_LEAFCUTTER           } from '../subworkflows/local/sqtl_leafcutter/main'
+include { QTL_HYPRCOLOC             } from '../subworkflows/local/qtl_hyprcoloc/main'
+include { QTL_SMR                   } from '../subworkflows/local/qtl_smr/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,6 +255,24 @@ workflow VARIANT2QTL {
             PHENOTYPE_PREPARE_SWF(ch_pheno_matrix, ch_pheno_genes, ch_pheno_samples)
             ch_versions = ch_versions.mix(PHENOTYPE_PREPARE_SWF.out.versions)
             ch_prepared_pheno = PHENOTYPE_PREPARE_SWF.out.bed
+        }
+    }
+
+    //
+    // Optional LeafCutter sQTL phenotype (default OFF)
+    //
+    if (params.run_sqtl_leafcutter) {
+        def sqtl_meta = [id: params.sqtl_id ?: 'sqtl_leafcutter']
+        if (!params.sqtl_counts) {
+            log.warn "run_sqtl_leafcutter=true but missing --sqtl_counts."
+        } else {
+            def ch_sqtl_counts = channel.of([sqtl_meta, file(params.sqtl_counts, checkIfExists: true)])
+            def ch_sqtl_genes = params.sqtl_genes
+                ? channel.of([sqtl_meta, file(params.sqtl_genes, checkIfExists: true)])
+                : channel.empty()
+            SQTL_LEAFCUTTER(ch_sqtl_counts, ch_sqtl_genes)
+            ch_versions = ch_versions.mix(SQTL_LEAFCUTTER.out.versions)
+            ch_prepared_pheno = ch_prepared_pheno.mix(SQTL_LEAFCUTTER.out.bed)
         }
     }
 
@@ -601,6 +622,42 @@ workflow VARIANT2QTL {
 
         QTL_COLOC(ch_coloc_qtl, ch_coloc_gwas)
         ch_versions = ch_versions.mix(QTL_COLOC.out.versions)
+    }
+
+    //
+    // Optional HyPrColoc-style multi-trait clustering (default OFF)
+    //
+    if (params.run_hyprcoloc) {
+        def hypr_meta = [id: params.hyprcoloc_id ?: 'hyprcoloc']
+        if (!params.hyprcoloc_sumstats) {
+            log.warn "run_hyprcoloc=true but missing --hyprcoloc_sumstats."
+        } else {
+            QTL_HYPRCOLOC(
+                channel.of([hypr_meta, file(params.hyprcoloc_sumstats, checkIfExists: true)])
+            )
+            ch_versions = ch_versions.mix(QTL_HYPRCOLOC.out.versions)
+        }
+    }
+
+    //
+    // Optional SMR / HEIDI (default OFF)
+    //
+    if (params.run_smr) {
+        def smr_meta = [id: params.smr_id ?: 'smr']
+        def ch_smr_qtl = params.smr_qtl_sumstats
+            ? channel.of([smr_meta, file(params.smr_qtl_sumstats, checkIfExists: true)])
+            : ch_qtl_cis_for_finemap
+        def ch_smr_gwas = params.smr_gwas_sumstats
+            ? channel.of([smr_meta, file(params.smr_gwas_sumstats, checkIfExists: true)])
+            : ch_gwas_std
+        if (!params.smr_qtl_sumstats && !params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+            log.warn "run_smr=true but missing --smr_qtl_sumstats (and no cis QTL engine outputs)."
+        }
+        if (!params.smr_gwas_sumstats && !params.run_gwas_benchmark) {
+            log.warn "run_smr=true but missing --smr_gwas_sumstats (and no GWAS standardized tables)."
+        }
+        QTL_SMR(ch_smr_qtl, ch_smr_gwas)
+        ch_versions = ch_versions.mix(QTL_SMR.out.versions)
     }
 
     //
