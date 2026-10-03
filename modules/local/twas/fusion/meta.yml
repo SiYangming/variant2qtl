@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "twas_fusion"
+description: FUSION/PrediXcan-style TWAS from gene weights and GWAS z-scores
+keywords:
+  - twas
+  - fusion
+  - predixcan
+  - gwas
+tools:
+  - "python":
+      description: "Independent-SNP TWAS when official FUSION/PrediXcan is not pinned"
+      homepage: "http://gusevlab.org/projects/fusion/"
+      documentation: "http://gusevlab.org/projects/fusion/"
+      licence: ["MIT"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - weights:
+        type: file
+        description: Gene SNP weights (gene, snp, weight)
+        pattern: "*.{tsv,txt,csv}"
+  - - meta2:
+        type: map
+        description: GWAS metadata
+    - gwas:
+        type: file
+        description: GWAS sumstats (snp, beta, se or z)
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  twas:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.twas.tsv":
+        type: file
+        description: Gene-level TWAS z and p
+        pattern: "*.twas.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

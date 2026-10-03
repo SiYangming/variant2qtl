@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process FINEMAP_EXTRA"
+    script "../main.nf"
+    process "FINEMAP_EXTRA"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "finemap"
+    tag "finemap/extra"
+
+    test("finemap_susie_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'finemap_extra_mini' ],
+                    file("${projectDir}/assets/testdata/finemap_susie_mini/sumstats.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.pip.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

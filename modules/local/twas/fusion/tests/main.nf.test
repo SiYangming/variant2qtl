@@ -1,0 +1,40 @@
+nextflow_process {
+
+    name "Test Process TWAS_FUSION"
+    script "../main.nf"
+    process "TWAS_FUSION"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "twas"
+    tag "twas/fusion"
+
+    test("twas_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'twas_mini' ],
+                    file("${projectDir}/assets/testdata/twas_mini/weights.tsv", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'twas_mini' ],
+                    file("${projectDir}/assets/testdata/twas_mini/gwas.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.twas.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

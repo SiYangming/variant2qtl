@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "QTL_FINEMAP_EXTRA"
+description: FINEMAP/CAVIAR/DAP-G style PIPs from association sumstats
+components:
+  - FINEMAP_EXTRA
+input:
+  - ch_sumstats
+output:
+  - pip
+  - credible_sets
+  - outdir
+  - versions
+authors:
+  - "@SiYangming"

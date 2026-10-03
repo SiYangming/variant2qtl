@@ -1,0 +1,5 @@
+gene	snp	weight
+GENE_A	rs1	0.40
+GENE_A	rs2	0.20
+GENE_B	rs3	0.50
+GENE_B	rs1	-0.10

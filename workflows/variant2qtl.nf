@@ -27,6 +27,10 @@ include { QTL_SMR                   } from '../subworkflows/local/qtl_smr/main'
 include { QTL_MASHR                 } from '../subworkflows/local/qtl_mashr/main'
 include { QTL_METAL                 } from '../subworkflows/local/qtl_metal/main'
 include { QTL_TORUS                 } from '../subworkflows/local/qtl_torus/main'
+include { QTL_TWAS                  } from '../subworkflows/local/qtl_twas/main'
+include { QTL_FINEMAP_EXTRA         } from '../subworkflows/local/qtl_finemap_extra/main'
+include { VARIANT_SV                } from '../subworkflows/local/variant_sv/main'
+include { VARIANT_STR               } from '../subworkflows/local/variant_str/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,6 +51,10 @@ workflow VARIANT2QTL {
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
+    def run_snp_indel = params.run_snp_indel
+    def run_ingest = params.run_genotype_ingest || run_snp_indel
+    def run_qc = params.run_genotype_qc || run_snp_indel
+    def run_omiga = params.run_omiga_cis || run_snp_indel
     //
     // MODULE: Run FastQC
     //
@@ -72,7 +80,7 @@ workflow VARIANT2QTL {
     def ch_peer_cov_omiga = channel.empty()
     def ch_peer_cov_tensor = channel.empty()
 
-    if (params.run_genotype_ingest || params.run_genotype_qc || params.run_gwas_benchmark || params.genotype_input) {
+    if (run_ingest || run_qc || params.run_gwas_benchmark || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
         def ch_gwas_vcf = channel.empty()
         def ch_gwas_pheno = channel.empty()
@@ -170,9 +178,9 @@ workflow VARIANT2QTL {
         } else {
             def gwas_meta = [id: params.gwas_benchmark_id ?: 'gwas_benchmark']
 
-            if (params.run_genotype_ingest) {
+            if (run_ingest) {
                 if (!params.genotype_ingest_vcf) {
-                    log.warn "run_genotype_ingest=true but missing --genotype_ingest_vcf; channels empty."
+                    log.warn "run_genotype_ingest/run_snp_indel=true but missing --genotype_ingest_vcf; channels empty."
                 } else {
                     def ch_ingest_vcf = channel.of([
                         gwas_meta,
@@ -197,7 +205,7 @@ workflow VARIANT2QTL {
                     ? channel.of([gwas_meta, file(params.gwas_benchmark_vcf, checkIfExists: true)])
                     : channel.empty()
 
-                if ((params.run_genotype_qc || params.run_gwas_benchmark) &&
+                if ((run_qc || params.run_gwas_benchmark) &&
                     (!params.gwas_benchmark_bed || !params.gwas_benchmark_bim || !params.gwas_benchmark_fam)) {
                     log.warn "genotype_qc/gwas_benchmark enabled but missing --gwas_benchmark_bed/bim/fam; channels empty."
                 }
@@ -213,7 +221,7 @@ workflow VARIANT2QTL {
         }
 
         def ch_gwas_plink = ch_gwas_plink_raw
-        if (params.run_genotype_qc) {
+        if (run_qc) {
             GENOTYPE_QC(ch_gwas_plink_raw)
             ch_versions = ch_versions.mix(GENOTYPE_QC.out.versions)
             ch_gwas_plink = GENOTYPE_QC.out.bed
@@ -305,7 +313,7 @@ workflow VARIANT2QTL {
     // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
     // Legacy: --omiga_cis_bed/bim/fam + --omiga_cis_phenotype, or --omiga_cis_use_qc_bed.
     //
-    if (params.run_omiga_cis) {
+    if (run_omiga) {
         def omiga_meta = [id: params.omiga_cis_id ?: 'omiga_cis']
         def ch_omiga_plink = channel.empty()
         def ch_omiga_pheno = channel.empty()
@@ -313,11 +321,11 @@ workflow VARIANT2QTL {
         def ch_omiga_vcf = channel.empty()
 
         if (params.genotype_input) {
-            if (params.omiga_cis_use_qc_bed) {
-                if (params.run_genotype_qc) {
+            if (params.omiga_cis_use_qc_bed || run_snp_indel) {
+                if (run_qc) {
                     ch_omiga_plink = ch_shared_qc_bed
                 } else {
-                    log.warn "omiga_cis_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
+                    log.warn "omiga_cis_use_qc_bed/run_snp_indel=true but QC did not run; falling back to samplesheet genotype bed."
                     ch_omiga_plink = ch_shared_geno_plink
                 }
             } else {
@@ -413,7 +421,7 @@ workflow VARIANT2QTL {
 
         if (params.genotype_input) {
             if (params.tensorqtl_use_qc_bed) {
-                if (params.run_genotype_qc) {
+                if (run_qc) {
                     ch_tensorqtl_plink = ch_shared_qc_bed
                 } else {
                     log.warn "tensorqtl_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
@@ -497,7 +505,7 @@ workflow VARIANT2QTL {
 
         if (params.genotype_input) {
             if (params.qtltools_use_qc_bed) {
-                if (params.run_genotype_qc) {
+                if (run_qc) {
                     ch_qtltools_plink = ch_shared_qc_bed
                 } else {
                     log.warn "qtltools_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
@@ -585,7 +593,7 @@ workflow VARIANT2QTL {
             ])
         } else {
             ch_finemap_sumstats = ch_qtl_cis_for_finemap
-            if (!params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+            if (!run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
                 log.warn "run_finemap_susie=true but missing --finemap_susie_sumstats (and no cis QTL engine outputs)."
             }
         }
@@ -616,7 +624,7 @@ workflow VARIANT2QTL {
             ? channel.of([coloc_meta, file(params.coloc_gwas_sumstats, checkIfExists: true)])
             : ch_gwas_std
 
-        if (!params.coloc_qtl_sumstats && !params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+        if (!params.coloc_qtl_sumstats && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
             log.warn "run_coloc=true but missing --coloc_qtl_sumstats (and no cis QTL engine outputs)."
         }
         if (!params.coloc_gwas_sumstats && !params.run_gwas_benchmark) {
@@ -653,7 +661,7 @@ workflow VARIANT2QTL {
         def ch_smr_gwas = params.smr_gwas_sumstats
             ? channel.of([smr_meta, file(params.smr_gwas_sumstats, checkIfExists: true)])
             : ch_gwas_std
-        if (!params.smr_qtl_sumstats && !params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+        if (!params.smr_qtl_sumstats && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
             log.warn "run_smr=true but missing --smr_qtl_sumstats (and no cis QTL engine outputs)."
         }
         if (!params.smr_gwas_sumstats && !params.run_gwas_benchmark) {
@@ -709,6 +717,105 @@ workflow VARIANT2QTL {
     }
 
     //
+    // Optional TWAS (default OFF)
+    //
+    if (params.run_twas) {
+        def twas_meta = [id: params.twas_id ?: 'twas']
+        def ch_twas_w = params.twas_weights
+            ? channel.of([twas_meta, file(params.twas_weights, checkIfExists: true)])
+            : channel.empty()
+        def ch_twas_g = params.twas_gwas
+            ? channel.of([twas_meta, file(params.twas_gwas, checkIfExists: true)])
+            : ch_gwas_std
+        if (!params.twas_weights) {
+            log.warn "run_twas=true but missing --twas_weights."
+        }
+        if (!params.twas_gwas && !params.run_gwas_benchmark) {
+            log.warn "run_twas=true but missing --twas_gwas (and no GWAS standardized tables)."
+        }
+        if (params.twas_weights) {
+            QTL_TWAS(ch_twas_w, ch_twas_g)
+            ch_versions = ch_versions.mix(QTL_TWAS.out.versions)
+        }
+    }
+
+    //
+    // Optional FINEMAP/CAVIAR/DAP-G PIPs (default OFF)
+    //
+    if (params.run_finemap_extra) {
+        def extra_meta = [id: params.finemap_extra_id ?: 'finemap_extra']
+        def ch_extra = params.finemap_extra_sumstats
+            ? channel.of([extra_meta, file(params.finemap_extra_sumstats, checkIfExists: true)])
+            : ch_qtl_cis_for_finemap
+        if (!params.finemap_extra_sumstats && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+            log.warn "run_finemap_extra=true but missing --finemap_extra_sumstats (and no cis QTL engine outputs)."
+        }
+        QTL_FINEMAP_EXTRA(ch_extra)
+        ch_versions = ch_versions.mix(QTL_FINEMAP_EXTRA.out.versions)
+    }
+
+    //
+    // Optional SV calling (default OFF)
+    //
+    if (params.run_sv) {
+        def sv_meta = [id: params.sv_id ?: 'sv']
+        if (!params.sv_bam || !params.sv_bam_index || !params.sv_fasta || !params.sv_fasta_fai) {
+            log.warn "run_sv=true but missing --sv_bam/--sv_bam_index/--sv_fasta/--sv_fasta_fai."
+        } else {
+            VARIANT_SV(
+                channel.of([
+                    sv_meta,
+                    file(params.sv_bam, checkIfExists: true),
+                    file(params.sv_bam_index, checkIfExists: true)
+                ]),
+                channel.of([[id: 'sv_ref'], file(params.sv_fasta, checkIfExists: true)]),
+                channel.of([[id: 'sv_ref'], file(params.sv_fasta_fai, checkIfExists: true)])
+            )
+            ch_versions = ch_versions.mix(VARIANT_SV.out.versions)
+        }
+    }
+
+    //
+    // Optional STR genotyping (default OFF)
+    //
+    if (params.run_str) {
+        def str_meta = [id: params.str_id ?: 'str']
+        if (!params.str_bam || !params.str_bam_index || !params.str_fasta || !params.str_fasta_fai) {
+            log.warn "run_str=true but missing --str_bam/--str_bam_index/--str_fasta/--str_fasta_fai."
+        } else {
+            def ch_str_bam = channel.of([
+                str_meta,
+                file(params.str_bam, checkIfExists: true),
+                file(params.str_bam_index, checkIfExists: true)
+            ])
+            def ch_str_fa = channel.of([[id: 'str_ref'], file(params.str_fasta, checkIfExists: true)])
+            def ch_str_fai = channel.of([[id: 'str_ref'], file(params.str_fasta_fai, checkIfExists: true)])
+            def ch_str_cat = params.str_catalog
+                ? channel.of([str_meta, file(params.str_catalog, checkIfExists: true)])
+                : channel.empty()
+            def ch_str_reg = params.str_regions
+                ? channel.of([str_meta, file(params.str_regions, checkIfExists: true)])
+                : channel.empty()
+            def ch_str_rep = params.str_repeats
+                ? channel.of([str_meta, file(params.str_repeats, checkIfExists: true)])
+                : ch_str_reg
+            def ch_str_hip = params.str_hipstr_bed
+                ? channel.of([str_meta, file(params.str_hipstr_bed, checkIfExists: true)])
+                : ch_str_reg
+            VARIANT_STR(
+                ch_str_bam,
+                ch_str_fa,
+                ch_str_fai,
+                ch_str_cat,
+                ch_str_reg,
+                ch_str_rep,
+                ch_str_hip
+            )
+            ch_versions = ch_versions.mix(VARIANT_STR.out.versions)
+        }
+    }
+
+    //
     // Optional cis-QTL postprocess: unified table + BH q-values (default OFF)
     //
     if (params.run_qtl_postprocess) {
@@ -719,7 +826,7 @@ workflow VARIANT2QTL {
             ])
             : ch_qtl_cis_for_finemap
 
-        if (!params.qtl_postprocess_input && !params.run_omiga_cis && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+        if (!params.qtl_postprocess_input && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
             log.warn "run_qtl_postprocess=true but missing --qtl_postprocess_input (and no cis QTL engine outputs)."
         }
 

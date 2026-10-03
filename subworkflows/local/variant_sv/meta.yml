@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "VARIANT_SV"
+description: Germline SV calling with smoove, manta, and/or delly
+components:
+  - SMOOVE_CALL
+  - MANTA_GERMLINE
+  - DELLY_CALL
+input:
+  - ch_bam
+  - ch_fasta
+  - ch_fai
+output:
+  - vcf
+  - versions
+authors:
+  - "@SiYangming"
