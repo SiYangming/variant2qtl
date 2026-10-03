@@ -1,0 +1,47 @@
+nextflow_process {
+
+    name "Test Process QTLTOOLS_CIS"
+    script "../main.nf"
+    process "QTLTOOLS_CIS"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "qtltools"
+    tag "qtltools/cis"
+
+    test("omiga_cis_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'qtltools_cis_mini' ],
+                    file("${projectDir}/assets/testdata/omiga_cis_mini/geno.bed", checkIfExists: true),
+                    file("${projectDir}/assets/testdata/omiga_cis_mini/geno.bim", checkIfExists: true),
+                    file("${projectDir}/assets/testdata/omiga_cis_mini/geno.fam", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'qtltools_cis_mini' ],
+                    file("${projectDir}/assets/testdata/omiga_cis_mini/phenotype.bed.gz", checkIfExists: true)
+                ]
+                input[2] = [
+                    [ id:'qtltools_cis_mini' ],
+                    file("${projectDir}/assets/testdata/omiga_cis_mini/covariates_tensorqtl.txt", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.outdir.size() == 1 },
+                { assert process.out.outdir.get(0).get(0).id == "qtltools_cis_mini" },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

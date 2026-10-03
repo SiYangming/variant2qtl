@@ -1,0 +1,6 @@
+phe_id	var_id	var_chr	var_from	nom_pval	beta	slope_se
+geneA	snp1	chr1	100	1e-8	0.40	0.08
+geneA	snp2	chr1	200	0.02	0.10	0.09
+geneB	snp3	chr1	300	1e-5	0.28	0.07
+geneB	snp4	chr1	400	0.40	0.02	0.10
+geneC	snp5	chr1	500	0.001	0.15	0.06

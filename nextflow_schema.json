@@ -435,6 +435,134 @@
                 }
             }
         },
+        "coloc_options": {
+            "title": "QTL–GWAS coloc options",
+            "type": "object",
+            "fa_icon": "fas fa-link",
+            "description": "Optional coloc.abf (qtl_coloc). Disabled by default. hyprcoloc is not included.",
+            "properties": {
+                "run_coloc": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run QTL–GWAS coloc.abf via qtl_coloc. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "When true, runs COLOC_ABF on `--coloc_qtl_sumstats` and `--coloc_gwas_sumstats`, or on cis QTL outputs plus GWAS standardized tables if those branches ran."
+                },
+                "coloc_id": {
+                    "type": "string",
+                    "default": "coloc",
+                    "description": "Sample meta.id for the coloc branch.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "coloc_qtl_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "QTL summary statistics (snp/variant_id, beta, se; optional maf, n).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "coloc_gwas_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "GWAS summary statistics (snp/variant_id, beta, se; optional maf, n).",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "qtltools_cis_options": {
+            "title": "QTLtools cis options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Optional QTLtools cis-molQTL (molqtl_map_qtltools). Disabled by default.",
+            "properties": {
+                "run_qtltools_cis": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run QTLtools cis mapping via molqtl_map_qtltools. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Prefer `--genotype_input` molqtl_phenotype[/covariates]. Converts PLINK bed to VCF inside the process. Default OFF."
+                },
+                "qtltools_cis_id": {
+                    "type": "string",
+                    "default": "qtltools_cis",
+                    "description": "Sample meta.id for the QTLtools cis branch.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "qtltools_cis_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .bed for QTLtools cis (required unless --qtltools_use_qc_bed or --genotype_input).",
+                    "fa_icon": "fas fa-file"
+                },
+                "qtltools_cis_bim": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .bim for QTLtools cis.",
+                    "fa_icon": "fas fa-file"
+                },
+                "qtltools_cis_fam": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .fam for QTLtools cis.",
+                    "fa_icon": "fas fa-file"
+                },
+                "qtltools_use_qc_bed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Reuse the shared genotype_qc bed for QTLtools cis instead of --qtltools_cis_bed/bim/fam.",
+                    "fa_icon": "fas fa-link"
+                },
+                "qtltools_cis_phenotype": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Molecular phenotype BED for QTLtools cis.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "qtltools_cis_covariates": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional covariates for QTLtools cis.",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "qtl_postprocess_options": {
+            "title": "cis-QTL postprocess options",
+            "type": "object",
+            "fa_icon": "fas fa-table",
+            "description": "Optional unified cis table with Benjamini-Hochberg q-values. Disabled by default.",
+            "properties": {
+                "run_qtl_postprocess": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Harmonise cis-QTL tables and add BH q-values. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "When true, standardises `--qtl_postprocess_input` or cis outputs from OmiGA/tensorQTL/QTLtools."
+                },
+                "qtl_postprocess_id": {
+                    "type": "string",
+                    "default": "qtl_postprocess",
+                    "description": "Sample meta.id when using --qtl_postprocess_input.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "qtl_postprocess_input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional cis-QTL file to standardise (else uses engine cis outputs).",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -639,6 +767,15 @@
         },
         {
             "$ref": "#/$defs/finemap_susie_options"
+        },
+        {
+            "$ref": "#/$defs/coloc_options"
+        },
+        {
+            "$ref": "#/$defs/qtltools_cis_options"
+        },
+        {
+            "$ref": "#/$defs/qtl_postprocess_options"
         },
         {
             "$ref": "#/$defs/reference_genome_options"

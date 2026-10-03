@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+channels:
+  - conda-forge
+  - bioconda
+  - dnachun
+dependencies:
+  - dnachun::qtltools=1.3.1
+  - bioconda::plink2=2.00a5.10
+  - bioconda::htslib=1.21

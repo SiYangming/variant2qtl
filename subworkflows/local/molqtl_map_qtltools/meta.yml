@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "MOLQTL_MAP_QTLTOOLS"
+description: Local subworkflow molqtl_map_qtltools for SiYangming/variant2qtl
+keywords:
+  - qtl
+  - qtltools
+  - local
+components:
+  - qtltools/cis
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

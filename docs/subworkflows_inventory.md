@@ -59,14 +59,15 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P0 — 核心业务（必须自建）
 
-| 建议名                        | 职责                                                                                | 依赖模块（多为 local）                                                                               |
-| ----------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `genotype_ingest_harmonize`   | 多源变异入口（SNP/Indel）→ 标准化 VCF/PLINK；可选 liftover、bcftools norm、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**已深化**（SV/STR 仍在 P3 编排）   |
-| `genotype_qc`                 | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                       | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关） |
-| `genotype_to_analysis_format` | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                           | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                               |
-| `molqtl_map_omiga`            | **OmiGA** cis（经 analysis-format）                                                 | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                    |
-| `molqtl_map_tensorqtl`        | tensorQTL 备用/对照引擎                                                             | **已实现**；`params.run_tensorqtl_cis`；可 `--tensorqtl_use_qc_bed`；PyPI `1.0.10`                   |
-| `qtl_postprocess`             | 结果合并、FDR/q-value、按染色体汇总、导出标准表                                     | 轻量 R/Python local                                                                                  |
+| 建议名                                    | 职责                                                                                | 依赖模块（多为 local）                                                                               |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `genotype_ingest_harmonize`               | 多源变异入口（SNP/Indel）→ 标准化 VCF/PLINK；可选 liftover、bcftools norm、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**已深化**（SV/STR 仍在 P3 编排）   |
+| `genotype_qc`                             | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                       | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关） |
+| `genotype_to_analysis_format`             | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                           | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                               |
+| `molqtl_map_omiga`                        | **OmiGA** cis（经 analysis-format）                                                 | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                    |
+| `molqtl_map_tensorqtl`                    | tensorQTL 备用/对照引擎                                                             | **已实现**；`params.run_tensorqtl_cis`；可 `--tensorqtl_use_qc_bed`；PyPI `1.0.10`                   |
+| `molqtl_map_qtltools`                     | QTLtools cis 对照引擎                                                               | **已实现**；`params.run_qtltools_cis`；可 `--qtltools_use_qc_bed`；conda `dnachun::qtltools=1.3.1`   |
+| `qtl_postprocess` / `qtl_postprocess_cis` | 多引擎 cis 结果合并、BH FDR、标准表                                                 | **已实现**；`params.run_qtl_postprocess` 默认关                                                      |
 
 ### P1 — 协变量与 sQTL 表型（表型矩阵侧）
 
@@ -81,7 +82,7 @@ nf-core subworkflows install vcf_impute_minimac4
 | 建议名                              | 职责                                            |
 | ----------------------------------- | ----------------------------------------------- |
 | `qtl_finemap` / `qtl_finemap_susie` | SuSiE（已实现）/ FINEMAP / CAVIAR / DAP-G       |
-| `qtl_coloc`                         | coloc / hyprcoloc（QTL–GWAS）— **deferred**     |
+| `qtl_coloc`                         | coloc.abf（已实现；hyprcoloc 后补）             |
 | `qtl_meta_mashr`                    | 多组织 mashr / METAL                            |
 | `qtl_enrichment`                    | TORUS / 富集（可与 OmiGA 自带富集二选一或串联） |
 
@@ -109,7 +110,7 @@ nf-core subworkflows install vcf_impute_minimac4
 ## 三、结论（一句话）
 
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
-- **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
+- **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
 ## 建议下一步：P1（PEER / LeafCutter / phenotype_prepare）或 P3 编排层（SV/STR）。
 
