@@ -24,6 +24,9 @@ include { COVARIATE_PEER            } from '../subworkflows/local/covariate_peer
 include { SQTL_LEAFCUTTER           } from '../subworkflows/local/sqtl_leafcutter/main'
 include { QTL_HYPRCOLOC             } from '../subworkflows/local/qtl_hyprcoloc/main'
 include { QTL_SMR                   } from '../subworkflows/local/qtl_smr/main'
+include { QTL_MASHR                 } from '../subworkflows/local/qtl_mashr/main'
+include { QTL_METAL                 } from '../subworkflows/local/qtl_metal/main'
+include { QTL_TORUS                 } from '../subworkflows/local/qtl_torus/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -658,6 +661,51 @@ workflow VARIANT2QTL {
         }
         QTL_SMR(ch_smr_qtl, ch_smr_gwas)
         ch_versions = ch_versions.mix(QTL_SMR.out.versions)
+    }
+
+    //
+    // Optional mashr multi-condition shrinkage (default OFF)
+    //
+    if (params.run_mashr) {
+        def mash_meta = [id: params.mashr_id ?: 'mashr']
+        if (!params.mashr_sumstats) {
+            log.warn "run_mashr=true but missing --mashr_sumstats."
+        } else {
+            QTL_MASHR(
+                channel.of([mash_meta, file(params.mashr_sumstats, checkIfExists: true)])
+            )
+            ch_versions = ch_versions.mix(QTL_MASHR.out.versions)
+        }
+    }
+
+    //
+    // Optional METAL inverse-variance meta (default OFF)
+    //
+    if (params.run_metal) {
+        def metal_meta = [id: params.metal_id ?: 'metal']
+        if (!params.metal_sumstats) {
+            log.warn "run_metal=true but missing --metal_sumstats."
+        } else {
+            QTL_METAL(
+                channel.of([metal_meta, file(params.metal_sumstats, checkIfExists: true)])
+            )
+            ch_versions = ch_versions.mix(QTL_METAL.out.versions)
+        }
+    }
+
+    //
+    // Optional TORUS enrichment prior (default OFF)
+    //
+    if (params.run_torus) {
+        def torus_meta = [id: params.torus_id ?: 'torus']
+        if (!params.torus_annot) {
+            log.warn "run_torus=true but missing --torus_annot."
+        } else {
+            QTL_TORUS(
+                channel.of([torus_meta, file(params.torus_annot, checkIfExists: true)])
+            )
+            ch_versions = ch_versions.mix(QTL_TORUS.out.versions)
+        }
     }
 
     //

@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process METAL_IVW"
+    script "../main.nf"
+    process "METAL_IVW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "metal"
+    tag "metal/ivw"
+
+    test("metal_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'metal_mini' ],
+                    file("${projectDir}/assets/testdata/metal_mini/cohorts.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.metal.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

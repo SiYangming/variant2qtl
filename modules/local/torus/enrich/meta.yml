@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "torus_enrich"
+description: SNP annotation enrichment prior from QTL z-scores
+keywords:
+  - torus
+  - enrichment
+  - qtl
+  - prior
+tools:
+  - "python":
+      description: "Logistic enrichment prior when official TORUS is absent from bioconda"
+      homepage: "https://github.com/xqwen/torus"
+      documentation: "https://github.com/xqwen/torus"
+      licence: ["MIT"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - annot:
+        type: file
+        description: SNP table with z and annotation columns
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  prior:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.prior.tsv":
+        type: file
+        description: Per-SNP enrichment prior
+        pattern: "*.prior.tsv"
+  enrich:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.enrich.tsv":
+        type: file
+        description: Annotation log-odds
+        pattern: "*.enrich.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

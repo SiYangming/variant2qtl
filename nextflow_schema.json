@@ -724,6 +724,93 @@
                 }
             }
         },
+        "mashr_options": {
+            "title": "mashr options",
+            "type": "object",
+            "fa_icon": "fas fa-compress",
+            "description": "Optional multi-condition mashr shrinkage. Disabled by default.",
+            "properties": {
+                "run_mashr": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run mashr on long-format multi-condition effects. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Uses conda-forge r-mashr. Container CI is r-base stub (no biocontainers mashr image)."
+                },
+                "mashr_id": {
+                    "type": "string",
+                    "default": "mashr",
+                    "description": "Sample meta.id for mashr.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "mashr_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Long-format table with snp, condition, beta, se.",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "metal_options": {
+            "title": "METAL options",
+            "type": "object",
+            "fa_icon": "fas fa-layer-group",
+            "description": "Optional inverse-variance meta-analysis. Disabled by default.",
+            "properties": {
+                "run_metal": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run inverse-variance meta across cohorts. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Official METAL is not on bioconda; this module implements IVW + Cochran Q on long-format snp/cohort/beta/se."
+                },
+                "metal_id": {
+                    "type": "string",
+                    "default": "metal",
+                    "description": "Sample meta.id for METAL.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "metal_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Long-format table with snp, cohort, beta, se.",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "torus_options": {
+            "title": "TORUS options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-area",
+            "description": "Optional annotation enrichment prior. Disabled by default.",
+            "properties": {
+                "run_torus": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run TORUS-style enrichment prior from SNP z and annotations. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Official TORUS is not on bioconda; logistic enrichment of |z|>=2 on annotation columns."
+                },
+                "torus_id": {
+                    "type": "string",
+                    "default": "torus",
+                    "description": "Sample meta.id for TORUS.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "torus_annot": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "SNP table with z plus annotation columns.",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
         "smr_options": {
             "title": "SMR / HEIDI options",
             "type": "object",
@@ -988,6 +1075,15 @@
         },
         {
             "$ref": "#/$defs/smr_options"
+        },
+        {
+            "$ref": "#/$defs/mashr_options"
+        },
+        {
+            "$ref": "#/$defs/metal_options"
+        },
+        {
+            "$ref": "#/$defs/torus_options"
         },
         {
             "$ref": "#/$defs/reference_genome_options"

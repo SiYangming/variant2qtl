@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process TORUS_ENRICH"
+    script "../main.nf"
+    process "TORUS_ENRICH"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "torus"
+    tag "torus/enrich"
+
+    test("torus_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'torus_mini' ],
+                    file("${projectDir}/assets/testdata/torus_mini/annot.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.prior.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

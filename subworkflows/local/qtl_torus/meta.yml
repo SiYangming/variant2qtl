@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "QTL_TORUS"
+description: SNP annotation enrichment prior from QTL z-scores
+components:
+  - TORUS_ENRICH
+input:
+  - ch_annot
+output:
+  - prior
+  - enrich
+  - outdir
+  - versions
+authors:
+  - "@SiYangming"

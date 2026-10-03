@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local **LeafCutter sQTL prepare** (`modules/local/leafcutter/prepare`, `sqtl_leafcutter`) behind `params.run_sqtl_leafcutter` (default OFF); intron ratios + INV + gene annotation → FastQTL BED and `phenotype_group`; profile `test_sqtl` + stub nf-test.
 - Local **HyPrColoc-style** clustering (`modules/local/coloc/hyprcoloc`) behind `params.run_hyprcoloc` (default OFF); pairwise Wakefield ABF (official `r-hyprcoloc` is not on bioconda); profile `test_hyprcoloc` + stub nf-test.
 - Local **SMR/HEIDI** (`modules/local/smr/heidi`) behind `params.run_smr` (default OFF); Zhu et al. 2016 on overlapping sumstats (official SMR binary is not on bioconda); profile `test_smr` + stub nf-test.
+- Local **mashr** (`modules/local/mashr/fit`, `qtl_mashr`) behind `params.run_mashr` (default OFF); conda-forge `r-mashr=0.2.79` / r-base stub container; profile `test_mashr` + stub nf-test.
+- Local **METAL-style IVW** (`modules/local/metal/ivw`, `qtl_metal`) behind `params.run_metal` (default OFF); official METAL is not on bioconda; profile `test_metal` + stub nf-test.
+- Local **TORUS-style enrichment** (`modules/local/torus/enrich`, `qtl_torus`) behind `params.run_torus` (default OFF); official TORUS is not on bioconda; profile `test_torus` + stub nf-test.
 
 ### `Fixed`
 
