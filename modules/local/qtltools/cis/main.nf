@@ -3,9 +3,13 @@ process QTLTOOLS_CIS {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
+    // Official bioconda/biocontainers QTLtools is absent. Conda: YangmingSi::qtltools=1.3.1.
+    // quay.io/bioinfortools/qtltools:1.3.1 exists but is still private (anonymous pull → 401),
+    // so docker/singularity CI -stub uses public biocontainers python (same pattern as tensorqtl).
+    // Switch to the Quay tag once that repository is public like bioinfortools/omiga.
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'quay.io/bioinfortools/qtltools:1.3.1' :
-        'quay.io/bioinfortools/qtltools:1.3.1' }"
+        'https://depot.galaxyproject.org/singularity/python:3.9--1' :
+        'quay.io/biocontainers/python:3.9--1' }"
 
     input:
     tuple val(meta), path(bed), path(bim), path(fam)
