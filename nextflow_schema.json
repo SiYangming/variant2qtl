@@ -563,6 +563,103 @@
                 }
             }
         },
+        "phenotype_prepare_options": {
+            "title": "Phenotype prepare options",
+            "type": "object",
+            "fa_icon": "fas fa-table",
+            "description": "Optional molecular phenotype QC to a FastQTL BED. Disabled by default.",
+            "properties": {
+                "run_phenotype_prepare": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Intersect samples, filter missingness, INV/quantile, write FastQTL BED. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "phenotype_prepare_id": {
+                    "type": "string",
+                    "default": "phenotype_prepare",
+                    "description": "Sample meta.id for phenotype_prepare.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "phenotype_matrix": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Genes×samples TSV/CSV or FastQTL BED to prepare.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "phenotype_gene_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional chr/start/end/gene_id BED for FastQTL coordinates.",
+                    "fa_icon": "fas fa-file"
+                },
+                "phenotype_samples": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional sample keep list or PLINK FAM for intersection.",
+                    "fa_icon": "fas fa-file"
+                },
+                "phenotype_transform": {
+                    "type": "string",
+                    "default": "invnorm",
+                    "enum": ["invnorm", "quantile", "none"],
+                    "description": "Per-gene inverse-normal, Bolstad quantile, or none.",
+                    "fa_icon": "fas fa-sliders-h"
+                },
+                "phenotype_max_missing": {
+                    "type": "number",
+                    "default": 0.2,
+                    "description": "Drop genes with missing fraction above this threshold.",
+                    "fa_icon": "fas fa-percentage"
+                }
+            }
+        },
+        "peer_options": {
+            "title": "PEER covariate options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "Optional PEER hidden-factor covariates. Disabled by default.",
+            "properties": {
+                "run_peer": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Infer PEER factors and emit cis-engine covariate tables. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Uses bioconda r-peer 1.3 / biocontainers peer:1.3. Prefers --peer_phenotype or phenotype_prepare BED. Feeds OmiGA/QTLtools (factor×sample) and tensorQTL (sample×factor) when those branches have no explicit covariates."
+                },
+                "peer_id": {
+                    "type": "string",
+                    "default": "peer",
+                    "description": "Sample meta.id for PEER.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "peer_phenotype": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "FastQTL BED for PEER (else uses phenotype_prepare output).",
+                    "fa_icon": "fas fa-file"
+                },
+                "peer_covariates": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional known covariates included in PEER.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "peer_nk": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Number of hidden PEER factors (Nk).",
+                    "fa_icon": "fas fa-hashtag"
+                }
+            }
+        },
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -776,6 +873,12 @@
         },
         {
             "$ref": "#/$defs/qtl_postprocess_options"
+        },
+        {
+            "$ref": "#/$defs/phenotype_prepare_options"
+        },
+        {
+            "$ref": "#/$defs/peer_options"
         },
         {
             "$ref": "#/$defs/reference_genome_options"

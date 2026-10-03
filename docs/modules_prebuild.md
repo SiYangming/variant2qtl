@@ -101,14 +101,43 @@ nextflow run . -profile test_qtltools,docker -stub --outdir results_test_qtltool
 
 ## P1 — 协变量与 sQTL 表型准备
 
-| 建议模块名                        | 说明                                         |
-| --------------------------------- | -------------------------------------------- |
-| `peer`                            | 隐因子协变量估计（eQTL 常用）                |
-| `leafcutter/normalize`            | intron ratio 过滤 + 分位数归一化（sQTL）     |
-| `leafcutter/annotate`             | intron→基因注释，供 phenotype group          |
-| `leafcutter/differentialsplicing` | 官方有开放 PR，尚未合入；可先 local 或等上游 |
+| 建议模块名                        | 说明                                                                                   |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| `peer`                            | **已建**：隐因子协变量（`params.run_peer` 默认关）                                     |
+| `leafcutter/normalize`            | intron ratio 过滤 + 分位数归一化（sQTL）                                               |
+| `leafcutter/annotate`             | intron→基因注释，供 phenotype group                                                    |
+| `leafcutter/differentialsplicing` | 官方有开放 PR，尚未合入；可先 local 或等上游                                           |
+| `phenotype_prepare`               | **已建**：样本交集 / 缺失 / INV / FastQTL BED（`params.run_phenotype_prepare` 默认关） |
 
 > 已安装官方：`regtools/junctionsextract`、`leafcutter/clusterregtools`（聚类上游可用）。
+
+### P1 — phenotype_prepare（已建 / 已接入 workflow）
+
+| 模块路径                                | 状态                                                                          | Conda / 容器 pin              |
+| --------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------- |
+| `modules/local/utils/phenotype_prepare` | **已建，已挂入** `phenotype_prepare`（`params.run_phenotype_prepare` 默认关） | biocontainers `python:3.9--1` |
+
+Mini testdata: [`assets/testdata/phenotype_prepare_mini/`](../assets/testdata/phenotype_prepare_mini/).
+
+```bash
+nf-test test modules/local/utils/phenotype_prepare/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_pheno,docker -stub --outdir results_test_pheno
+```
+
+### P1 — PEER（已建 / 已接入 workflow）
+
+| 模块路径                     | 状态                                                          | Conda / 容器 pin                                                      |
+| ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `modules/local/peer/factors` | **已建，已挂入** `covariate_peer`（`params.run_peer` 默认关） | `bioconda::r-peer=1.3` / `quay.io/biocontainers/peer:1.3--h503566f_1` |
+
+- Input: FastQTL BED (`--peer_phenotype` or phenotype_prepare output); optional known covariates.
+- Emits sample×factor (`*.peer.tensor.tsv`) for tensorQTL and factor×sample (`*.peer.omiga.tsv`) for OmiGA/QTLtools.
+- Mini testdata: [`assets/testdata/peer_mini/`](../assets/testdata/peer_mini/).
+
+```bash
+nf-test test modules/local/peer/factors/tests/main.nf.test --tag stub --profile test,docker
+nextflow run . -profile test_peer,docker -stub --outdir results_test_peer
+```
 
 ## P1b — GWAS/QTL 基准对照（已建模块 / 已挂入 `gwas_benchmark_parallel`）
 
@@ -139,13 +168,14 @@ Adapters: `modules/local/utils/phenocovar_adapt`, `modules/local/utils/assoc_sta
 
 ### 包装仓与发布账号
 
-| 工具           | Git 策略                               | 仓库                                   | 发布                                       |
-| -------------- | -------------------------------------- | -------------------------------------- | ------------------------------------------ |
-| GEMMA / TASSEL | 官方 bioconda + biocontainers          | —                                      | 直接引用                                   |
-| OmiGA          | fork 官方仓 + Release 备份官方 tarball | https://github.com/SiYangming/OmiGA    | Conda `YangmingSi`；Quay `bioinfortools`   |
-| rMVP           | fork 官方仓，Dockerfile 在 fork        | https://github.com/SiYangming/rMVP     | Quay `bioinfortools`；conda 用 conda-forge |
-| EMMAX          | 无官方 GitHub → 自建备份仓             | https://github.com/SiYangming/emmax    | Conda `YangmingSi`；Quay `bioinfortools`   |
-| QTLtools       | fork 官方仓 + 官方 source tarball      | https://github.com/SiYangming/qtltools | Conda `YangmingSi`；Quay `bioinfortools`   |
+| 工具           | Git 策略                               | 仓库                                   | 发布                                            |
+| -------------- | -------------------------------------- | -------------------------------------- | ----------------------------------------------- |
+| GEMMA / TASSEL | 官方 bioconda + biocontainers          | —                                      | 直接引用                                        |
+| OmiGA          | fork 官方仓 + Release 备份官方 tarball | https://github.com/SiYangming/OmiGA    | Conda `YangmingSi`；Quay `bioinfortools`        |
+| rMVP           | fork 官方仓，Dockerfile 在 fork        | https://github.com/SiYangming/rMVP     | Quay `bioinfortools`；conda 用 conda-forge      |
+| EMMAX          | 无官方 GitHub → 自建备份仓             | https://github.com/SiYangming/emmax    | Conda `YangmingSi`；Quay `bioinfortools`        |
+| QTLtools       | fork 官方仓 + 官方 source tarball      | https://github.com/SiYangming/qtltools | Conda `YangmingSi`；Quay `bioinfortools`        |
+| PEER           | 官方 bioconda + biocontainers          | —                                      | `bioconda::r-peer=1.3` / `peer:1.3--h503566f_1` |
 
 构建环境：本地 `conda_build`。GitHub 操作：`gh` CLI。
 

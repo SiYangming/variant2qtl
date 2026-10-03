@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "COVARIATE_PEER"
+description: Infer PEER factors and emit tensorQTL- and OmiGA-oriented covariate tables
+components:
+  - PEER_FACTORS
+input:
+  - ch_phenotype
+  - ch_covariates
+output:
+  - cov_tensorqtl
+  - cov_omiga
+  - outdir
+  - versions
+authors:
+  - "@SiYangming"

@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "peer_factors"
+description: Infer PEER hidden factors from a molecular phenotype BED
+keywords:
+  - peer
+  - covariates
+  - qtl
+tools:
+  - "peer":
+      description: "Probabilistic estimation of expression residuals (PEER)"
+      homepage: "https://github.com/PMBio/peer"
+      documentation: "https://github.com/PMBio/peer/wiki"
+      licence: ["GPL-2.0-or-later"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - phenotype:
+        type: file
+        description: FastQTL phenotype BED
+        pattern: "*.{bed,bed.gz,tsv,txt}"
+  - - meta2:
+        type: map
+        description: Known-covariate metadata
+    - covariates:
+        type: file
+        description: Optional known covariates (sample×cov or cov×sample)
+        pattern: "*.{tsv,txt,csv}"
+
+output:
+  cov_tensorqtl:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.peer.tensor.tsv":
+        type: file
+        description: Sample × PEER-factor covariates for tensorQTL
+        pattern: "*.peer.tensor.tsv"
+  cov_omiga:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.peer.omiga.tsv":
+        type: file
+        description: Factor × sample covariates for OmiGA/QTLtools
+        pattern: "*.peer.omiga.tsv"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Working output directory
+  versions_peer:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -1,0 +1,41 @@
+nextflow_process {
+
+    name "Test Process PEER_FACTORS"
+    script "../main.nf"
+    process "PEER_FACTORS"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "peer"
+    tag "peer/factors"
+
+    test("peer_mini - stub") {
+        options "-stub"
+
+        tag "stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'peer_mini' ],
+                    file("${projectDir}/assets/testdata/peer_mini/phenotype.bed", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'peer_mini' ],
+                    file("${projectDir}/assets/testdata/peer_mini/covariates.txt", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.cov_tensorqtl.size() == 1 },
+                { assert process.out.cov_omiga.size() == 1 },
+                { assert path(process.out.outdir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}
