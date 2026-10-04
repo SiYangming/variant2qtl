@@ -32,6 +32,9 @@ include { QTL_LDSC                  } from '../subworkflows/local/qtl_ldsc/main'
 include { QTL_FINEMAP_EXTRA         } from '../subworkflows/local/qtl_finemap_extra/main'
 include { VARIANT_SV                } from '../subworkflows/local/variant_sv/main'
 include { VARIANT_STR               } from '../subworkflows/local/variant_str/main'
+include { VARIANT_ANNOTATE          } from '../subworkflows/local/variant_annotate/main'
+include { VARIANT_PHASE             } from '../subworkflows/local/variant_phase/main'
+include { VARIANT_IMPUTE            } from '../subworkflows/local/variant_impute/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -791,6 +794,97 @@ workflow VARIANT2QTL {
         }
         QTL_FINEMAP_EXTRA(ch_extra)
         ch_versions = ch_versions.mix(QTL_FINEMAP_EXTRA.out.versions)
+    }
+
+    //
+    // Optional VCF annotation (default OFF)
+    //
+    if (params.run_annotate) {
+        def ann_meta = [id: params.annotate_id ?: 'annotate']
+        if (!params.annotate_vcf) {
+            log.warn "run_annotate=true but missing --annotate_vcf."
+        } else {
+            def ch_ann_vcf = channel.of([
+                ann_meta,
+                file(params.annotate_vcf, checkIfExists: true),
+                params.annotate_vcf_tbi
+                    ? file(params.annotate_vcf_tbi, checkIfExists: true)
+                    : []
+            ])
+            def ch_ann_fa = params.annotate_fasta
+                ? channel.of([[id: 'annotate_fasta'], file(params.annotate_fasta, checkIfExists: true)])
+                : channel.of([[id: 'annotate_fasta'], []])
+            def ch_vep_cache = params.annotate_vep_cache
+                ? channel.of([[id: 'vep_cache'], file(params.annotate_vep_cache, checkIfExists: true)])
+                : channel.of([[id: 'vep_cache'], []])
+            def ch_snpeff_cache = params.annotate_snpeff_cache
+                ? channel.of([[id: 'snpeff_cache'], file(params.annotate_snpeff_cache, checkIfExists: true)])
+                : channel.of([[id: 'snpeff_cache'], []])
+            VARIANT_ANNOTATE(ch_ann_vcf, ch_ann_fa, ch_vep_cache, ch_snpeff_cache)
+            ch_versions = ch_versions.mix(VARIANT_ANNOTATE.out.versions)
+        }
+    }
+
+    //
+    // Optional VCF phasing (default OFF)
+    //
+    if (params.run_phase) {
+        def phase_meta = [id: params.phase_id ?: 'phase']
+        if (!params.phase_vcf) {
+            log.warn "run_phase=true but missing --phase_vcf."
+        } else {
+            def ch_phase_vcf = channel.of([
+                phase_meta,
+                file(params.phase_vcf, checkIfExists: true),
+                params.phase_vcf_tbi
+                    ? file(params.phase_vcf_tbi, checkIfExists: true)
+                    : []
+            ])
+            def ch_phase_ref = (params.phase_ref_vcf)
+                ? channel.of([
+                    phase_meta,
+                    file(params.phase_ref_vcf, checkIfExists: true),
+                    params.phase_ref_vcf_tbi
+                        ? file(params.phase_ref_vcf_tbi, checkIfExists: true)
+                        : []
+                ])
+                : channel.empty()
+            def ch_phase_map = params.phase_map
+                ? channel.of([phase_meta, file(params.phase_map, checkIfExists: true)])
+                : channel.empty()
+            VARIANT_PHASE(ch_phase_vcf, ch_phase_ref, ch_phase_map)
+            ch_versions = ch_versions.mix(VARIANT_PHASE.out.versions)
+        }
+    }
+
+    //
+    // Optional genotype imputation (default OFF)
+    //
+    if (params.run_impute) {
+        def imp_meta = [id: params.impute_id ?: 'impute']
+        if (!params.impute_vcf || !params.impute_panel) {
+            log.warn "run_impute=true but missing --impute_vcf and/or --impute_panel."
+        } else {
+            def ch_imp_vcf = channel.of([
+                imp_meta,
+                file(params.impute_vcf, checkIfExists: true),
+                params.impute_vcf_tbi
+                    ? file(params.impute_vcf_tbi, checkIfExists: true)
+                    : []
+            ])
+            def ch_imp_panel = channel.of([
+                imp_meta,
+                file(params.impute_panel, checkIfExists: true),
+                params.impute_panel_tbi
+                    ? file(params.impute_panel_tbi, checkIfExists: true)
+                    : []
+            ])
+            def ch_imp_map = params.impute_map
+                ? channel.of([imp_meta, file(params.impute_map, checkIfExists: true)])
+                : channel.empty()
+            VARIANT_IMPUTE(ch_imp_vcf, ch_imp_panel, ch_imp_map)
+            ch_versions = ch_versions.mix(VARIANT_IMPUTE.out.versions)
+        }
     }
 
     //

@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PredictDB / PrediXcan SQLite import (`modules/local/twas/predictdb`) when `--twas_weights` ends with `.db`; profile `test_twas_predictdb`.
 - LDSC reference-panel LD scores via `--ldsc_ldscores` (snp + l2), merged by SNP id.
 - Cap nf-test process resources in `tests/nextflow.config` so stub GWAS/gQTL paths stay under local memory limits.
+- Wire nf-core **annotate / phase / impute**: `run_annotate` (VEP/snpEff), `run_phase` (SHAPEIT5), `run_impute` (beagle5/minimac4/glimpse); profiles `test_annotate` / `test_phase` / `test_impute`.
 
 ### `Fixed`
 

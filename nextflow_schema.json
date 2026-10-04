@@ -1025,6 +1025,222 @@
                 }
             }
         },
+        "annotate_options": {
+            "title": "VCF annotation options",
+            "type": "object",
+            "fa_icon": "fas fa-tags",
+            "description": "Optional Ensembl VEP / snpEff annotation. Disabled by default.",
+            "properties": {
+                "run_annotate": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run VCF annotation (VEP and/or snpEff). Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "annotate_id": {
+                    "type": "string",
+                    "default": "annotate",
+                    "description": "Sample meta.id for annotation.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "annotate_tools": {
+                    "type": "string",
+                    "default": "snpeff",
+                    "description": "Comma-separated tools: ensemblvep, snpeff.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "annotate_vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Input VCF/VCF.GZ to annotate.",
+                    "fa_icon": "fas fa-file"
+                },
+                "annotate_vcf_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional tabix index for annotate_vcf.",
+                    "fa_icon": "fas fa-file"
+                },
+                "annotate_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional reference FASTA for VEP.",
+                    "fa_icon": "fas fa-file"
+                },
+                "annotate_vep_genome": {
+                    "type": "string",
+                    "description": "VEP assembly (defaults to --genome).",
+                    "fa_icon": "fas fa-dna"
+                },
+                "annotate_vep_species": {
+                    "type": "string",
+                    "default": "homo_sapiens",
+                    "description": "VEP species.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "annotate_vep_cache_version": {
+                    "type": "string",
+                    "default": "110",
+                    "description": "VEP cache version.",
+                    "fa_icon": "fas fa-hashtag"
+                },
+                "annotate_vep_cache": {
+                    "type": "string",
+                    "format": "path",
+                    "exists": true,
+                    "description": "Optional VEP cache directory.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "annotate_snpeff_db": {
+                    "type": "string",
+                    "default": "GRCh38.99",
+                    "description": "snpEff database name.",
+                    "fa_icon": "fas fa-database"
+                },
+                "annotate_snpeff_cache": {
+                    "type": "string",
+                    "format": "path",
+                    "exists": true,
+                    "description": "Optional snpEff dataDir / cache.",
+                    "fa_icon": "fas fa-folder"
+                }
+            }
+        },
+        "phase_options": {
+            "title": "VCF phasing options",
+            "type": "object",
+            "fa_icon": "fas fa-random",
+            "description": "Optional SHAPEIT5 phasing. Disabled by default.",
+            "properties": {
+                "run_phase": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run SHAPEIT5 phase_common. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "phase_id": {
+                    "type": "string",
+                    "default": "phase",
+                    "description": "Sample meta.id for phasing.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "phase_vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Input VCF/BCF to phase.",
+                    "fa_icon": "fas fa-file"
+                },
+                "phase_vcf_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Index for phase_vcf.",
+                    "fa_icon": "fas fa-file"
+                },
+                "phase_ref_vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional reference panel VCF for SHAPEIT5.",
+                    "fa_icon": "fas fa-file"
+                },
+                "phase_ref_vcf_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Index for phase_ref_vcf.",
+                    "fa_icon": "fas fa-file"
+                },
+                "phase_map": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional genetic map.",
+                    "fa_icon": "fas fa-file"
+                },
+                "phase_region": {
+                    "type": "string",
+                    "default": "1",
+                    "description": "Region for SHAPEIT5 (chr or chr:start-end).",
+                    "fa_icon": "fas fa-map-marker-alt"
+                }
+            }
+        },
+        "impute_options": {
+            "title": "Genotype imputation options",
+            "type": "object",
+            "fa_icon": "fas fa-puzzle-piece",
+            "description": "Optional Beagle5 / Minimac4 / GLIMPSE imputation. Disabled by default.",
+            "properties": {
+                "run_impute": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run genotype imputation. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "impute_id": {
+                    "type": "string",
+                    "default": "impute",
+                    "description": "Sample meta.id for imputation.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "impute_engine": {
+                    "type": "string",
+                    "default": "beagle5",
+                    "enum": ["beagle5", "minimac4", "glimpse"],
+                    "description": "Imputation engine.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "impute_vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Target VCF/BCF to impute.",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_vcf_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Index for impute_vcf.",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_panel": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Reference panel VCF (beagle/glimpse) or MSAV (minimac4).",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_panel_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Index for panel VCF when applicable.",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_map": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional genetic map.",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_region": {
+                    "type": "string",
+                    "default": "1",
+                    "description": "Region / chrom for imputation.",
+                    "fa_icon": "fas fa-map-marker-alt"
+                }
+            }
+        },
         "sv_options": {
             "title": "SV calling options",
             "type": "object",
@@ -1415,6 +1631,15 @@
         },
         {
             "$ref": "#/$defs/snp_indel_options"
+        },
+        {
+            "$ref": "#/$defs/annotate_options"
+        },
+        {
+            "$ref": "#/$defs/phase_options"
+        },
+        {
+            "$ref": "#/$defs/impute_options"
         },
         {
             "$ref": "#/$defs/sv_options"

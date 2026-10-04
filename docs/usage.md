@@ -144,6 +144,12 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 - `finemap_extra_sumstats` and `finemap_extra_method` (`finemap`/`caviar`/`dapg`); 1-causal PIPs (identity LD)
 
+**VCF annotate / phase / impute**
+
+- `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`)
+- `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`
+- `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map
+
 **SNP/Indel umbrella / SV / STR**
 
 - `run_snp_indel` — ingest (if needed) + QC + OmiGA cis from `--genotype_input`
@@ -347,6 +353,9 @@ nextflow run . -profile test_gqtl,docker -stub --outdir results_test_gqtl
 nextflow run . -profile test_ldsc,docker -stub --outdir results_test_ldsc
 nextflow run . -profile test_twas,docker -stub --outdir results_test_twas
 nextflow run . -profile test_twas_predictdb,docker -stub --outdir results_test_twas_predictdb
+nextflow run . -profile test_annotate,docker -stub --outdir results_test_annotate
+nextflow run . -profile test_phase,docker -stub --outdir results_test_phase
+nextflow run . -profile test_impute,docker -stub --outdir results_test_impute
 nextflow run . -profile test_finemap_extra,docker -stub --outdir results_test_finemap_extra
 nextflow run . -profile test_sv,docker -stub --outdir results_test_sv
 nextflow run . -profile test_str,docker -stub --outdir results_test_str
@@ -509,6 +518,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_modality_sqtl`
 - `test_pqtl`
 - `test_gqtl`
+- `test_annotate`
+- `test_phase`
+- `test_impute`
 - `test_finemap_extra`
 - `test_sv`
 - `test_str`

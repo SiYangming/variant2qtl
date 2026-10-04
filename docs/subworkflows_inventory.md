@@ -109,6 +109,9 @@ nf-core subworkflows install vcf_impute_minimac4
 | `variant_sv`                                      | **已实现**；smoove/manta/delly；`params.run_sv` 默认关        |
 | `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；`params.run_str` 默认关   |
 | `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关             |
+| `variant_annotate` / `run_annotate`               | **已实现**；VEP/snpEff 模块包装；默认关                       |
+| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5 phase_common；默认关                     |
+| `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；默认关              |
 
 ---
 
@@ -117,7 +120,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：接线已装 nf-core 的 `run_annotate` / `run_phase` / `run_impute`，或真实 LDSC/PredictDB 大面板 smoke。
+## 建议下一步：Somalier 亲缘 QC 接线，或 annotate→phase→impute 串联 umbrella，或真实面板 smoke。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "VARIANT_PHASE"
+description: Phase VCF with SHAPEIT5 phase_common (nf-core module)
+components:
+  - SHAPEIT5_PHASECOMMON
+input:
+  - ch_vcf
+  - ch_ref
+  - ch_map
+output:
+  - phased
+  - versions
+authors:
+  - "@SiYangming"

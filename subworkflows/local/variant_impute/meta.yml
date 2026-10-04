@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "VARIANT_IMPUTE"
+description: Impute genotypes with Beagle5, Minimac4, or GLIMPSE (nf-core modules)
+components:
+  - BEAGLE5_BEAGLE
+  - MINIMAC4_IMPUTE
+  - GLIMPSE_PHASE
+input:
+  - ch_vcf
+  - ch_panel
+  - ch_map
+output:
+  - imputed
+  - versions
+authors:
+  - "@SiYangming"
