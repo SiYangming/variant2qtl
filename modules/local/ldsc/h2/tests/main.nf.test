@@ -25,6 +25,10 @@ nextflow_process {
                     [ id:'ldsc_mini' ],
                     file("${projectDir}/assets/testdata/ldsc_mini/annot.tsv", checkIfExists: true)
                 ]
+                input[2] = [
+                    [ id:'ldsc_mini' ],
+                    file("${projectDir}/assets/testdata/ldsc_mini/ldscores.tsv", checkIfExists: true)
+                ]
                 """
             }
         }

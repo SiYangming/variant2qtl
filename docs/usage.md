@@ -124,19 +124,21 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 **TWAS**
 
-- `twas_weights` — `gene/snp/weight` or MetaXcan `GENE/RSID/WEIGHT`; `twas_gwas` — `snp/beta/se` or `z`
+- `twas_weights` — `gene/snp/weight`, MetaXcan `GENE/RSID/WEIGHT`, or PredictDB SQLite (`.db`); `twas_gwas` — `snp/beta/se` or `z`
 - Optional `twas_ld` SNP matrix for FUSION-style `w'Rw` variance (else independent SNPs)
 
 **LDSC**
 
 - `ldsc_sumstats` — `snp`, `z` or `beta/se`, `n` (optional `l2`); `ldsc_annot` for partitioned enrichment
+- Optional `ldsc_ldscores` — reference-panel `snp` + `l2` (merged by SNP id; preferred over inline `l2`)
 - Official ldsc is not pinned; chi² ~ LD-score regression
 
 **QTL modality umbrellas**
 
 - `run_eqtl` / `run_pqtl` — phenotype_prepare + PEER + cis engine
 - `run_sqtl` — LeafCutter prepare + PEER + cis engine
-- `qtl_modality_engine` — `omiga` (default) / `tensorqtl` / `qtltools`; enables QC when `--genotype_input` is set
+- `run_gqtl` — genotype ingest (if needed) + QC + GWAS benchmark
+- `qtl_modality_engine` — `omiga` (default) / `tensorqtl` / `qtltools` for e/s/pQTL; enables QC when `--genotype_input` is set
 
 **FINEMAP / CAVIAR / DAP-G**
 
@@ -202,8 +204,10 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 23. **STR ExpansionHunter**: `--run_str --str_bam assets/testdata/str_mini/sample.bam --str_bam_index assets/testdata/str_mini/sample.bam.bai --str_fasta assets/testdata/str_mini/ref.fa --str_fasta_fai assets/testdata/str_mini/ref.fa.fai --str_catalog assets/testdata/str_mini/catalog.json`
 24. **eQTL modality**: `--run_eqtl --genotype_input assets/genotype_samplesheet_omiga.csv --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
 25. **sQTL modality**: `--run_sqtl --genotype_input assets/genotype_samplesheet_omiga.csv --sqtl_counts assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv --sqtl_genes assets/testdata/sqtl_leafcutter_mini/genes.bed`
-26. **LDSC h2**: `--run_ldsc --ldsc_sumstats assets/testdata/ldsc_mini/sumstats.tsv --ldsc_annot assets/testdata/ldsc_mini/annot.tsv`
+26. **LDSC h2**: `--run_ldsc --ldsc_sumstats assets/testdata/ldsc_mini/sumstats_nol2.tsv --ldsc_ldscores assets/testdata/ldsc_mini/ldscores.tsv --ldsc_annot assets/testdata/ldsc_mini/annot.tsv`
 27. **TWAS with MetaXcan weights + LD**: `--run_twas --twas_weights assets/testdata/twas_mini/weights_metaxcan.tsv --twas_gwas assets/testdata/twas_mini/gwas.tsv --twas_ld assets/testdata/twas_mini/ld.tsv`
+28. **gQTL modality**: `--run_gqtl --genotype_input assets/genotype_samplesheet_bed.csv`
+29. **TWAS from PredictDB**: `--run_twas --twas_weights assets/testdata/twas_mini/predictdb_mini.db --twas_gwas assets/testdata/twas_mini/gwas.tsv`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA/tensorQTL mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
@@ -339,8 +343,10 @@ nextflow run . -profile test_torus,docker -stub --outdir results_test_torus
 nextflow run . -profile test_eqtl,docker -stub --outdir results_test_eqtl
 nextflow run . -profile test_modality_sqtl,docker -stub --outdir results_test_modality_sqtl
 nextflow run . -profile test_pqtl,docker -stub --outdir results_test_pqtl
+nextflow run . -profile test_gqtl,docker -stub --outdir results_test_gqtl
 nextflow run . -profile test_ldsc,docker -stub --outdir results_test_ldsc
 nextflow run . -profile test_twas,docker -stub --outdir results_test_twas
+nextflow run . -profile test_twas_predictdb,docker -stub --outdir results_test_twas_predictdb
 nextflow run . -profile test_finemap_extra,docker -stub --outdir results_test_finemap_extra
 nextflow run . -profile test_sv,docker -stub --outdir results_test_sv
 nextflow run . -profile test_str,docker -stub --outdir results_test_str
@@ -497,10 +503,12 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_metal`
 - `test_torus`
 - `test_twas`
+- `test_twas_predictdb`
 - `test_ldsc`
 - `test_eqtl`
 - `test_modality_sqtl`
 - `test_pqtl`
+- `test_gqtl`
 - `test_finemap_extra`
 - `test_sv`
 - `test_str`

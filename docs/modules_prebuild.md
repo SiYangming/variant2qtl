@@ -324,14 +324,14 @@ bash scripts/run_real_nf_tests.sh susie
 
 ## P3 — 可选互补
 
-| 建议模块名                               | 说明                               | 现有替代                                                                     |
-| ---------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------- |
-| `crossmap`                               | 坐标升版本                         | `ucsc/liftover`、`picard/liftovervcf`                                        |
-| `annovar`                                | 变异注释                           | `ensemblvep`、`snpeff`                                                       |
-| `king`                                   | 亲缘/族系 QC                       | `somalier/relate`、`plink/genome`                                            |
-| `bolt-lmm`                               | 大规模混合模型 GWAS                | `regenie`、`omiga`、见 P1b GEMMA                                             |
-| `ldsc`                                   | LD score / 遗传力                  | **已建** `modules/local/ldsc/h2`（LDSC 风格；另有 `gcta/calculateldscores`） |
-| `predixcan` / `metaxcan` / TWAS-`fusion` | TWAS（勿与融合基因 fusion\* 混淆） | **已建** `modules/local/twas/fusion`（MetaXcan 列 + 可选 LD）                |
+| 建议模块名                               | 说明                               | 现有替代                                                                                      |
+| ---------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| `crossmap`                               | 坐标升版本                         | `ucsc/liftover`、`picard/liftovervcf`                                                         |
+| `annovar`                                | 变异注释                           | `ensemblvep`、`snpeff`                                                                        |
+| `king`                                   | 亲缘/族系 QC                       | `somalier/relate`、`plink/genome`                                                             |
+| `bolt-lmm`                               | 大规模混合模型 GWAS                | `regenie`、`omiga`、见 P1b GEMMA                                                              |
+| `ldsc`                                   | LD score / 遗传力                  | **已建** `modules/local/ldsc/h2`（参考面板 `--ldsc_ldscores`；另有 `gcta/calculateldscores`） |
+| `predixcan` / `metaxcan` / TWAS-`fusion` | TWAS（勿与融合基因 fusion\* 混淆） | **已建** `twas/fusion` + `twas/predictdb`（PredictDB `.db` → TSV）                            |
 
 ## 已从 nf-core 安装（摘要）
 

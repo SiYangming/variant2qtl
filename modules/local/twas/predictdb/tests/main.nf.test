@@ -1,0 +1,33 @@
+nextflow_process {
+
+    name "Test Process TWAS_PREDICTDB"
+    script "../main.nf"
+    process "TWAS_PREDICTDB"
+    tag "modules"
+    tag "modules_local"
+    tag "twas"
+    tag "predictdb"
+
+    test("predictdb extract stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [id: 'test'],
+                    file("${projectDir}/assets/testdata/twas_mini/predictdb_mini.db")
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.weights.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

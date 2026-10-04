@@ -10,6 +10,7 @@ process LDSC_H2 {
     input:
     tuple val(meta), path(sumstats)
     tuple val(meta2), path(annot)
+    tuple val(meta3), path(ldscores)
 
     output:
     tuple val(meta), path("*.h2.tsv"), emit: h2
@@ -24,6 +25,7 @@ process LDSC_H2 {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def annot_arg = annot ? "--annot ${annot}" : ''
+    def ldscores_arg = ldscores ? "--ldscores ${ldscores}" : ''
     def template_py = "${moduleDir}/templates/ldsc_h2.py"
     """
     mkdir -p ${prefix}_out
@@ -32,6 +34,7 @@ process LDSC_H2 {
     python3 ldsc_h2.py \\
         --sumstats ${sumstats} \\
         ${annot_arg} \\
+        ${ldscores_arg} \\
         --out ${prefix}_out/${prefix} \\
         ${args}
 
@@ -43,8 +46,8 @@ process LDSC_H2 {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     mkdir -p ${prefix}_out
-    echo -e "trait\\tnsnp\\tn_bar\\th2\\th2_se\\tslope" > ${prefix}.h2.tsv
-    echo -e "trait1\\t10\\t10000\\t0.2\\t0.05\\t0.001" >> ${prefix}.h2.tsv
+    echo -e "trait\\tnsnp\\tn_bar\\th2\\th2_se\\tslope\\tldscores" > ${prefix}.h2.tsv
+    echo -e "trait1\\t10\\t10000\\t0.2\\t0.05\\t0.001\\tref" >> ${prefix}.h2.tsv
     echo -e "annotation\\tnsnp\\th2\\tenrichment" > ${prefix}.part.tsv
     echo -e "base\\t10\\t0.2\\t1" >> ${prefix}.part.tsv
     cp ${prefix}.h2.tsv ${prefix}_out/

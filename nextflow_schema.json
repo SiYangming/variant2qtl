@@ -858,7 +858,7 @@
                     "default": false,
                     "description": "Run gene-level TWAS from QTL weights and GWAS z. Default: false.",
                     "fa_icon": "fas fa-toggle-off",
-                    "help_text": "Accepts gene/snp/weight or MetaXcan GENE/RSID/WEIGHT. Optional --twas_ld for FUSION-style w'Rw variance."
+                    "help_text": "Accepts gene/snp/weight, MetaXcan GENE/RSID/WEIGHT, or PredictDB .db. Optional --twas_ld for FUSION-style w'Rw variance."
                 },
                 "twas_id": {
                     "type": "string",
@@ -871,8 +871,9 @@
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "description": "Gene SNP weights (gene/GENE, snp/rsid, weight/WEIGHT).",
-                    "fa_icon": "fas fa-file-csv"
+                    "description": "Gene SNP weights TSV (gene/GENE, snp/rsid, weight/WEIGHT) or PredictDB SQLite (.db).",
+                    "fa_icon": "fas fa-file-csv",
+                    "help_text": "`.db` files are extracted via TWAS_PREDICTDB (weights + optional extra.genename) before FUSION/MetaXcan scoring."
                 },
                 "twas_gwas": {
                     "type": "string",
@@ -901,7 +902,7 @@
                     "default": false,
                     "description": "Run LDSC-style heritability and optional partitioned enrichment. Default: false.",
                     "fa_icon": "fas fa-toggle-off",
-                    "help_text": "Official ldsc is not pinned; chi2 ~ l2 regression with optional annotation enrichment."
+                    "help_text": "Official ldsc is not pinned; chi2 ~ l2 regression with optional annotation enrichment and reference-panel LD scores."
                 },
                 "ldsc_id": {
                     "type": "string",
@@ -923,6 +924,14 @@
                     "exists": true,
                     "description": "Optional SNP annotation table for partitioned h2.",
                     "fa_icon": "fas fa-file-csv"
+                },
+                "ldsc_ldscores": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional reference-panel LD scores (snp + l2), merged by SNP id.",
+                    "fa_icon": "fas fa-table",
+                    "help_text": "Prefer this over inline sumstats l2 when using 1000G/EUR-style precomputed scores."
                 }
             }
         },
@@ -930,7 +939,7 @@
             "title": "QTL modality umbrella options",
             "type": "object",
             "fa_icon": "fas fa-layer-group",
-            "description": "Optional eQTL/sQTL/pQTL one-switch paths. Disabled by default.",
+            "description": "Optional eQTL/sQTL/pQTL/gQTL one-switch paths. Disabled by default.",
             "properties": {
                 "run_eqtl": {
                     "type": "boolean",
@@ -950,11 +959,18 @@
                     "description": "Run pQTL: phenotype_prepare + PEER + cis engine. Default: false.",
                     "fa_icon": "fas fa-toggle-off"
                 },
+                "run_gqtl": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run gQTL: genotype ingest (if needed) + QC + GWAS benchmark. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Convenience umbrella for complex-trait GWAS path. Uses --genotype_input or --gwas_benchmark_* like test_gwas."
+                },
                 "qtl_modality_engine": {
                     "type": "string",
                     "default": "omiga",
                     "enum": ["omiga", "tensorqtl", "qtltools"],
-                    "description": "Cis QTL engine for modality umbrellas.",
+                    "description": "Cis QTL engine for e/s/pQTL modality umbrellas.",
                     "fa_icon": "fas fa-cogs"
                 }
             }

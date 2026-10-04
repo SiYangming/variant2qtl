@@ -29,6 +29,13 @@ input:
         type: file
         description: Optional SNP annotation table
         pattern: "*.{tsv,txt,csv}"
+  - - meta3:
+        type: map
+        description: Reference LD-score metadata
+    - ldscores:
+        type: file
+        description: Optional reference-panel LD scores (snp + l2)
+        pattern: "*.{tsv,txt,csv}"
 
 output:
   h2:

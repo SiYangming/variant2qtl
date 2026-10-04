@@ -14,6 +14,7 @@ workflow QTL_LDSC {
     take:
     ch_sumstats  // channel: [ meta, sumstats ]
     ch_annot     // channel: [ meta, annot ] (may be empty)
+    ch_ldscores  // channel: [ meta, ldscores ] (may be empty)
 
     main:
     ch_versions = channel.empty()
@@ -22,9 +23,14 @@ workflow QTL_LDSC {
         .join(ch_annot, remainder: true)
         .map { meta, _sumstats, annot -> [meta, annot ?: []] }
 
+    ch_ldscores_aligned = ch_sumstats
+        .join(ch_ldscores, remainder: true)
+        .map { meta, _sumstats, ldscores -> [meta, ldscores ?: []] }
+
     LDSC_H2(
         ch_sumstats,
-        ch_annot_aligned
+        ch_annot_aligned,
+        ch_ldscores_aligned
     )
 
     emit:

@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - QTL modality umbrellas `params.run_eqtl` / `run_sqtl` / `run_pqtl` (default OFF) + `qtl_modality_engine` (omiga/tensorqtl/qtltools); profiles `test_eqtl` / `test_modality_sqtl` / `test_pqtl`.
 - Local **LDSC-style h2** (`modules/local/ldsc/h2`, `qtl_ldsc`) behind `params.run_ldsc` (default OFF); optional partitioned enrichment; profile `test_ldsc` + stub nf-test.
 - TWAS deepen: MetaXcan `GENE/RSID/WEIGHT` columns and optional `--twas_ld` for FUSION-style `w'Rw` variance.
+- gQTL modality umbrella `params.run_gqtl` (default OFF): ingest + QC + GWAS benchmark; profile `test_gqtl`.
+- PredictDB / PrediXcan SQLite import (`modules/local/twas/predictdb`) when `--twas_weights` ends with `.db`; profile `test_twas_predictdb`.
+- LDSC reference-panel LD scores via `--ldsc_ldscores` (snp + l2), merged by SNP id.
+- Cap nf-test process resources in `tests/nextflow.config` so stub GWAS/gQTL paths stay under local memory limits.
 
 ### `Fixed`
 
