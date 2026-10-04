@@ -6,6 +6,7 @@ components:
 input:
   - ch_sumstats
   - ch_annot
+  - ch_ldscores
 output:
   - h2
   - partitioned

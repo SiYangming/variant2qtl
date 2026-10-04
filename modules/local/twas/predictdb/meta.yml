@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "twas_predictdb"
+description: Extract PredictDB / PrediXcan SQLite weights to long TSV for TWAS
+keywords:
+  - twas
+  - predictdb
+  - predixcan
+  - weights
+tools:
+  - "python":
+      description: "SQLite PredictDB weight export when official PrediXcan is not pinned"
+      homepage: "https://predictdb.org/"
+      documentation: "https://github.com/hakyimlab/PredictDB-Tutorial"
+      licence: ["MIT"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - db:
+        type: file
+        description: PredictDB SQLite database
+        pattern: "*.db"
+
+output:
+  weights:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.weights.tsv":
+        type: file
+        description: Long gene/snp/weight table
+        pattern: "*.weights.tsv"
+  versions_python:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

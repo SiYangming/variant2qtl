@@ -1,12 +1,13 @@
 nextflow_pipeline {
 
-    name "Test pipeline ldsc path"
+    name "Test pipeline twas PredictDB path"
     script "../main.nf"
     tag "pipeline"
-    tag "ldsc"
+    tag "twas"
+    tag "predictdb"
     tag "stub"
 
-    test("-profile test_ldsc path (stub)") {
+    test("-profile test_twas_predictdb path (stub)") {
 
         options "-stub"
 
@@ -17,10 +18,9 @@ nextflow_pipeline {
                 igenomes_ignore = true
                 validate_params = false
 
-                run_ldsc = true
-                ldsc_sumstats = "${projectDir}/assets/testdata/ldsc_mini/sumstats_nol2.tsv"
-                ldsc_ldscores = "${projectDir}/assets/testdata/ldsc_mini/ldscores.tsv"
-                ldsc_annot = "${projectDir}/assets/testdata/ldsc_mini/annot.tsv"
+                run_twas = true
+                twas_weights = "${projectDir}/assets/testdata/twas_mini/predictdb_mini.db"
+                twas_gwas = "${projectDir}/assets/testdata/twas_mini/gwas.tsv"
             }
         }
 
@@ -28,7 +28,8 @@ nextflow_pipeline {
             assertAll(
                 { assert workflow.success },
                 { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
-                { assert path("$outputDir/qtl_ldsc/ldsc_h2").exists() }
+                { assert path("$outputDir/qtl_twas/twas_predictdb").exists() },
+                { assert path("$outputDir/qtl_twas/twas_fusion").exists() }
             )
         }
     }
