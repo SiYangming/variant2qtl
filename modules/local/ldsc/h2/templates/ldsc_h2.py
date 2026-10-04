@@ -3,6 +3,7 @@
 
 Official ldsc is not pinned here. Columns:
   sumstats: snp, z|beta+se, n|n_samples; optional l2 (LD score)
+  ldscores (optional): reference-panel snp + l2 / L2 (merged by SNP id)
   annot (optional): snp + binary/numeric annotation columns for partitioned h2
 """
 from __future__ import annotations
@@ -40,12 +41,29 @@ def ols(x: list[float], y: list[float]) -> tuple[float, float, float]:
     return intercept, slope, se
 
 
+def load_ldscores(path: Path) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for row in read_table(path):
+        snp = (row.get("snp") or row.get("variant_id") or row.get("rsid") or "").strip()
+        if not snp:
+            continue
+        raw = row.get("l2") or row.get("ldscore") or row.get("ld_score") or ""
+        try:
+            out[snp] = float(raw)
+        except ValueError:
+            continue
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sumstats", required=True)
     parser.add_argument("--annot", default=None)
+    parser.add_argument("--ldscores", default=None)
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
+
+    ref_l2 = load_ldscores(Path(args.ldscores)) if args.ldscores else {}
 
     snps = []
     zs = []
@@ -70,14 +88,19 @@ def main() -> None:
             n = float(row.get("n") or row.get("n_samples") or row.get("sample_size") or 10000)
         except ValueError:
             n = 10000.0
-        if row.get("l2"):
+
+        l2 = None
+        if snp in ref_l2:
+            l2 = ref_l2[snp]
+        elif row.get("l2"):
             try:
                 l2 = float(row["l2"])
             except ValueError:
-                l2 = 1.0
-        else:
-            # proxy LD score from |z| rank when l2 absent (smoke / stub-friendly)
+                l2 = None
+        if l2 is None:
+            # proxy when neither reference nor inline l2 is present
             l2 = 1.0
+
         snps.append(snp)
         zs.append(z)
         ns.append(n)
@@ -86,7 +109,8 @@ def main() -> None:
     if not snps:
         raise SystemExit("no usable sumstats rows")
 
-    if all(v == 1.0 for v in l2s):
+    used_ref = bool(ref_l2) and any(s in ref_l2 for s in snps)
+    if (not used_ref) and all(v == 1.0 for v in l2s):
         # synthetic LD scores from chi2 ranks so slope is identifiable
         order = sorted(range(len(zs)), key=lambda i: zs[i] * zs[i])
         for rank, i in enumerate(order, start=1):
@@ -104,8 +128,11 @@ def main() -> None:
     out_prefix.parent.mkdir(parents=True, exist_ok=True)
     h2_path = out_prefix.with_suffix(".h2.tsv")
     with h2_path.open("w") as fh:
-        fh.write("trait\tnsnp\tn_bar\th2\th2_se\tslope\n")
-        fh.write(f"trait1\t{int(m)}\t{n_bar:.6g}\t{h2:.8g}\t{h2_se:.8g}\t{slope:.8g}\n")
+        fh.write("trait\tnsnp\tn_bar\th2\th2_se\tslope\tldscores\n")
+        fh.write(
+            f"trait1\t{int(m)}\t{n_bar:.6g}\t{h2:.8g}\t{h2_se:.8g}\t{slope:.8g}\t"
+            f"{'ref' if used_ref else 'inline'}\n"
+        )
 
     part_path = out_prefix.with_suffix(".part.tsv")
     with part_path.open("w") as fh:
@@ -116,7 +143,9 @@ def main() -> None:
             annot_rows = read_table(Path(args.annot))
             if annot_rows:
                 cols = [c for c in annot_rows[0] if c not in reserved]
-                by_snp = { (r.get("snp") or r.get("variant_id") or r.get("rsid") or "").strip(): r for r in annot_rows }
+                by_snp = {
+                    (r.get("snp") or r.get("variant_id") or r.get("rsid") or "").strip(): r for r in annot_rows
+                }
                 for col in cols:
                     idx = [i for i, s in enumerate(snps) if s in by_snp]
                     if len(idx) < 3:
@@ -139,7 +168,9 @@ def main() -> None:
                     enrich = (h2_ann / h2 / prop) if h2 > 0 and prop > 0 else float("nan")
                     fh.write(f"{col}\t{len(x)}\t{h2_ann:.8g}\t{enrich:.8g}\n")
 
-    out_prefix.with_suffix(".ldsc.log").write_text(f"nsnp\t{int(m)}\nh2\t{h2:.8g}\n")
+    out_prefix.with_suffix(".ldsc.log").write_text(
+        f"nsnp\t{int(m)}\nh2\t{h2:.8g}\nldscores\t{'ref' if used_ref else 'inline'}\n"
+    )
 
 
 if __name__ == "__main__":

@@ -56,13 +56,15 @@ workflow VARIANT2QTL {
     def run_eqtl = params.run_eqtl
     def run_sqtl = params.run_sqtl
     def run_pqtl = params.run_pqtl
+    def run_gqtl = params.run_gqtl
     def run_modality = run_eqtl || run_sqtl || run_pqtl
     def modality_engine = (params.qtl_modality_engine ?: 'omiga').toString().trim().toLowerCase()
     def run_pheno_prep = params.run_phenotype_prepare || run_eqtl || run_pqtl
     def run_leaf = params.run_sqtl_leafcutter || run_sqtl
     def run_peer_flag = params.run_peer || run_modality
-    def run_ingest = params.run_genotype_ingest || run_snp_indel
-    def run_qc = params.run_genotype_qc || run_snp_indel || (run_modality && params.genotype_input)
+    def run_gwas = params.run_gwas_benchmark || run_gqtl
+    def run_ingest = params.run_genotype_ingest || run_snp_indel || run_gqtl
+    def run_qc = params.run_genotype_qc || run_snp_indel || run_gqtl || (run_modality && params.genotype_input)
     def run_omiga = params.run_omiga_cis || run_snp_indel || (run_modality && modality_engine == 'omiga')
     def run_tensor = params.run_tensorqtl_cis || (run_modality && modality_engine == 'tensorqtl')
     def run_qtltools = params.run_qtltools_cis || (run_modality && modality_engine == 'qtltools')
@@ -91,7 +93,7 @@ workflow VARIANT2QTL {
     def ch_peer_cov_omiga = channel.empty()
     def ch_peer_cov_tensor = channel.empty()
 
-    if (run_ingest || run_qc || params.run_gwas_benchmark || params.genotype_input) {
+    if (run_ingest || run_qc || run_gwas || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
         def ch_gwas_vcf = channel.empty()
         def ch_gwas_pheno = channel.empty()
@@ -216,9 +218,9 @@ workflow VARIANT2QTL {
                     ? channel.of([gwas_meta, file(params.gwas_benchmark_vcf, checkIfExists: true)])
                     : channel.empty()
 
-                if ((run_qc || params.run_gwas_benchmark) &&
+                if ((run_qc || run_gwas) &&
                     (!params.gwas_benchmark_bed || !params.gwas_benchmark_bim || !params.gwas_benchmark_fam)) {
-                    log.warn "genotype_qc/gwas_benchmark enabled but missing --gwas_benchmark_bed/bim/fam; channels empty."
+                    log.warn "genotype_qc/gwas_benchmark/run_gqtl enabled but missing --gwas_benchmark_bed/bim/fam; channels empty."
                 }
             }
 
@@ -244,9 +246,9 @@ workflow VARIANT2QTL {
         ch_shared_geno_plink = ch_gwas_plink
         ch_shared_geno_vcf = ch_gwas_vcf
 
-        if (params.run_gwas_benchmark) {
+        if (run_gwas) {
             if (!params.genotype_input && !params.gwas_benchmark_phenotype) {
-                log.warn "run_gwas_benchmark=true but missing --gwas_benchmark_phenotype (or --genotype_input)."
+                log.warn "run_gwas_benchmark/run_gqtl=true but missing --gwas_benchmark_phenotype (or --genotype_input)."
             }
             GWAS_BENCHMARK_PARALLEL(
                 ch_gwas_plink,
@@ -638,7 +640,7 @@ workflow VARIANT2QTL {
         if (!params.coloc_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
             log.warn "run_coloc=true but missing --coloc_qtl_sumstats (and no cis QTL engine outputs)."
         }
-        if (!params.coloc_gwas_sumstats && !params.run_gwas_benchmark) {
+        if (!params.coloc_gwas_sumstats && !run_gwas) {
             log.warn "run_coloc=true but missing --coloc_gwas_sumstats (and no GWAS standardized tables)."
         }
 
@@ -675,7 +677,7 @@ workflow VARIANT2QTL {
         if (!params.smr_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
             log.warn "run_smr=true but missing --smr_qtl_sumstats (and no cis QTL engine outputs)."
         }
-        if (!params.smr_gwas_sumstats && !params.run_gwas_benchmark) {
+        if (!params.smr_gwas_sumstats && !run_gwas) {
             log.warn "run_smr=true but missing --smr_gwas_sumstats (and no GWAS standardized tables)."
         }
         QTL_SMR(ch_smr_qtl, ch_smr_gwas)
@@ -744,7 +746,7 @@ workflow VARIANT2QTL {
         if (!params.twas_weights) {
             log.warn "run_twas=true but missing --twas_weights."
         }
-        if (!params.twas_gwas && !params.run_gwas_benchmark) {
+        if (!params.twas_gwas && !run_gwas) {
             log.warn "run_twas=true but missing --twas_gwas (and no GWAS standardized tables)."
         }
         if (params.twas_weights) {
@@ -764,11 +766,14 @@ workflow VARIANT2QTL {
         def ch_ldsc_annot = params.ldsc_annot
             ? channel.of([ldsc_meta, file(params.ldsc_annot, checkIfExists: true)])
             : channel.empty()
-        if (!params.ldsc_sumstats && !params.run_gwas_benchmark) {
+        def ch_ldsc_l2 = params.ldsc_ldscores
+            ? channel.of([ldsc_meta, file(params.ldsc_ldscores, checkIfExists: true)])
+            : channel.empty()
+        if (!params.ldsc_sumstats && !run_gwas) {
             log.warn "run_ldsc=true but missing --ldsc_sumstats (and no GWAS standardized tables)."
         }
-        if (params.ldsc_sumstats || params.run_gwas_benchmark) {
-            QTL_LDSC(ch_ldsc_ss, ch_ldsc_annot)
+        if (params.ldsc_sumstats || run_gwas) {
+            QTL_LDSC(ch_ldsc_ss, ch_ldsc_annot, ch_ldsc_l2)
             ch_versions = ch_versions.mix(QTL_LDSC.out.versions)
         }
     }
