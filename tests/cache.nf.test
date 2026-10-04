@@ -1,0 +1,38 @@
+nextflow_pipeline {
+
+    name "Test pipeline annotation cache path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "cache"
+    tag "stub"
+
+    test("-profile test_cache path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_cache = true
+                cache_tools = 'snpeff,ensemblvep'
+                annotate_vep_genome = 'GRCh38'
+                annotate_vep_species = 'homo_sapiens'
+                annotate_vep_cache_version = '110'
+                annotate_snpeff_db = 'GRCh38.99'
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/annotation_cache/ensemblvep_download").exists() },
+                { assert path("$outputDir/annotation_cache/snpeff_download").exists() }
+            )
+        }
+    }
+}

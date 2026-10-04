@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "VARIANT_VCF_PREP"
+description: Chain VCF annotate → phase → impute (skippable steps)
+components:
+  - VARIANT_ANNOTATE
+  - VARIANT_PHASE
+  - VARIANT_IMPUTE
+input:
+  - ch_vcf
+  - ch_fasta
+  - ch_vep_cache
+  - ch_snpeff_cache
+  - ch_phase_ref
+  - ch_phase_map
+  - ch_impute_panel
+  - ch_impute_map
+output:
+  - vcf
+  - imputed
+  - versions
+authors:
+  - "@SiYangming"

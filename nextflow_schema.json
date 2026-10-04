@@ -1116,8 +1116,15 @@
                 "run_vcf_prep": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Run annotate + phase + impute (skippable steps). Default: false.",
+                    "description": "Run sequential annotate → phase → impute (each step consumes the previous VCF). Default: false.",
                     "fa_icon": "fas fa-toggle-off"
+                },
+                "vcf_prep_id": {
+                    "type": "string",
+                    "default": "vcf_prep",
+                    "description": "Sample meta.id for the chained VCF prep path.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
                 },
                 "vcf_prep_vcf": {
                     "type": "string",
@@ -1366,6 +1373,128 @@
                     "default": "1",
                     "description": "Region / chrom for imputation.",
                     "fa_icon": "fas fa-map-marker-alt"
+                }
+            }
+        },
+        "cache_options": {
+            "title": "Annotation cache download options",
+            "type": "object",
+            "fa_icon": "fas fa-download",
+            "description": "Optional Ensembl VEP / snpEff cache download. Disabled by default.",
+            "properties": {
+                "run_cache": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Download VEP and/or snpEff annotation caches. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "cache_id": {
+                    "type": "string",
+                    "default": "cache",
+                    "description": "Sample meta.id for cache download.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "cache_tools": {
+                    "type": "string",
+                    "default": "snpeff,ensemblvep",
+                    "description": "Comma-separated tools to download: snpeff, ensemblvep.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "cache_vep_preflight": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Check Ensembl CHECKSUMS before VEP cache install.",
+                    "fa_icon": "fas fa-check"
+                }
+            }
+        },
+        "impute_bam_options": {
+            "title": "GLIMPSE2 BAM/GL imputation options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Optional GLIMPSE2 imputation from BAM/CRAM or genotype-likelihood VCF. Disabled by default.",
+            "properties": {
+                "run_impute_bam": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run GLIMPSE2 imputation. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "impute_bam_id": {
+                    "type": "string",
+                    "default": "impute_bam",
+                    "description": "Sample meta.id for GLIMPSE2.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "impute_bam_input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BAM/CRAM or genotype-likelihood VCF for GLIMPSE2.",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_bam_index": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Index for impute_bam_input (BAI/CRAI/TBI).",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_bam_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional FASTA for CRAM decode / GLIMPSE2 --fasta.",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_bam_fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "FAI for impute_bam_fasta.",
+                    "fa_icon": "fas fa-file"
+                },
+                "impute_bam_region": {
+                    "type": "string",
+                    "description": "Input/output region for GLIMPSE2 (falls back to impute_region).",
+                    "fa_icon": "fas fa-map-marker-alt"
+                },
+                "impute_bam_suffix": {
+                    "type": "string",
+                    "default": "vcf.gz",
+                    "enum": ["vcf", "vcf.gz", "bcf", "bgen"],
+                    "description": "GLIMPSE2 output suffix.",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
+        "fasta_index_options": {
+            "title": "FASTA index options",
+            "type": "object",
+            "fa_icon": "fas fa-book",
+            "description": "Optional bgzip + samtools faidx/dict for a reference FASTA. Disabled by default.",
+            "properties": {
+                "run_fasta_index": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "bgzip FASTA and build faidx/dict. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "fasta_index_id": {
+                    "type": "string",
+                    "default": "fasta_index",
+                    "description": "Sample meta.id for FASTA indexing.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "fasta_index_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Uncompressed or gzipped reference FASTA to index.",
+                    "fa_icon": "fas fa-file"
                 }
             }
         },
@@ -1774,6 +1903,15 @@
         },
         {
             "$ref": "#/$defs/impute_options"
+        },
+        {
+            "$ref": "#/$defs/cache_options"
+        },
+        {
+            "$ref": "#/$defs/impute_bam_options"
+        },
+        {
+            "$ref": "#/$defs/fasta_index_options"
         },
         {
             "$ref": "#/$defs/sv_options"
