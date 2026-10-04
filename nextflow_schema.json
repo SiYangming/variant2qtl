@@ -198,6 +198,31 @@
                     "description": "Picard sequence dictionary (.dict) for LiftoverVcf.",
                     "fa_icon": "fas fa-file"
                 },
+                "genotype_ingest_biallelic": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Keep only biallelic sites before PLINK ingest (auto-on with sv_feed_ingest / str_feed_ingest). Complex SV/STR alleles are dropped.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "genotype_ingest_biallelic_args": {
+                    "type": "string",
+                    "default": "-m2 -M2 --output-type z",
+                    "description": "bcftools view args for the biallelic filter.",
+                    "fa_icon": "fas fa-terminal",
+                    "hidden": true
+                },
+                "sv_feed_ingest": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Mix VARIANT_SV VCF into genotype_ingest (biallelic filter). Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "str_feed_ingest": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Mix VARIANT_STR VCF into genotype_ingest (biallelic filter). Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
                 "run_genotype_qc": {
                     "type": "boolean",
                     "default": false,
@@ -1327,8 +1352,22 @@
                 "phase_region": {
                     "type": "string",
                     "default": "1",
-                    "description": "Region for SHAPEIT5 (chr or chr:start-end).",
+                    "description": "Region for SHAPEIT5 (chr or chr:start-end). Overridden per chunk when scatter BED is set.",
                     "fa_icon": "fas fa-map-marker-alt"
+                },
+                "phase_scatter_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional BED to scatter SHAPEIT5 regions (bed_scatter_bedtools + gather).",
+                    "fa_icon": "fas fa-cut"
+                },
+                "phase_scatter_count": {
+                    "type": "integer",
+                    "default": 2,
+                    "description": "Number of BED chunks for phase scatter.",
+                    "fa_icon": "fas fa-hashtag",
+                    "hidden": true
                 }
             }
         },
@@ -1396,8 +1435,22 @@
                 "impute_region": {
                     "type": "string",
                     "default": "1",
-                    "description": "Region / chrom for imputation.",
+                    "description": "Region / chrom for imputation. Overridden per chunk when scatter BED is set.",
                     "fa_icon": "fas fa-map-marker-alt"
+                },
+                "impute_scatter_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional BED to scatter imputation regions (bed_scatter_bedtools + gather).",
+                    "fa_icon": "fas fa-cut"
+                },
+                "impute_scatter_count": {
+                    "type": "integer",
+                    "default": 2,
+                    "description": "Number of BED chunks for impute scatter.",
+                    "fa_icon": "fas fa-hashtag",
+                    "hidden": true
                 }
             }
         },

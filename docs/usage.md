@@ -164,8 +164,8 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 **VCF annotate / phase / impute / relate**
 
 - `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`); optional `annotate_filter` (bcftools view / filter_vep)
-- `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`
-- `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map
+- `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`; optional `--phase_scatter_bed` / `--phase_scatter_count` (bed_scatter + gather)
+- `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map; optional `--impute_scatter_bed` / `--impute_scatter_count`
 - `run_vcf_prep` — sequential annotate → phase → impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`); independent `run_annotate` / `run_phase` / `run_impute` stay parallel
 - `run_cache` — download VEP/snpEff caches (`cache_tools`); used as annotate / `vcf_prep` cache when `--annotate_*_cache` is unset
 - `run_impute_bam` — GLIMPSE2 chunk → phase → ligate (`--impute_bam_input` + `--impute_panel`); `--impute_bam_chunk` for auto-chunk
@@ -190,8 +190,8 @@ nf-test test tests/real/vep.vep_real.nf.test --config nf-test.real.config --prof
 **SNP/Indel umbrella / SV / STR**
 
 - `run_snp_indel` — ingest (if needed) + QC + OmiGA cis from `--genotype_input`
-- `run_sv` — `--sv_bam` + fasta; engines `smoove,manta,delly`
-- `run_str` — BAM + fasta + catalog/regions; engines `expansionhunter,gangstr,hipstr,trgt`
+- `run_sv` — `--sv_bam` + fasta; engines `smoove,manta,delly`; `--sv_feed_ingest` mixes the called VCF into `genotype_ingest` (biallelic filter; complex SV alleles are dropped before PLINK)
+- `run_str` — BAM + fasta + catalog/regions; engines `expansionhunter,gangstr,hipstr,trgt`; `--str_feed_ingest` same ingest path as SV
 
 **LeafCutter sQTL**
 
@@ -573,6 +573,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_finemap_extra`
 - `test_sv`
 - `test_str`
+- `test_sv_ingest`
+- `test_str_ingest`
+- `test_phase_scatter`
 - `test_snp_indel`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`

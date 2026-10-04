@@ -59,15 +59,15 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P0 — 核心业务（必须自建）
 
-| 建议名                                    | 职责                                                                                | 依赖模块（多为 local）                                                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `genotype_ingest_harmonize`               | 多源变异入口（SNP/Indel）→ 标准化 VCF/PLINK；可选 liftover、bcftools norm、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**已深化**（SV/STR 仍在 P3 编排）    |
-| `genotype_qc`                             | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                       | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关）  |
-| `genotype_to_analysis_format`             | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                           | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                                |
-| `molqtl_map_omiga`                        | **OmiGA** cis（经 analysis-format）                                                 | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                     |
-| `molqtl_map_tensorqtl`                    | tensorQTL 备用/对照引擎                                                             | **已实现**；`params.run_tensorqtl_cis`；可 `--tensorqtl_use_qc_bed`；PyPI `1.0.10`                    |
-| `molqtl_map_qtltools`                     | QTLtools cis 对照引擎                                                               | **已实现**；`params.run_qtltools_cis`；可 `--qtltools_use_qc_bed`；conda `YangmingSi::qtltools=1.3.1` |
-| `qtl_postprocess` / `qtl_postprocess_cis` | 多引擎 cis 结果合并、BH FDR、标准表                                                 | **已实现**；`params.run_qtl_postprocess` 默认关                                                       |
+| 建议名                                    | 职责                                                                                              | 依赖模块（多为 local）                                                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `genotype_ingest_harmonize`               | 多源变异入口（SNP/Indel/SV/STR feed）→ 标准化 VCF/PLINK；可选 liftover、norm、biallelic、样本子集 | `picard/liftovervcf`、`bcftools/{index,norm,view}`、`plink/vcf`；**SV/STR 可 `--sv_feed_ingest` / `--str_feed_ingest`（复杂等位基因会被丢掉）** |
+| `genotype_qc`                             | HWE / missing / MAF / 杂合度 / 亲缘异常 / PCA                                                     | `plink2/{filter,het,remove}`、`plink/genome`、local het/relatedness/pca；**已深化**（extras 默认关）                                            |
+| `genotype_to_analysis_format`             | VCF ↔ BED ↔ 可选 BGEN，供 OmiGA/tensorQTL                                                         | **已实现**（bed passthrough + 可选 `plink2/vcf2bgen`）                                                                                          |
+| `molqtl_map_omiga`                        | **OmiGA** cis（经 analysis-format）                                                               | **已实现**；可 `--omiga_cis_use_qc_bed` 复用 QC bed；pin `1.8.17`                                                                               |
+| `molqtl_map_tensorqtl`                    | tensorQTL 备用/对照引擎                                                                           | **已实现**；`params.run_tensorqtl_cis`；可 `--tensorqtl_use_qc_bed`；PyPI `1.0.10`                                                              |
+| `molqtl_map_qtltools`                     | QTLtools cis 对照引擎                                                                             | **已实现**；`params.run_qtltools_cis`；可 `--qtltools_use_qc_bed`；conda `YangmingSi::qtltools=1.3.1`                                           |
+| `qtl_postprocess` / `qtl_postprocess_cis` | 多引擎 cis 结果合并、BH FDR、标准表                                                               | **已实现**；`params.run_qtl_postprocess` 默认关                                                                                                 |
 
 ### P1 — 协变量与 sQTL 表型（表型矩阵侧）
 
@@ -103,20 +103,20 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P3 — 编排层（pipeline 级）
 
-| 建议名                                            | 职责                                                             |
-| ------------------------------------------------- | ---------------------------------------------------------------- |
-| `variant2qtl_snp_indel`                           | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis    |
-| `variant_sv`                                      | **已实现**；smoove/manta/delly；`params.run_sv` 默认关           |
-| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；`params.run_str` 默认关      |
-| `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关                |
-| `variant_annotate` / `run_annotate`               | **已实现**；VEP/snpEff 模块包装；默认关                          |
-| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5 phase_common；默认关                        |
-| `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；默认关                 |
-| `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                      |
-| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步）；默认关     |
-| `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；可喂 annotate；默认关         |
-| `variant_impute_bam` / `run_impute_bam`           | **已实现**；`bam_vcf_impute_glimpse2` chunk/phase/ligate；默认关 |
-| `reference_fasta` / `run_fasta_index`             | **已实现**；产物可喂 relate/VEP/SV/STR/GLIMPSE2；默认关          |
+| 建议名                                            | 职责                                                                                 |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `variant2qtl_snp_indel`                           | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis                        |
+| `variant_sv`                                      | **已实现**；smoove/manta/delly；`params.run_sv` 默认关                               |
+| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；`params.run_str` 默认关                          |
+| `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关                                    |
+| `variant_annotate` / `run_annotate`               | **已实现**；VEP/snpEff 模块包装；默认关                                              |
+| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5；可选 `phase_scatter_bed` + `vcf_gather_bcftools`；默认关       |
+| `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；可选 `impute_scatter_bed` + gather；默认关 |
+| `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                                          |
+| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步）；默认关                         |
+| `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；可喂 annotate；默认关                             |
+| `variant_impute_bam` / `run_impute_bam`           | **已实现**；`bam_vcf_impute_glimpse2` chunk/phase/ligate；默认关                     |
+| `reference_fasta` / `run_fasta_index`             | **已实现**；产物可喂 relate/VEP/SV/STR/GLIMPSE2；默认关                              |
 
 ---
 
@@ -125,7 +125,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：SV/STR VCF 接到 `genotype_ingest`，或 `bed_scatter` 给 phase/impute 分区间，或打 0.0.1 tag。
+## 建议下一步：打 0.0.1 tag（仅在你明确要求时），或把 scatter 接到 `run_vcf_prep` 串行链。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

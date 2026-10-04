@@ -25,14 +25,28 @@ workflow VARIANT_IMPUTE {
     ch_imputed = channel.empty()
 
     def engine = (params.impute_engine ?: 'beagle5').toString().trim().toLowerCase()
-    def region = (params.impute_region ?: '1').toString()
+    def default_region = (params.impute_region ?: '1').toString()
 
-    ch_map_aligned = ch_vcf
-        .join(ch_map, remainder: true)
-        .map { meta, _vcf, _tbi, gmap -> [meta, gmap ?: []] }
+    ch_vcf_keyed = ch_vcf.map { meta, vcf, tbi ->
+        [meta.group_id ?: meta.id, meta, vcf, tbi]
+    }
 
-    ch_joined = ch_vcf
-        .join(ch_panel)
+    ch_map_aligned = ch_vcf_keyed
+        .join(
+            ch_map.map { meta, gmap -> [meta.id, gmap] },
+            remainder: true
+        )
+        .map { row ->
+            def meta = row[1]
+            def gmap = (row.size() > 4 && row[4]) ? row[4] : []
+            [meta, gmap]
+        }
+
+    ch_joined = ch_vcf_keyed
+        .join(ch_panel.map { meta, panel, panel_tbi -> [meta.id, panel, panel_tbi] })
+        .map { _key, meta, vcf, tbi, panel, panel_tbi ->
+            [meta, vcf, tbi, panel, panel_tbi]
+        }
         .join(ch_map_aligned)
         .map { meta, vcf, tbi, panel, panel_tbi, gmap ->
             [meta, vcf, tbi, panel, panel_tbi ?: [], gmap]
@@ -41,6 +55,7 @@ workflow VARIANT_IMPUTE {
     if (engine == 'beagle5' || engine == 'beagle') {
         BEAGLE5_BEAGLE(
             ch_joined.map { meta, vcf, tbi, panel, panel_tbi, gmap ->
+                def region = (meta.region ?: default_region).toString()
                 [meta, vcf, tbi, panel, panel_tbi, gmap, [], [], region]
             }
         )
@@ -49,6 +64,7 @@ workflow VARIANT_IMPUTE {
     else if (engine == 'minimac4' || engine == 'minimac') {
         MINIMAC4_IMPUTE(
             ch_joined.map { meta, vcf, tbi, panel, _panel_tbi, gmap ->
+                def region = (meta.region ?: default_region).toString()
                 [meta, vcf, tbi, panel, [], [], gmap, region]
             }
         )
@@ -57,6 +73,7 @@ workflow VARIANT_IMPUTE {
     else if (engine == 'glimpse' || engine == 'glimpse1') {
         GLIMPSE_PHASE(
             ch_joined.map { meta, vcf, tbi, panel, panel_tbi, gmap ->
+                def region = (meta.region ?: default_region).toString()
                 [meta, vcf, tbi, [], region, region, panel, panel_tbi, gmap]
             }
         )

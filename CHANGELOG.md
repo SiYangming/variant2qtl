@@ -50,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example params YAML (`assets/params_eqtl.yml`, `params_vcf_prep.yml`, `params_cache_annotate.yml`) and output-directory docs.
 - Feed `run_fasta_index` / `run_cache` into relate, VEP, SV/STR, and GLIMPSE2 when per-step FASTA/cache params are unset.
 - Optional `annotate_filter` via `vcf_filter_bcftools_ensemblvep`; `run_impute_bam` uses `bam_vcf_impute_glimpse2` (chunk/phase/ligate).
+- `--sv_feed_ingest` / `--str_feed_ingest` mix called VCFs into `genotype_ingest` with a biallelic `bcftools view` (complex SV/STR alleles are dropped before PLINK).
+- Optional `--phase_scatter_bed` / `--impute_scatter_bed` (`bed_scatter_bedtools` + `bed_to_region` + `vcf_gather_bcftools`).
+- README shortest command uses `-params-file assets/params_eqtl.yml`. **No 0.0.1 tag.**
 
 ### `Fixed`
 

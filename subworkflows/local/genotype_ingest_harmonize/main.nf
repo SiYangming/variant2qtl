@@ -8,12 +8,14 @@
 include { PICARD_LIFTOVERVCF                          } from '../../../modules/nf-core/picard/liftovervcf/main'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_NORM       } from '../../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_VIEW       } from '../../../modules/nf-core/bcftools/index/main'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_BIALLELIC  } from '../../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_NORM                               } from '../../../modules/nf-core/bcftools/norm/main'
 include { BCFTOOLS_VIEW                               } from '../../../modules/nf-core/bcftools/view/main'
+include { BCFTOOLS_VIEW as BCFTOOLS_VIEW_BIALLELIC    } from '../../../modules/nf-core/bcftools/view/main'
 include { PLINK_VCF                                   } from '../../../modules/nf-core/plink/vcf/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
-// PICARD_LIFTOVERVCF.out.versions, BCFTOOLS_INDEX_NORM.out.versions, BCFTOOLS_INDEX_VIEW.out.versions, BCFTOOLS_NORM.out.versions, BCFTOOLS_VIEW.out.versions, PLINK_VCF.out.versions
+// PICARD_LIFTOVERVCF.out.versions, BCFTOOLS_INDEX_NORM.out.versions, BCFTOOLS_INDEX_VIEW.out.versions, BCFTOOLS_INDEX_BIALLELIC.out.versions, BCFTOOLS_NORM.out.versions, BCFTOOLS_VIEW.out.versions, BCFTOOLS_VIEW_BIALLELIC.out.versions, PLINK_VCF.out.versions
 
 
 workflow GENOTYPE_INGEST_HARMONIZE {
@@ -69,6 +71,20 @@ workflow GENOTYPE_INGEST_HARMONIZE {
 
         BCFTOOLS_NORM(ch_indexed, ch_ref)
         ch_work = BCFTOOLS_NORM.out.vcf
+    }
+
+    // Drop multi-allelic / symbolic alleles so PLINK ingest can proceed.
+    // Complex SV/STR records are discarded (documented limitation).
+    def do_biallelic = params.genotype_ingest_biallelic || params.sv_feed_ingest || params.str_feed_ingest
+    if (do_biallelic) {
+        BCFTOOLS_INDEX_BIALLELIC(ch_work)
+        BCFTOOLS_VIEW_BIALLELIC(
+            ch_work.join(BCFTOOLS_INDEX_BIALLELIC.out.index),
+            [],
+            [],
+            []
+        )
+        ch_work = BCFTOOLS_VIEW_BIALLELIC.out.vcf
     }
 
     // --- Optional sample keep-list (cohort alignment) ---
