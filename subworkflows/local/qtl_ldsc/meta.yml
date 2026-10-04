@@ -1,14 +1,14 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "QTL_TWAS"
-description: FUSION/PrediXcan/MetaXcan-style TWAS from gene weights and GWAS sumstats
+name: "QTL_LDSC"
+description: LD-score regression style heritability and partitioned enrichment
 components:
-  - TWAS_FUSION
+  - LDSC_H2
 input:
-  - ch_weights
-  - ch_gwas
-  - ch_ld
+  - ch_sumstats
+  - ch_annot
 output:
-  - twas
+  - h2
+  - partitioned
   - outdir
   - versions
 authors:

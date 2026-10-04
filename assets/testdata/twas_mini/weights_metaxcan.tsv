@@ -1,0 +1,5 @@
+gene	rsid	weight	ref_allele	eff_allele
+GENE_A	rs1	0.40	A	G
+GENE_A	rs2	0.20	C	T
+GENE_B	rs3	0.50	A	C
+GENE_B	rs1	-0.10	A	G

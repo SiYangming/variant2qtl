@@ -851,14 +851,14 @@
             "title": "TWAS options",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "Optional FUSION/PrediXcan-style TWAS. Disabled by default.",
+            "description": "Optional FUSION/PrediXcan/MetaXcan-style TWAS. Disabled by default.",
             "properties": {
                 "run_twas": {
                     "type": "boolean",
                     "default": false,
                     "description": "Run gene-level TWAS from QTL weights and GWAS z. Default: false.",
                     "fa_icon": "fas fa-toggle-off",
-                    "help_text": "Independent-SNP FUSION-style score. Prefers --twas_weights and --twas_gwas, or GWAS standardised tables."
+                    "help_text": "Accepts gene/snp/weight or MetaXcan GENE/RSID/WEIGHT. Optional --twas_ld for FUSION-style w'Rw variance."
                 },
                 "twas_id": {
                     "type": "string",
@@ -871,7 +871,7 @@
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "description": "Gene SNP weights (gene, snp, weight).",
+                    "description": "Gene SNP weights (gene/GENE, snp/rsid, weight/WEIGHT).",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "twas_gwas": {
@@ -880,6 +880,82 @@
                     "exists": true,
                     "description": "GWAS sumstats (snp, beta, se or z).",
                     "fa_icon": "fas fa-file-csv"
+                },
+                "twas_ld": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional SNP LD matrix for FUSION-style TWAS variance.",
+                    "fa_icon": "fas fa-table"
+                }
+            }
+        },
+        "ldsc_options": {
+            "title": "LDSC options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-line",
+            "description": "Optional LD-score regression heritability. Disabled by default.",
+            "properties": {
+                "run_ldsc": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run LDSC-style heritability and optional partitioned enrichment. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Official ldsc is not pinned; chi2 ~ l2 regression with optional annotation enrichment."
+                },
+                "ldsc_id": {
+                    "type": "string",
+                    "default": "ldsc",
+                    "description": "Sample meta.id for LDSC.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "ldsc_sumstats": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "GWAS sumstats (snp, z or beta/se, n; optional l2).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "ldsc_annot": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional SNP annotation table for partitioned h2.",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "qtl_modality_options": {
+            "title": "QTL modality umbrella options",
+            "type": "object",
+            "fa_icon": "fas fa-layer-group",
+            "description": "Optional eQTL/sQTL/pQTL one-switch paths. Disabled by default.",
+            "properties": {
+                "run_eqtl": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run eQTL: phenotype_prepare + PEER + cis engine. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "run_sqtl": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run sQTL: LeafCutter prepare + PEER + cis engine. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "run_pqtl": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run pQTL: phenotype_prepare + PEER + cis engine. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "qtl_modality_engine": {
+                    "type": "string",
+                    "default": "omiga",
+                    "enum": ["omiga", "tensorqtl", "qtltools"],
+                    "description": "Cis QTL engine for modality umbrellas.",
+                    "fa_icon": "fas fa-cogs"
                 }
             }
         },
@@ -1311,6 +1387,12 @@
         },
         {
             "$ref": "#/$defs/twas_options"
+        },
+        {
+            "$ref": "#/$defs/ldsc_options"
+        },
+        {
+            "$ref": "#/$defs/qtl_modality_options"
         },
         {
             "$ref": "#/$defs/finemap_extra_options"

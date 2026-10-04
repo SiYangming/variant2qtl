@@ -1,18 +1,16 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
-name: "twas_fusion"
-description: FUSION/PrediXcan/MetaXcan-style TWAS from gene weights and GWAS z-scores
+name: "ldsc_h2"
+description: LD-score regression style heritability and partitioned enrichment
 keywords:
-  - twas
-  - fusion
-  - predixcan
-  - metaxcan
+  - ldsc
+  - heritability
   - gwas
 tools:
   - "python":
-      description: "TWAS with optional LD when official FUSION/PrediXcan is not pinned"
-      homepage: "http://gusevlab.org/projects/fusion/"
-      documentation: "http://gusevlab.org/projects/fusion/"
+      description: "LDSC-style h2 when official ldsc is not pinned"
+      homepage: "https://github.com/bulik/ldsc"
+      documentation: "https://github.com/bulik/ldsc"
       licence: ["MIT"]
       identifier: ""
 
@@ -20,34 +18,35 @@ input:
   - - meta:
         type: map
         description: Groovy map containing sample information
-    - weights:
+    - sumstats:
         type: file
-        description: Gene SNP weights (gene/GENE, snp/rsid, weight/WEIGHT)
+        description: GWAS sumstats (snp, z or beta/se, n; optional l2)
         pattern: "*.{tsv,txt,csv}"
   - - meta2:
         type: map
-        description: GWAS metadata
-    - gwas:
+        description: Annotation metadata
+    - annot:
         type: file
-        description: GWAS sumstats (snp, beta, se or z)
-        pattern: "*.{tsv,txt,csv}"
-  - - meta3:
-        type: map
-        description: Optional LD metadata
-    - ld:
-        type: file
-        description: Optional SNP LD matrix for FUSION-style variance
+        description: Optional SNP annotation table
         pattern: "*.{tsv,txt,csv}"
 
 output:
-  twas:
+  h2:
     - meta:
         type: map
         description: Groovy map containing sample information
-    - "*.twas.tsv":
+    - "*.h2.tsv":
         type: file
-        description: Gene-level TWAS z and p
-        pattern: "*.twas.tsv"
+        description: Observed-scale heritability
+        pattern: "*.h2.tsv"
+  partitioned:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.part.tsv":
+        type: file
+        description: Partitioned heritability / enrichment
+        pattern: "*.part.tsv"
   outdir:
     - meta:
         type: map

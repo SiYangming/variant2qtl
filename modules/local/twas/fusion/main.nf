@@ -10,6 +10,7 @@ process TWAS_FUSION {
     input:
     tuple val(meta), path(weights)
     tuple val(meta2), path(gwas)
+    tuple val(meta3), path(ld)
 
     output:
     tuple val(meta), path("*.twas.tsv"), emit: twas
@@ -22,6 +23,7 @@ process TWAS_FUSION {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def ld_arg = ld ? "--ld ${ld}" : ''
     def template_py = "${moduleDir}/templates/twas_fusion.py"
     """
     mkdir -p ${prefix}_out
@@ -30,6 +32,7 @@ process TWAS_FUSION {
     python3 twas_fusion.py \\
         --weights ${weights} \\
         --gwas ${gwas} \\
+        ${ld_arg} \\
         --out ${prefix}_out/${prefix} \\
         ${args}
 
@@ -40,8 +43,8 @@ process TWAS_FUSION {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     mkdir -p ${prefix}_out
-    echo -e "gene\\tn_snps\\tz\\tp" > ${prefix}.twas.tsv
-    echo -e "GENE_A\\t2\\t3.1\\t0.002" >> ${prefix}.twas.tsv
+    echo -e "gene\\tn_snps\\tz\\tp\\tld" > ${prefix}.twas.tsv
+    echo -e "GENE_A\\t2\\t3.1\\t0.002\\tno" >> ${prefix}.twas.tsv
     cp ${prefix}.twas.tsv ${prefix}_out/
     """
 }

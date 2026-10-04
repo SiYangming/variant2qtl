@@ -28,6 +28,7 @@ include { QTL_MASHR                 } from '../subworkflows/local/qtl_mashr/main
 include { QTL_METAL                 } from '../subworkflows/local/qtl_metal/main'
 include { QTL_TORUS                 } from '../subworkflows/local/qtl_torus/main'
 include { QTL_TWAS                  } from '../subworkflows/local/qtl_twas/main'
+include { QTL_LDSC                  } from '../subworkflows/local/qtl_ldsc/main'
 include { QTL_FINEMAP_EXTRA         } from '../subworkflows/local/qtl_finemap_extra/main'
 include { VARIANT_SV                } from '../subworkflows/local/variant_sv/main'
 include { VARIANT_STR               } from '../subworkflows/local/variant_str/main'
@@ -52,9 +53,19 @@ workflow VARIANT2QTL {
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
     def run_snp_indel = params.run_snp_indel
+    def run_eqtl = params.run_eqtl
+    def run_sqtl = params.run_sqtl
+    def run_pqtl = params.run_pqtl
+    def run_modality = run_eqtl || run_sqtl || run_pqtl
+    def modality_engine = (params.qtl_modality_engine ?: 'omiga').toString().trim().toLowerCase()
+    def run_pheno_prep = params.run_phenotype_prepare || run_eqtl || run_pqtl
+    def run_leaf = params.run_sqtl_leafcutter || run_sqtl
+    def run_peer_flag = params.run_peer || run_modality
     def run_ingest = params.run_genotype_ingest || run_snp_indel
-    def run_qc = params.run_genotype_qc || run_snp_indel
-    def run_omiga = params.run_omiga_cis || run_snp_indel
+    def run_qc = params.run_genotype_qc || run_snp_indel || (run_modality && params.genotype_input)
+    def run_omiga = params.run_omiga_cis || run_snp_indel || (run_modality && modality_engine == 'omiga')
+    def run_tensor = params.run_tensorqtl_cis || (run_modality && modality_engine == 'tensorqtl')
+    def run_qtltools = params.run_qtltools_cis || (run_modality && modality_engine == 'qtltools')
     //
     // MODULE: Run FastQC
     //
@@ -251,10 +262,10 @@ workflow VARIANT2QTL {
     //
     // Optional phenotype_prepare → FastQTL BED (default OFF)
     //
-    if (params.run_phenotype_prepare) {
+    if (run_pheno_prep) {
         def pheno_meta = [id: params.phenotype_prepare_id ?: 'phenotype_prepare']
         if (!params.phenotype_matrix) {
-            log.warn "run_phenotype_prepare=true but missing --phenotype_matrix."
+            log.warn "run_phenotype_prepare/run_eqtl/run_pqtl=true but missing --phenotype_matrix."
         } else {
             def ch_pheno_matrix = channel.of([pheno_meta, file(params.phenotype_matrix, checkIfExists: true)])
             def ch_pheno_genes = params.phenotype_gene_bed
@@ -272,10 +283,10 @@ workflow VARIANT2QTL {
     //
     // Optional LeafCutter sQTL phenotype (default OFF)
     //
-    if (params.run_sqtl_leafcutter) {
+    if (run_leaf) {
         def sqtl_meta = [id: params.sqtl_id ?: 'sqtl_leafcutter']
         if (!params.sqtl_counts) {
-            log.warn "run_sqtl_leafcutter=true but missing --sqtl_counts."
+            log.warn "run_sqtl_leafcutter/run_sqtl=true but missing --sqtl_counts."
         } else {
             def ch_sqtl_counts = channel.of([sqtl_meta, file(params.sqtl_counts, checkIfExists: true)])
             def ch_sqtl_genes = params.sqtl_genes
@@ -291,7 +302,7 @@ workflow VARIANT2QTL {
     // Optional PEER hidden covariates (default OFF)
     // Prefer --peer_phenotype; else reuse phenotype_prepare BED.
     //
-    if (params.run_peer) {
+    if (run_peer_flag) {
         def peer_meta = [id: params.peer_id ?: 'peer']
         def ch_peer_pheno = params.peer_phenotype
             ? channel.of([peer_meta, file(params.peer_phenotype, checkIfExists: true)])
@@ -299,8 +310,8 @@ workflow VARIANT2QTL {
         def ch_peer_known = params.peer_covariates
             ? channel.of([peer_meta, file(params.peer_covariates, checkIfExists: true)])
             : channel.empty()
-        if (!params.peer_phenotype && !params.run_phenotype_prepare) {
-            log.warn "run_peer=true but missing --peer_phenotype (and phenotype_prepare did not run)."
+        if (!params.peer_phenotype && !run_pheno_prep && !run_leaf) {
+            log.warn "run_peer/modality=true but missing --peer_phenotype (and no prepared phenotype)."
         }
         COVARIATE_PEER(ch_peer_pheno, ch_peer_known)
         ch_versions = ch_versions.mix(COVARIATE_PEER.out.versions)
@@ -321,11 +332,11 @@ workflow VARIANT2QTL {
         def ch_omiga_vcf = channel.empty()
 
         if (params.genotype_input) {
-            if (params.omiga_cis_use_qc_bed || run_snp_indel) {
+            if (params.omiga_cis_use_qc_bed || run_snp_indel || run_modality) {
                 if (run_qc) {
                     ch_omiga_plink = ch_shared_qc_bed
                 } else {
-                    log.warn "omiga_cis_use_qc_bed/run_snp_indel=true but QC did not run; falling back to samplesheet genotype bed."
+                    log.warn "omiga_cis_use_qc_bed/run_snp_indel/modality=true but QC did not run; falling back to samplesheet genotype bed."
                     ch_omiga_plink = ch_shared_geno_plink
                 }
             } else {
@@ -384,8 +395,8 @@ workflow VARIANT2QTL {
                 (!params.omiga_cis_bed || !params.omiga_cis_bim || !params.omiga_cis_fam)) {
                 log.warn "run_omiga_cis=true but missing --omiga_cis_bed/bim/fam (or --omiga_cis_use_qc_bed); channels empty."
             }
-            if (!params.omiga_cis_phenotype && !params.run_phenotype_prepare) {
-                log.warn "run_omiga_cis=true but missing --omiga_cis_phenotype (and phenotype_prepare did not run)."
+            if (!params.omiga_cis_phenotype && !run_pheno_prep && !run_leaf) {
+                log.warn "run_omiga_cis=true but missing --omiga_cis_phenotype (and no prepared phenotype)."
             }
         }
 
@@ -413,18 +424,18 @@ workflow VARIANT2QTL {
     // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
     // Legacy: --tensorqtl_cis_bed/bim/fam + --tensorqtl_cis_phenotype, or --tensorqtl_use_qc_bed.
     //
-    if (params.run_tensorqtl_cis) {
+    if (run_tensor) {
         def tensorqtl_meta = [id: params.tensorqtl_cis_id ?: 'tensorqtl_cis']
         def ch_tensorqtl_plink = channel.empty()
         def ch_tensorqtl_pheno = channel.empty()
         def ch_tensorqtl_covar = channel.empty()
 
         if (params.genotype_input) {
-            if (params.tensorqtl_use_qc_bed) {
+            if (params.tensorqtl_use_qc_bed || run_modality) {
                 if (run_qc) {
                     ch_tensorqtl_plink = ch_shared_qc_bed
                 } else {
-                    log.warn "tensorqtl_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
+                    log.warn "tensorqtl_use_qc_bed/modality=true but QC did not run; falling back to samplesheet genotype bed."
                     ch_tensorqtl_plink = ch_shared_geno_plink
                 }
             } else {
@@ -497,18 +508,18 @@ workflow VARIANT2QTL {
     // Optional QTLtools cis-molQTL (default OFF)
     // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
     //
-    if (params.run_qtltools_cis) {
+    if (run_qtltools) {
         def qtltools_meta = [id: params.qtltools_cis_id ?: 'qtltools_cis']
         def ch_qtltools_plink = channel.empty()
         def ch_qtltools_pheno = channel.empty()
         def ch_qtltools_covar = channel.empty()
 
         if (params.genotype_input) {
-            if (params.qtltools_use_qc_bed) {
+            if (params.qtltools_use_qc_bed || run_modality) {
                 if (run_qc) {
                     ch_qtltools_plink = ch_shared_qc_bed
                 } else {
-                    log.warn "qtltools_use_qc_bed=true but run_genotype_qc=false; falling back to samplesheet genotype bed."
+                    log.warn "qtltools_use_qc_bed/modality=true but QC did not run; falling back to samplesheet genotype bed."
                     ch_qtltools_plink = ch_shared_geno_plink
                 }
             } else {
@@ -593,7 +604,7 @@ workflow VARIANT2QTL {
             ])
         } else {
             ch_finemap_sumstats = ch_qtl_cis_for_finemap
-            if (!run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+            if (!run_omiga && !run_tensor && !run_qtltools) {
                 log.warn "run_finemap_susie=true but missing --finemap_susie_sumstats (and no cis QTL engine outputs)."
             }
         }
@@ -624,7 +635,7 @@ workflow VARIANT2QTL {
             ? channel.of([coloc_meta, file(params.coloc_gwas_sumstats, checkIfExists: true)])
             : ch_gwas_std
 
-        if (!params.coloc_qtl_sumstats && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+        if (!params.coloc_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
             log.warn "run_coloc=true but missing --coloc_qtl_sumstats (and no cis QTL engine outputs)."
         }
         if (!params.coloc_gwas_sumstats && !params.run_gwas_benchmark) {
@@ -661,7 +672,7 @@ workflow VARIANT2QTL {
         def ch_smr_gwas = params.smr_gwas_sumstats
             ? channel.of([smr_meta, file(params.smr_gwas_sumstats, checkIfExists: true)])
             : ch_gwas_std
-        if (!params.smr_qtl_sumstats && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+        if (!params.smr_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
             log.warn "run_smr=true but missing --smr_qtl_sumstats (and no cis QTL engine outputs)."
         }
         if (!params.smr_gwas_sumstats && !params.run_gwas_benchmark) {
@@ -727,6 +738,9 @@ workflow VARIANT2QTL {
         def ch_twas_g = params.twas_gwas
             ? channel.of([twas_meta, file(params.twas_gwas, checkIfExists: true)])
             : ch_gwas_std
+        def ch_twas_ld = params.twas_ld
+            ? channel.of([twas_meta, file(params.twas_ld, checkIfExists: true)])
+            : channel.empty()
         if (!params.twas_weights) {
             log.warn "run_twas=true but missing --twas_weights."
         }
@@ -734,8 +748,28 @@ workflow VARIANT2QTL {
             log.warn "run_twas=true but missing --twas_gwas (and no GWAS standardized tables)."
         }
         if (params.twas_weights) {
-            QTL_TWAS(ch_twas_w, ch_twas_g)
+            QTL_TWAS(ch_twas_w, ch_twas_g, ch_twas_ld)
             ch_versions = ch_versions.mix(QTL_TWAS.out.versions)
+        }
+    }
+
+    //
+    // Optional LDSC heritability (default OFF)
+    //
+    if (params.run_ldsc) {
+        def ldsc_meta = [id: params.ldsc_id ?: 'ldsc']
+        def ch_ldsc_ss = params.ldsc_sumstats
+            ? channel.of([ldsc_meta, file(params.ldsc_sumstats, checkIfExists: true)])
+            : ch_gwas_std
+        def ch_ldsc_annot = params.ldsc_annot
+            ? channel.of([ldsc_meta, file(params.ldsc_annot, checkIfExists: true)])
+            : channel.empty()
+        if (!params.ldsc_sumstats && !params.run_gwas_benchmark) {
+            log.warn "run_ldsc=true but missing --ldsc_sumstats (and no GWAS standardized tables)."
+        }
+        if (params.ldsc_sumstats || params.run_gwas_benchmark) {
+            QTL_LDSC(ch_ldsc_ss, ch_ldsc_annot)
+            ch_versions = ch_versions.mix(QTL_LDSC.out.versions)
         }
     }
 
@@ -747,7 +781,7 @@ workflow VARIANT2QTL {
         def ch_extra = params.finemap_extra_sumstats
             ? channel.of([extra_meta, file(params.finemap_extra_sumstats, checkIfExists: true)])
             : ch_qtl_cis_for_finemap
-        if (!params.finemap_extra_sumstats && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+        if (!params.finemap_extra_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
             log.warn "run_finemap_extra=true but missing --finemap_extra_sumstats (and no cis QTL engine outputs)."
         }
         QTL_FINEMAP_EXTRA(ch_extra)
@@ -826,7 +860,7 @@ workflow VARIANT2QTL {
             ])
             : ch_qtl_cis_for_finemap
 
-        if (!params.qtl_postprocess_input && !run_omiga && !params.run_tensorqtl_cis && !params.run_qtltools_cis) {
+        if (!params.qtl_postprocess_input && !run_omiga && !run_tensor && !run_qtltools) {
             log.warn "run_qtl_postprocess=true but missing --qtl_postprocess_input (and no cis QTL engine outputs)."
         }
 
