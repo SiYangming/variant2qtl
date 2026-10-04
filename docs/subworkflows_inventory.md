@@ -113,7 +113,10 @@ nf-core subworkflows install vcf_impute_minimac4
 | `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5 phase_common；默认关                     |
 | `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；默认关              |
 | `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                   |
-| `run_vcf_prep`                                    | **已实现**；annotate→phase→impute 伞（可跳步）；默认关        |
+| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步）；默认关  |
+| `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；默认关                     |
+| `variant_impute_bam` / `run_impute_bam`           | **已实现**；GLIMPSE2 BAM/GL；默认关                           |
+| `reference_fasta` / `run_fasta_index`             | **已实现**；`fasta_bgzip_index_dict_samtools`；默认关         |
 
 ---
 
@@ -122,7 +125,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：cache 下载接线（`cache_download_ensemblvep_snpeff`）、或 GLIMPSE2 BAM 填补路径、或正式 release 文档/示例 params。
+## 建议下一步：正式 release 文档 / 示例 params，或把 cache 下载接到 annotate 的默认缓存路径、把 fasta_index 产物接到 relate/VEP。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

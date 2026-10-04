@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "REFERENCE_FASTA"
+description: bgzip FASTA and build samtools faidx/dict indexes
+components:
+  - FASTA_BGZIP_INDEX_DICT_SAMTOOLS
+input:
+  - ch_fasta
+output:
+  - fasta_fai_gzi_dict
+  - versions
+authors:
+  - "@SiYangming"

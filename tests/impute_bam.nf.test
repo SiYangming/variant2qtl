@@ -1,0 +1,38 @@
+nextflow_pipeline {
+
+    name "Test pipeline GLIMPSE2 impute_bam path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "impute_bam"
+    tag "stub"
+
+    test("-profile test_impute_bam path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_impute_bam = true
+                impute_bam_input = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz"
+                impute_bam_index = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz.tbi"
+                impute_panel = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz"
+                impute_panel_tbi = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz.tbi"
+                impute_map = "${projectDir}/assets/testdata/vcf_api_mini/genetic_map.txt"
+                impute_bam_region = '1'
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/variant_impute_bam/glimpse2_phase").exists() }
+            )
+        }
+    }
+}

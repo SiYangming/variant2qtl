@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "VARIANT_IMPUTE_BAM"
+description: GLIMPSE2 imputation from BAM/CRAM or GL VCF
+components:
+  - GLIMPSE2_PHASE
+input:
+  - ch_input
+  - ch_panel
+  - ch_fasta
+  - ch_map
+output:
+  - imputed
+  - versions
+authors:
+  - "@SiYangming"

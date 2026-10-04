@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "ANNOTATION_CACHE"
+description: Download Ensembl VEP and/or snpEff caches
+components:
+  - ENSEMBLVEP_DOWNLOAD
+  - SNPEFF_DOWNLOAD
+input:
+  - ch_vep_info
+  - ch_snpeff_info
+output:
+  - vep_cache
+  - snpeff_cache
+  - versions
+authors:
+  - "@SiYangming"
