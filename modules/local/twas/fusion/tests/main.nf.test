@@ -25,6 +25,10 @@ nextflow_process {
                     [ id:'twas_mini' ],
                     file("${projectDir}/assets/testdata/twas_mini/gwas.tsv", checkIfExists: true)
                 ]
+                input[2] = [
+                    [ id:'twas_mini' ],
+                    file("${projectDir}/assets/testdata/twas_mini/ld.tsv", checkIfExists: true)
+                ]
                 """
             }
         }

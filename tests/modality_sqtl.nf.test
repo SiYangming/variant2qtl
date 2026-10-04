@@ -1,0 +1,40 @@
+nextflow_pipeline {
+
+    name "Test pipeline modality_sqtl path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "modality_sqtl"
+    tag "stub"
+
+    test("-profile test_modality_sqtl path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                genotype_input = "${projectDir}/assets/genotype_samplesheet_omiga.csv"
+                run_sqtl = true
+                qtl_modality_engine = 'omiga'
+                sqtl_counts = "${projectDir}/assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv"
+                sqtl_genes = "${projectDir}/assets/testdata/sqtl_leafcutter_mini/genes.bed"
+                genotype_qc_args = '--maf 0.01 --hwe 1e-6 --geno 0.2'
+                genotype_qc_run_het = false
+                genotype_qc_run_relatedness = false
+                genotype_qc_run_pca = false
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/sqtl_leafcutter/leafcutter_prepare").exists() }
+            )
+        }
+    }
+}

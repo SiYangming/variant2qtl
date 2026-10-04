@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - P3 **SNP/Indel umbrella** `params.run_snp_indel` (default OFF) runs ingest (if needed) + QC + OmiGA cis; profile `test_snp_indel`.
 - P3 **SV** (`variant_sv`) behind `params.run_sv` (default OFF); nf-core smoove/manta/delly; profile `test_sv`.
 - P3 **STR** (`variant_str`) behind `params.run_str` (default OFF); nf-core ExpansionHunter/GangSTR/HipSTR/TRGT; profile `test_str`.
+- QTL modality umbrellas `params.run_eqtl` / `run_sqtl` / `run_pqtl` (default OFF) + `qtl_modality_engine` (omiga/tensorqtl/qtltools); profiles `test_eqtl` / `test_modality_sqtl` / `test_pqtl`.
+- Local **LDSC-style h2** (`modules/local/ldsc/h2`, `qtl_ldsc`) behind `params.run_ldsc` (default OFF); optional partitioned enrichment; profile `test_ldsc` + stub nf-test.
+- TWAS deepen: MetaXcan `GENE/RSID/WEIGHT` columns and optional `--twas_ld` for FUSION-style `w'Rw` variance.
 
 ### `Fixed`
 
