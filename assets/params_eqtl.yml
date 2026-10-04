@@ -1,0 +1,22 @@
+# Example: eQTL (phenotype_prepare + PEER + OmiGA cis)
+#
+#   nextflow run . -profile docker -stub \
+#     -params-file assets/params_eqtl.yml \
+#     --outdir results_eqtl
+#
+# Use local testdata paths; swap in your FASTQ samplesheet and genotype_input for a real run.
+
+input: assets/samplesheet_stub.csv
+genotype_input: assets/genotype_samplesheet_omiga.csv
+igenomes_ignore: true
+validate_params: false
+
+run_eqtl: true
+qtl_modality_engine: omiga
+phenotype_matrix: assets/testdata/phenotype_prepare_mini/expr.tsv
+phenotype_gene_bed: assets/testdata/phenotype_prepare_mini/genes.bed
+phenotype_samples: assets/testdata/phenotype_prepare_mini/samples.txt
+genotype_qc_args: "--maf 0.01 --hwe 1e-6 --geno 0.2"
+genotype_qc_run_het: false
+genotype_qc_run_relatedness: false
+genotype_qc_run_pca: false

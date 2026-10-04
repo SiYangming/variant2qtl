@@ -4,6 +4,7 @@ description: Annotate VCF with Ensembl VEP and/or snpEff (nf-core modules)
 components:
   - ENSEMBLVEP_VEP
   - SNPEFF_SNPEFF
+  - VCF_FILTER_BCFTOOLS_ENSEMBLVEP
 input:
   - ch_vcf
   - ch_fasta

@@ -1,0 +1,25 @@
+# Example: sequential VCF annotate → phase → impute
+#
+#   nextflow run . -profile docker -stub \
+#     -params-file assets/params_vcf_prep.yml \
+#     --outdir results_vcf_prep
+
+input: assets/samplesheet_stub.csv
+igenomes_ignore: true
+validate_params: false
+
+run_vcf_prep: true
+vcf_prep_vcf: assets/testdata/vcf_api_mini/sample.vcf.gz
+vcf_prep_vcf_tbi: assets/testdata/vcf_api_mini/sample.vcf.gz.tbi
+annotate_tools: snpeff
+annotate_snpeff_db: GRCh38.99
+annotate_snpeff_cache: assets/testdata/vcf_api_mini/snpeff_cache
+phase_ref_vcf: assets/testdata/vcf_api_mini/ref.vcf.gz
+phase_ref_vcf_tbi: assets/testdata/vcf_api_mini/ref.vcf.gz.tbi
+phase_map: assets/testdata/vcf_api_mini/genetic_map.txt
+phase_region: "1"
+impute_engine: beagle5
+impute_panel: assets/testdata/vcf_api_mini/ref.vcf.gz
+impute_panel_tbi: assets/testdata/vcf_api_mini/ref.vcf.gz.tbi
+impute_map: assets/testdata/vcf_api_mini/genetic_map.txt
+impute_region: "1"

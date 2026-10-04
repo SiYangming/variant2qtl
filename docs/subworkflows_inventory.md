@@ -103,20 +103,20 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P3 — 编排层（pipeline 级）
 
-| 建议名                                            | 职责                                                          |
-| ------------------------------------------------- | ------------------------------------------------------------- |
-| `variant2qtl_snp_indel`                           | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis |
-| `variant_sv`                                      | **已实现**；smoove/manta/delly；`params.run_sv` 默认关        |
-| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；`params.run_str` 默认关   |
-| `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关             |
-| `variant_annotate` / `run_annotate`               | **已实现**；VEP/snpEff 模块包装；默认关                       |
-| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5 phase_common；默认关                     |
-| `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；默认关              |
-| `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                   |
-| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步）；默认关  |
-| `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；默认关                     |
-| `variant_impute_bam` / `run_impute_bam`           | **已实现**；GLIMPSE2 BAM/GL；默认关                           |
-| `reference_fasta` / `run_fasta_index`             | **已实现**；`fasta_bgzip_index_dict_samtools`；默认关         |
+| 建议名                                            | 职责                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------- |
+| `variant2qtl_snp_indel`                           | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis    |
+| `variant_sv`                                      | **已实现**；smoove/manta/delly；`params.run_sv` 默认关           |
+| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；`params.run_str` 默认关      |
+| `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关                |
+| `variant_annotate` / `run_annotate`               | **已实现**；VEP/snpEff 模块包装；默认关                          |
+| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5 phase_common；默认关                        |
+| `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；默认关                 |
+| `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                      |
+| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步）；默认关     |
+| `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；可喂 annotate；默认关         |
+| `variant_impute_bam` / `run_impute_bam`           | **已实现**；`bam_vcf_impute_glimpse2` chunk/phase/ligate；默认关 |
+| `reference_fasta` / `run_fasta_index`             | **已实现**；产物可喂 relate/VEP/SV/STR/GLIMPSE2；默认关          |
 
 ---
 
@@ -125,7 +125,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：正式 release 文档 / 示例 params，或把 cache 下载接到 annotate 的默认缓存路径、把 fasta_index 产物接到 relate/VEP。
+## 建议下一步：SV/STR VCF 接到 `genotype_ingest`，或 `bed_scatter` 给 phase/impute 分区间，或打 0.0.1 tag。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 
