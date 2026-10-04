@@ -111,6 +111,8 @@ workflow VARIANT2QTL {
     def ch_somalier_pairs = channel.empty()
     def ch_downloaded_vep = channel.empty()
     def ch_downloaded_snpeff = channel.empty()
+    def ch_fasta_indexed = channel.empty()
+    def fasta_index_ok = params.run_fasta_index && params.fasta_index_fasta
 
     if (run_ingest || run_qc || run_gwas || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
@@ -813,13 +815,62 @@ workflow VARIANT2QTL {
     }
 
     //
+    // Optional annotation cache download (default OFF)
+    //
+    if (params.run_cache) {
+        def cache_meta = [id: params.cache_id ?: 'cache']
+        def tools = (params.cache_tools ?: 'snpeff,ensemblvep')
+            .tokenize(',')
+            .collect { tool -> tool.trim().toLowerCase() }
+        def ch_vep_info = tools.contains('ensemblvep')
+            ? channel.of([
+                cache_meta,
+                params.annotate_vep_genome ?: (params.genome ?: 'GRCh38'),
+                params.annotate_vep_species ?: 'homo_sapiens',
+                params.annotate_vep_cache_version ?: '110'
+            ])
+            : channel.empty()
+        def ch_snpeff_info = tools.contains('snpeff')
+            ? channel.of([cache_meta, params.annotate_snpeff_db ?: 'GRCh38.99'])
+            : channel.empty()
+        ANNOTATION_CACHE(ch_vep_info, ch_snpeff_info)
+        ch_versions = ch_versions.mix(ANNOTATION_CACHE.out.versions)
+        ch_downloaded_vep = ANNOTATION_CACHE.out.vep_cache
+        ch_downloaded_snpeff = ANNOTATION_CACHE.out.snpeff_cache
+    }
+
+    //
+    // Optional FASTA bgzip + faidx/dict (default OFF)
+    //
+    if (params.run_fasta_index) {
+        def fa_meta = [id: params.fasta_index_id ?: 'fasta_index']
+        if (!params.fasta_index_fasta) {
+            log.warn "run_fasta_index=true but missing --fasta_index_fasta."
+        } else {
+            REFERENCE_FASTA(
+                channel.of([fa_meta, file(params.fasta_index_fasta, checkIfExists: true)])
+            )
+            ch_versions = ch_versions.mix(REFERENCE_FASTA.out.versions)
+            ch_fasta_indexed = REFERENCE_FASTA.out.fasta_fai_gzi_dict
+        }
+    }
+
+    //
     // Optional Somalier relatedness (default OFF)
     //
     if (params.run_relate) {
         def rel_meta = [id: params.relate_id ?: 'relate']
-        if (!params.relate_vcf || !params.relate_fasta || !params.relate_fasta_fai || !params.relate_sites) {
-            log.warn "run_relate=true but missing --relate_vcf/--relate_fasta/--relate_fasta_fai/--relate_sites."
+        def have_rel_fa = params.relate_fasta || fasta_index_ok
+        def have_rel_fai = params.relate_fasta_fai || fasta_index_ok
+        if (!params.relate_vcf || !have_rel_fa || !have_rel_fai || !params.relate_sites) {
+            log.warn "run_relate=true but missing --relate_vcf/--relate_sites and FASTA (--relate_fasta/--relate_fasta_fai or run_fasta_index)."
         } else {
+            def ch_rel_fa = params.relate_fasta
+                ? channel.of([[id: 'relate_ref'], file(params.relate_fasta, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'relate_ref'], fa] }
+            def ch_rel_fai = params.relate_fasta_fai
+                ? channel.of([[id: 'relate_ref'], file(params.relate_fasta_fai, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, _fa, fai, _gzi, _sizes, _dict -> [[id: 'relate_ref'], fai] }
             VARIANT_RELATE(
                 channel.of([
                     rel_meta,
@@ -828,8 +879,8 @@ workflow VARIANT2QTL {
                         ? file(params.relate_vcf_tbi, checkIfExists: true)
                         : []
                 ]),
-                channel.of([[id: 'relate_ref'], file(params.relate_fasta, checkIfExists: true)]),
-                channel.of([[id: 'relate_ref'], file(params.relate_fasta_fai, checkIfExists: true)]),
+                ch_rel_fa,
+                ch_rel_fai,
                 channel.of([[id: 'relate_sites'], file(params.relate_sites, checkIfExists: true)]),
                 channel.of([
                     rel_meta,
@@ -877,46 +928,6 @@ workflow VARIANT2QTL {
     }
 
     //
-    // Optional annotation cache download (default OFF)
-    //
-    if (params.run_cache) {
-        def cache_meta = [id: params.cache_id ?: 'cache']
-        def tools = (params.cache_tools ?: 'snpeff,ensemblvep')
-            .tokenize(',')
-            .collect { tool -> tool.trim().toLowerCase() }
-        def ch_vep_info = tools.contains('ensemblvep')
-            ? channel.of([
-                cache_meta,
-                params.annotate_vep_genome ?: (params.genome ?: 'GRCh38'),
-                params.annotate_vep_species ?: 'homo_sapiens',
-                params.annotate_vep_cache_version ?: '110'
-            ])
-            : channel.empty()
-        def ch_snpeff_info = tools.contains('snpeff')
-            ? channel.of([cache_meta, params.annotate_snpeff_db ?: 'GRCh38.99'])
-            : channel.empty()
-        ANNOTATION_CACHE(ch_vep_info, ch_snpeff_info)
-        ch_versions = ch_versions.mix(ANNOTATION_CACHE.out.versions)
-        ch_downloaded_vep = ANNOTATION_CACHE.out.vep_cache
-        ch_downloaded_snpeff = ANNOTATION_CACHE.out.snpeff_cache
-    }
-
-    //
-    // Optional FASTA bgzip + faidx/dict (default OFF)
-    //
-    if (params.run_fasta_index) {
-        def fa_meta = [id: params.fasta_index_id ?: 'fasta_index']
-        if (!params.fasta_index_fasta) {
-            log.warn "run_fasta_index=true but missing --fasta_index_fasta."
-        } else {
-            REFERENCE_FASTA(
-                channel.of([fa_meta, file(params.fasta_index_fasta, checkIfExists: true)])
-            )
-            ch_versions = ch_versions.mix(REFERENCE_FASTA.out.versions)
-        }
-    }
-
-    //
     // Optional VCF annotation (default OFF)
     //
     if (run_annotate_flag) {
@@ -933,7 +944,9 @@ workflow VARIANT2QTL {
             ])
             def ch_ann_fa = params.annotate_fasta
                 ? channel.of([[id: 'annotate_fasta'], file(params.annotate_fasta, checkIfExists: true)])
-                : channel.of([[id: 'annotate_fasta'], []])
+                : (fasta_index_ok
+                    ? ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'annotate_fasta'], fa] }
+                    : channel.of([[id: 'annotate_fasta'], []]))
             def ch_vep_cache = params.annotate_vep_cache
                 ? channel.of([[id: 'vep_cache'], file(params.annotate_vep_cache, checkIfExists: true)])
                 : (params.run_cache ? ch_downloaded_vep : channel.of([[id: 'vep_cache'], []]))
@@ -1024,7 +1037,9 @@ workflow VARIANT2QTL {
             ])
             def ch_prep_fa = params.annotate_fasta
                 ? channel.of([prep_meta, file(params.annotate_fasta, checkIfExists: true)])
-                : channel.of([prep_meta, []])
+                : (fasta_index_ok
+                    ? ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [prep_meta, fa] }
+                    : channel.of([prep_meta, []]))
             def ch_prep_vep = params.annotate_vep_cache
                 ? channel.of([prep_meta, file(params.annotate_vep_cache, checkIfExists: true)])
                 : (params.run_cache ? ch_downloaded_vep.map { _meta, cache -> [prep_meta, cache] } : channel.of([prep_meta, []]))
@@ -1073,6 +1088,17 @@ workflow VARIANT2QTL {
         if (!params.impute_bam_input || !params.impute_panel) {
             log.warn "run_impute_bam=true but missing --impute_bam_input and/or --impute_panel."
         } else {
+            def ch_bam_fa = params.impute_bam_fasta
+                ? channel.of([
+                    bam_meta,
+                    file(params.impute_bam_fasta, checkIfExists: true),
+                    params.impute_bam_fasta_fai
+                        ? file(params.impute_bam_fasta_fai, checkIfExists: true)
+                        : []
+                ])
+                : (fasta_index_ok
+                    ? ch_fasta_indexed.map { _meta, fa, fai, _gzi, _sizes, _dict -> [bam_meta, fa, fai] }
+                    : channel.of([bam_meta, [], []]))
             VARIANT_IMPUTE_BAM(
                 channel.of([
                     bam_meta,
@@ -1088,18 +1114,10 @@ workflow VARIANT2QTL {
                         ? file(params.impute_panel_tbi, checkIfExists: true)
                         : []
                 ]),
-                channel.of([
-                    bam_meta,
-                    params.impute_bam_fasta
-                        ? file(params.impute_bam_fasta, checkIfExists: true)
-                        : [],
-                    params.impute_bam_fasta_fai
-                        ? file(params.impute_bam_fasta_fai, checkIfExists: true)
-                        : []
-                ]),
+                ch_bam_fa,
                 params.impute_map
                     ? channel.of([bam_meta, file(params.impute_map, checkIfExists: true)])
-                    : channel.empty()
+                    : channel.of([bam_meta, []])
             )
             ch_versions = ch_versions.mix(VARIANT_IMPUTE_BAM.out.versions)
         }
@@ -1110,17 +1128,23 @@ workflow VARIANT2QTL {
     //
     if (params.run_sv) {
         def sv_meta = [id: params.sv_id ?: 'sv']
-        if (!params.sv_bam || !params.sv_bam_index || !params.sv_fasta || !params.sv_fasta_fai) {
-            log.warn "run_sv=true but missing --sv_bam/--sv_bam_index/--sv_fasta/--sv_fasta_fai."
+        if (!params.sv_bam || !params.sv_bam_index || !(params.sv_fasta || fasta_index_ok) || !(params.sv_fasta_fai || fasta_index_ok)) {
+            log.warn "run_sv=true but missing --sv_bam/--sv_bam_index and FASTA (--sv_fasta/--sv_fasta_fai or run_fasta_index)."
         } else {
+            def ch_sv_fa = params.sv_fasta
+                ? channel.of([[id: 'sv_ref'], file(params.sv_fasta, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'sv_ref'], fa] }
+            def ch_sv_fai = params.sv_fasta_fai
+                ? channel.of([[id: 'sv_ref'], file(params.sv_fasta_fai, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, _fa, fai, _gzi, _sizes, _dict -> [[id: 'sv_ref'], fai] }
             VARIANT_SV(
                 channel.of([
                     sv_meta,
                     file(params.sv_bam, checkIfExists: true),
                     file(params.sv_bam_index, checkIfExists: true)
                 ]),
-                channel.of([[id: 'sv_ref'], file(params.sv_fasta, checkIfExists: true)]),
-                channel.of([[id: 'sv_ref'], file(params.sv_fasta_fai, checkIfExists: true)])
+                ch_sv_fa,
+                ch_sv_fai
             )
             ch_versions = ch_versions.mix(VARIANT_SV.out.versions)
         }
@@ -1131,16 +1155,20 @@ workflow VARIANT2QTL {
     //
     if (params.run_str) {
         def str_meta = [id: params.str_id ?: 'str']
-        if (!params.str_bam || !params.str_bam_index || !params.str_fasta || !params.str_fasta_fai) {
-            log.warn "run_str=true but missing --str_bam/--str_bam_index/--str_fasta/--str_fasta_fai."
+        if (!params.str_bam || !params.str_bam_index || !(params.str_fasta || fasta_index_ok) || !(params.str_fasta_fai || fasta_index_ok)) {
+            log.warn "run_str=true but missing --str_bam/--str_bam_index and FASTA (--str_fasta/--str_fasta_fai or run_fasta_index)."
         } else {
             def ch_str_bam = channel.of([
                 str_meta,
                 file(params.str_bam, checkIfExists: true),
                 file(params.str_bam_index, checkIfExists: true)
             ])
-            def ch_str_fa = channel.of([[id: 'str_ref'], file(params.str_fasta, checkIfExists: true)])
-            def ch_str_fai = channel.of([[id: 'str_ref'], file(params.str_fasta_fai, checkIfExists: true)])
+            def ch_str_fa = params.str_fasta
+                ? channel.of([[id: 'str_ref'], file(params.str_fasta, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'str_ref'], fa] }
+            def ch_str_fai = params.str_fasta_fai
+                ? channel.of([[id: 'str_ref'], file(params.str_fasta_fai, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, _fa, fai, _gzi, _sizes, _dict -> [[id: 'str_ref'], fai] }
             def ch_str_cat = params.str_catalog
                 ? channel.of([str_meta, file(params.str_catalog, checkIfExists: true)])
                 : channel.empty()

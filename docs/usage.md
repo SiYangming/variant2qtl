@@ -6,6 +6,23 @@
 
 <!-- NOTE: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
+### Shortest eQTL command
+
+From the repo root, with bundled mini testdata:
+
+```bash
+nextflow run . -profile docker -stub \
+  -params-file assets/params_eqtl.yml \
+  --outdir results_eqtl
+```
+
+That enables `run_eqtl` (phenotype_prepare + PEER + OmiGA cis) via `--genotype_input`. Other recipes:
+
+- `assets/params_vcf_prep.yml` — sequential annotate → phase → impute
+- `assets/params_cache_annotate.yml` — snpEff cache download then annotate
+
+You still need `--input` (FASTQ samplesheet) for the FastQC/MultiQC path; the example files set it to `assets/samplesheet_stub.csv`.
+
 ## Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping
 
 These branches are **off by default**. Enable them with boolean params; they do not replace the FASTQC/MultiQC template path (still driven by `--input`).
@@ -146,13 +163,13 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 **VCF annotate / phase / impute / relate**
 
-- `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`)
+- `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`); optional `annotate_filter` (bcftools view / filter_vep)
 - `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`
 - `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map
 - `run_vcf_prep` — sequential annotate → phase → impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`); independent `run_annotate` / `run_phase` / `run_impute` stay parallel
-- `run_cache` — download VEP/snpEff caches (`cache_tools`); optional feed into annotate when cache params are unset
-- `run_impute_bam` — GLIMPSE2 from BAM/CRAM or GL VCF (`--impute_bam_input` + `--impute_panel`)
-- `run_fasta_index` — bgzip FASTA + samtools faidx/dict (`--fasta_index_fasta`)
+- `run_cache` — download VEP/snpEff caches (`cache_tools`); used as annotate / `vcf_prep` cache when `--annotate_*_cache` is unset
+- `run_impute_bam` — GLIMPSE2 chunk → phase → ligate (`--impute_bam_input` + `--impute_panel`); `--impute_bam_chunk` for auto-chunk
+- `run_fasta_index` — bgzip FASTA + samtools faidx/dict; used for relate / VEP / SV / STR / GLIMPSE2 when those FASTA params are unset
 - `run_relate` — Somalier extract/relate; optional `genotype_qc_use_somalier` to remove related samples from QC bed
 
 **Real (non-stub) smokes** (ignored by default CI; use `nf-test.real.config`):
@@ -381,6 +398,7 @@ nextflow run . -profile test_vcf_prep,docker -stub --outdir results_test_vcf_pre
 nextflow run . -profile test_cache,docker -stub --outdir results_test_cache
 nextflow run . -profile test_impute_bam,docker -stub --outdir results_test_impute_bam
 nextflow run . -profile test_fasta_index,docker -stub --outdir results_test_fasta_index
+nextflow run . -profile test_annotate_filter,docker -stub --outdir results_test_annotate_filter
 nextflow run . -profile test_finemap_extra,docker -stub --outdir results_test_finemap_extra
 nextflow run . -profile test_sv,docker -stub --outdir results_test_sv
 nextflow run . -profile test_str,docker -stub --outdir results_test_str
@@ -551,6 +569,7 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_cache`
 - `test_impute_bam`
 - `test_fasta_index`
+- `test_annotate_filter`
 - `test_finemap_extra`
 - `test_sv`
 - `test_str`

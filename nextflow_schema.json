@@ -1242,6 +1242,31 @@
                     "exists": true,
                     "description": "Optional snpEff dataDir / cache.",
                     "fa_icon": "fas fa-folder"
+                },
+                "annotate_filter": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "After annotation, filter with bcftools view and/or filter_vep. Default: false.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "annotate_filter_bcftools": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run bcftools view when annotate_filter is true.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "annotate_filter_vep": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run filter_vep when annotate_filter is true (needs annotate_filter_vep_file).",
+                    "fa_icon": "fas fa-filter"
+                },
+                "annotate_filter_vep_file": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Feature list for filter_vep (e.g. HGNC IDs).",
+                    "fa_icon": "fas fa-file"
                 }
             }
         },
@@ -1465,8 +1490,27 @@
                     "type": "string",
                     "default": "vcf.gz",
                     "enum": ["vcf", "vcf.gz", "bcf", "bgen"],
-                    "description": "GLIMPSE2 output suffix.",
+                    "description": "Legacy GLIMPSE2 suffix (nf-core bam_vcf_impute_glimpse2 emits BCF).",
                     "fa_icon": "fas fa-file"
+                },
+                "impute_bam_chunk": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Auto-chunk the reference with GLIMPSE2_chunk before phase. Default: false (use impute_bam_region as one window).",
+                    "fa_icon": "fas fa-th"
+                },
+                "impute_bam_chunk_model": {
+                    "type": "string",
+                    "default": "sequential",
+                    "enum": ["sequential", "recursive"],
+                    "description": "GLIMPSE2 chunk model when impute_bam_chunk is true.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "impute_bam_split_ref": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Split the reference panel to GLIMPSE2 binary chunks. Default: false.",
+                    "fa_icon": "fas fa-cut"
                 }
             }
         },

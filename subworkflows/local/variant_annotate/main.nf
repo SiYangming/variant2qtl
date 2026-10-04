@@ -4,12 +4,17 @@
 // Versions via topic("versions") — do not mix into Path ch_versions.
 //
 
-include { ENSEMBLVEP_VEP } from '../../../modules/nf-core/ensemblvep/vep/main'
-include { SNPEFF_SNPEFF  } from '../../../modules/nf-core/snpeff/snpeff/main'
+include { ENSEMBLVEP_VEP                 } from '../../../modules/nf-core/ensemblvep/vep/main'
+include { SNPEFF_SNPEFF                  } from '../../../modules/nf-core/snpeff/snpeff/main'
+include { VCF_FILTER_BCFTOOLS_ENSEMBLVEP } from '../../../subworkflows/nf-core/vcf_filter_bcftools_ensemblvep/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
 // ENSEMBLVEP_VEP.out.versions
 // SNPEFF_SNPEFF.out.versions
+// VCF_FILTER_BCFTOOLS_ENSEMBLVEP.out.versions
+// BCFTOOLS_VIEW.out.versions
+// ENSEMBLVEP_FILTERVEP.out.versions
+// HTSLIB_BGZIPTABIX.out.versions
 
 
 workflow VARIANT_ANNOTATE {
@@ -53,6 +58,23 @@ workflow VARIANT_ANNOTATE {
             ch_snpeff_cache
         )
         ch_current = SNPEFF_SNPEFF.out.vcf
+    }
+
+    if (params.annotate_filter) {
+        def do_bcf = params.annotate_filter_bcftools ? true : false
+        def do_vep = (params.annotate_filter_vep && params.annotate_filter_vep_file) ? true : false
+        if (do_bcf || do_vep) {
+            def ch_feat = params.annotate_filter_vep_file
+                ? channel.of([[id: 'vep_filter'], file(params.annotate_filter_vep_file, checkIfExists: true)])
+                : channel.of([[id: 'vep_filter'], []])
+            VCF_FILTER_BCFTOOLS_ENSEMBLVEP(
+                ch_current,
+                ch_feat,
+                do_bcf,
+                do_vep
+            )
+            ch_current = VCF_FILTER_BCFTOOLS_ENSEMBLVEP.out.vcf
+        }
     }
 
     emit:

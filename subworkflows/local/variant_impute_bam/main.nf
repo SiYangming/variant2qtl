@@ -1,13 +1,18 @@
 //
-// Optional GLIMPSE2 imputation from BAM/CRAM or genotype-likelihood VCF.
+// Optional GLIMPSE2 imputation (chunk → phase → ligate).
 // Enable with params.run_impute_bam (default false).
 // Versions via topic("versions") — do not mix into Path ch_versions.
 //
 
-include { GLIMPSE2_PHASE } from '../../../modules/nf-core/glimpse2/phase/main'
+include { BAM_VCF_IMPUTE_GLIMPSE2 } from '../../../subworkflows/nf-core/bam_vcf_impute_glimpse2/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
+// BAM_VCF_IMPUTE_GLIMPSE2.out.versions
+// GLIMPSE2_CHUNK.out.versions
+// GLIMPSE2_SPLITREFERENCE.out.versions
 // GLIMPSE2_PHASE.out.versions
+// GLIMPSE2_LIGATE.out.versions
+// BCFTOOLS_INDEX.out.versions
 
 
 workflow VARIANT_IMPUTE_BAM {
@@ -19,27 +24,40 @@ workflow VARIANT_IMPUTE_BAM {
 
     main:
     ch_versions = channel.empty()
-    def region = (params.impute_bam_region ?: params.impute_region ?: '1').toString()
-    def suffix = params.impute_bam_suffix ?: 'vcf.gz'
+    def region_raw = (params.impute_bam_region ?: params.impute_region ?: '1').toString()
+    def region = region_raw.contains(':') ? region_raw : "${region_raw}:1-999999999"
+    def do_chunk = params.impute_bam_chunk ? true : false
+    def chunk_model = params.impute_bam_chunk_model ?: 'sequential'
+    def do_split = params.impute_bam_split_ref ? true : false
 
-    ch_map_aligned = ch_input
+    ch_glimpse_input = ch_input.map { meta, input, idx ->
+        [meta, input, idx ?: [], [], []]
+    }
+
+    ch_ref = ch_panel.map { meta, panel, tbi ->
+        [meta, panel, tbi ?: [], region]
+    }
+
+    ch_map_aligned = ch_panel
         .join(ch_map, remainder: true)
-        .map { meta, _input, _idx, gmap -> [meta, gmap ?: []] }
+        .map { meta, _panel, _tbi, gmap -> [meta, gmap ?: []] }
 
-    ch_joined = ch_input
-        .join(ch_panel)
-        .join(ch_map_aligned)
-        .map { meta, input, idx, panel, panel_tbi, gmap ->
-            [meta, input, idx ?: [], [], [], region, region, panel, panel_tbi ?: [], gmap]
-        }
+    ch_chunks = do_chunk
+        ? channel.empty()
+        : ch_panel.map { meta, _panel, _tbi -> [meta, region, region] }
 
-    GLIMPSE2_PHASE(
-        ch_joined,
+    BAM_VCF_IMPUTE_GLIMPSE2(
+        ch_glimpse_input,
+        ch_ref,
+        ch_chunks,
+        ch_map_aligned,
         ch_fasta,
-        suffix
+        do_chunk,
+        chunk_model,
+        do_split
     )
 
     emit:
-    imputed  = GLIMPSE2_PHASE.out.phased_variants
+    imputed  = BAM_VCF_IMPUTE_GLIMPSE2.out.vcf_index.map { meta, vcf, _idx -> [meta, vcf] }
     versions = ch_versions
 }
