@@ -1,0 +1,34 @@
+nextflow_process {
+
+    name "Test Process TWAS_PREDICTDB (panel, real)"
+    script "../main.nf"
+    process "TWAS_PREDICTDB"
+
+    tag "modules"
+    tag "modules_local"
+    tag "twas"
+    tag "predictdb"
+    tag "predictdb_real"
+
+    // Real SQLite extract from 100-gene PredictDB panel (not stub).
+    test("predictdb_panel - real") {
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [id: 'predictdb_panel'],
+                    file("${projectDir}/assets/testdata/twas_panel/predictdb_panel.db", checkIfExists: true)
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.weights.get(0).get(1)).exists() },
+                { assert path(process.out.weights.get(0).get(1)).readLines().size() > 100 }
+            )
+        }
+    }
+}

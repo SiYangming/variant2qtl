@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LDSC reference-panel LD scores via `--ldsc_ldscores` (snp + l2), merged by SNP id.
 - Cap nf-test process resources in `tests/nextflow.config` so stub GWAS/gQTL paths stay under local memory limits.
 - Wire nf-core **annotate / phase / impute**: `run_annotate` (VEP/snpEff), `run_phase` (SHAPEIT5), `run_impute` (beagle5/minimac4/glimpse); profiles `test_annotate` / `test_phase` / `test_impute`.
+- Somalier `run_relate`, `run_vcf_prep` umbrella, optional `genotype_qc_use_somalier` hook; CI-ignored real smokes for LDSC/PredictDB panels and VEP/SHAPEIT5/Beagle.
 
 ### `Fixed`
 

@@ -21,3 +21,7 @@ assets/testdata/tensorqtl_geuvadis/SOURCE.txt
 assets/testdata/tensorqtl_geuvadis/*.log
 assets/testdata/tensorqtl_geuvadis/*.hh
 !assets/testdata/tensorqtl_geuvadis/README.md
+
+# VEP real-smoke cache (fetched by scripts/fetch_vep_cache_testdata.sh)
+assets/testdata/vep_cache_real/*
+!assets/testdata/vep_cache_real/README.md

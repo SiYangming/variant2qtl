@@ -1,0 +1,44 @@
+nextflow_process {
+
+    name "Test Process LDSC_H2 (panel, real)"
+    script "../main.nf"
+    process "LDSC_H2"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "ldsc"
+    tag "ldsc/h2"
+    tag "ldsc_real"
+
+    // Real Python LDSC-style regression on ~2500-SNP panel (not stub).
+    test("ldsc_panel - real") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'ldsc_panel' ],
+                    file("${projectDir}/assets/testdata/ldsc_panel/sumstats.tsv", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'ldsc_panel' ],
+                    file("${projectDir}/assets/testdata/ldsc_panel/annot.tsv", checkIfExists: true)
+                ]
+                input[2] = [
+                    [ id:'ldsc_panel' ],
+                    file("${projectDir}/assets/testdata/ldsc_panel/ldscores.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.h2.size() == 1 },
+                { assert path(process.out.h2.get(0).get(1)).readLines().size() >= 2 },
+                { assert path(process.out.h2.get(0).get(1)).text.contains('ref') }
+            )
+        }
+    }
+}

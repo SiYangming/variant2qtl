@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process SHAPEIT5_PHASECOMMON (real)"
+    script "../../modules/nf-core/shapeit5/phasecommon/main.nf"
+    process "SHAPEIT5_PHASECOMMON"
+
+    tag "pipeline"
+    tag "shapeit5"
+    tag "shapeit5_real"
+
+    test("plink_simulated - real") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'shapeit5_real' ],
+                    file("${projectDir}/assets/testdata/phase_impute_real/target.vcf.gz", checkIfExists: true),
+                    file("${projectDir}/assets/testdata/phase_impute_real/target.vcf.gz.tbi", checkIfExists: true),
+                    [],
+                    '1',
+                    [],
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.phased_variant.size() == 1 },
+                { assert path(process.out.phased_variant.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

@@ -1,0 +1,46 @@
+nextflow_process {
+
+    name "Test Process TWAS_FUSION (PredictDB panel, real)"
+    script "../main.nf"
+    process "TWAS_FUSION"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "twas"
+    tag "twas/fusion"
+    tag "predictdb_real"
+
+    // Real TWAS scoring after PredictDB extract (not stub).
+    test("twas_predictdb_panel - real") {
+        when {
+            process {
+                """
+                // pre-extract weights with python in when? use committed export if present;
+                // here extract on the fly via process chain is pipeline-level;
+                // supply long weights exported from panel for fusion-only smoke.
+                input[0] = [
+                    [ id:'twas_panel' ],
+                    file("${projectDir}/assets/testdata/twas_panel/weights_from_db.tsv", checkIfExists: true)
+                ]
+                input[1] = [
+                    [ id:'twas_panel' ],
+                    file("${projectDir}/assets/testdata/twas_panel/gwas.tsv", checkIfExists: true)
+                ]
+                input[2] = [
+                    [ id:'twas_panel' ],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.twas.size() == 1 },
+                { assert path(process.out.twas.get(0).get(1)).readLines().size() > 2 }
+            )
+        }
+    }
+}
