@@ -1,0 +1,40 @@
+---
+name: "somalier_outliers"
+description: Convert Somalier pairs.tsv relatedness hits to FID/IID remove list
+keywords:
+  - somalier
+  - relatedness
+  - qc
+tools:
+  - "python":
+      description: "Parse Somalier pairs TSV"
+      homepage: "https://github.com/brentp/somalier"
+      documentation: "https://github.com/brentp/somalier"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - pairs:
+        type: file
+        description: Somalier pairs.tsv
+        pattern: "*.tsv"
+output:
+  outliers:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.related_outliers.txt":
+        type: file
+        description: Samples to remove (FID IID)
+        pattern: "*.related_outliers.txt"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

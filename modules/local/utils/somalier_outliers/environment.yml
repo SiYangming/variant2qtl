@@ -1,0 +1,5 @@
+name: somalier_outliers
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9

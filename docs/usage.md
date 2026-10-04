@@ -144,11 +144,28 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 - `finemap_extra_sumstats` and `finemap_extra_method` (`finemap`/`caviar`/`dapg`); 1-causal PIPs (identity LD)
 
-**VCF annotate / phase / impute**
+**VCF annotate / phase / impute / relate**
 
 - `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`)
 - `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`
 - `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map
+- `run_vcf_prep` — one switch for annotate→phase→impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`)
+- `run_relate` — Somalier extract/relate; optional `genotype_qc_use_somalier` to remove related samples from QC bed
+
+**Real (non-stub) smokes** (ignored by default CI; use `nf-test.real.config`):
+
+```bash
+nf-test test \
+  modules/local/ldsc/h2/tests/main.ldsc_real.nf.test \
+  modules/local/twas/predictdb/tests/main.predictdb_real.nf.test \
+  modules/local/twas/fusion/tests/main.predictdb_real.nf.test \
+  tests/real/beagle.beagle_real.nf.test \
+  tests/real/shapeit5.shapeit5_real.nf.test \
+  --config nf-test.real.config --profile docker
+
+bash scripts/fetch_vep_cache_testdata.sh
+nf-test test tests/real/vep.vep_real.nf.test --config nf-test.real.config --profile docker
+```
 
 **SNP/Indel umbrella / SV / STR**
 
@@ -356,6 +373,8 @@ nextflow run . -profile test_twas_predictdb,docker -stub --outdir results_test_t
 nextflow run . -profile test_annotate,docker -stub --outdir results_test_annotate
 nextflow run . -profile test_phase,docker -stub --outdir results_test_phase
 nextflow run . -profile test_impute,docker -stub --outdir results_test_impute
+nextflow run . -profile test_relate,docker -stub --outdir results_test_relate
+nextflow run . -profile test_vcf_prep,docker -stub --outdir results_test_vcf_prep
 nextflow run . -profile test_finemap_extra,docker -stub --outdir results_test_finemap_extra
 nextflow run . -profile test_sv,docker -stub --outdir results_test_sv
 nextflow run . -profile test_str,docker -stub --outdir results_test_str
@@ -521,6 +540,8 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_annotate`
 - `test_phase`
 - `test_impute`
+- `test_relate`
+- `test_vcf_prep`
 - `test_finemap_extra`
 - `test_sv`
 - `test_str`

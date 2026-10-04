@@ -35,6 +35,9 @@ include { VARIANT_STR               } from '../subworkflows/local/variant_str/ma
 include { VARIANT_ANNOTATE          } from '../subworkflows/local/variant_annotate/main'
 include { VARIANT_PHASE             } from '../subworkflows/local/variant_phase/main'
 include { VARIANT_IMPUTE            } from '../subworkflows/local/variant_impute/main'
+include { VARIANT_RELATE            } from '../subworkflows/local/variant_relate/main'
+include { SOMALIER_OUTLIERS         } from '../modules/local/utils/somalier_outliers/main'
+include { PLINK2_REMOVE as PLINK2_REMOVE_SOMALIER } from '../modules/nf-core/plink2/remove/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +71,12 @@ workflow VARIANT2QTL {
     def run_gwas = params.run_gwas_benchmark || run_gqtl
     def run_ingest = params.run_genotype_ingest || run_snp_indel || run_gqtl
     def run_qc = params.run_genotype_qc || run_snp_indel || run_gqtl || (run_modality && params.genotype_input)
+    def run_vcf_prep = params.run_vcf_prep
+    def run_annotate_flag = params.run_annotate || (run_vcf_prep && !params.vcf_prep_skip_annotate)
+    def run_phase_flag = params.run_phase || (run_vcf_prep && !params.vcf_prep_skip_phase)
+    def run_impute_flag = params.run_impute || (run_vcf_prep && !params.vcf_prep_skip_impute)
+    def vcf_prep_vcf = params.vcf_prep_vcf ?: params.annotate_vcf ?: params.phase_vcf ?: params.impute_vcf
+    def vcf_prep_tbi = params.vcf_prep_vcf_tbi ?: params.annotate_vcf_tbi ?: params.phase_vcf_tbi ?: params.impute_vcf_tbi
     def run_omiga = params.run_omiga_cis || run_snp_indel || (run_modality && modality_engine == 'omiga')
     def run_tensor = params.run_tensorqtl_cis || (run_modality && modality_engine == 'tensorqtl')
     def run_qtltools = params.run_qtltools_cis || (run_modality && modality_engine == 'qtltools')
@@ -95,6 +104,7 @@ workflow VARIANT2QTL {
     def ch_prepared_pheno = channel.empty()
     def ch_peer_cov_omiga = channel.empty()
     def ch_peer_cov_tensor = channel.empty()
+    def ch_somalier_pairs = channel.empty()
 
     if (run_ingest || run_qc || run_gwas || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
@@ -797,19 +807,83 @@ workflow VARIANT2QTL {
     }
 
     //
-    // Optional VCF annotation (default OFF)
+    // Optional Somalier relatedness (default OFF)
     //
-    if (params.run_annotate) {
+    if (params.run_relate) {
+        def rel_meta = [id: params.relate_id ?: 'relate']
+        if (!params.relate_vcf || !params.relate_fasta || !params.relate_fasta_fai || !params.relate_sites) {
+            log.warn "run_relate=true but missing --relate_vcf/--relate_fasta/--relate_fasta_fai/--relate_sites."
+        } else {
+            VARIANT_RELATE(
+                channel.of([
+                    rel_meta,
+                    file(params.relate_vcf, checkIfExists: true),
+                    params.relate_vcf_tbi
+                        ? file(params.relate_vcf_tbi, checkIfExists: true)
+                        : []
+                ]),
+                channel.of([[id: 'relate_ref'], file(params.relate_fasta, checkIfExists: true)]),
+                channel.of([[id: 'relate_ref'], file(params.relate_fasta_fai, checkIfExists: true)]),
+                channel.of([[id: 'relate_sites'], file(params.relate_sites, checkIfExists: true)]),
+                channel.of([
+                    rel_meta,
+                    params.relate_ped ? file(params.relate_ped, checkIfExists: true) : []
+                ])
+            )
+            ch_versions = ch_versions.mix(VARIANT_RELATE.out.versions)
+            ch_somalier_pairs = VARIANT_RELATE.out.pairs_tsv
+        }
+    }
+
+    //
+    // Optional: apply Somalier pairs as relatedness removals on QC bed
+    //
+    if (params.genotype_qc_use_somalier) {
+        def ch_pairs_for_qc = params.genotype_qc_somalier_pairs
+            ? channel.of([
+                [id: params.relate_id ?: 'relate'],
+                file(params.genotype_qc_somalier_pairs, checkIfExists: true)
+            ])
+            : ch_somalier_pairs
+        if (!params.genotype_qc_somalier_pairs && !params.run_relate) {
+            log.warn "genotype_qc_use_somalier=true but missing --genotype_qc_somalier_pairs (and run_relate did not run)."
+        }
+        SOMALIER_OUTLIERS(ch_pairs_for_qc)
+        ch_versions = ch_versions.mix(SOMALIER_OUTLIERS.out.versions)
+        def ch_som_remove = SOMALIER_OUTLIERS.out.outliers
+            .filter { _meta, path -> path.size() > 0 }
+        def ch_bed_to_filter = ch_shared_qc_bed.join(ch_som_remove)
+        PLINK2_REMOVE_SOMALIER(
+            ch_bed_to_filter.map { meta, bed, bim, fam, _out -> [meta, bed, bim, fam] },
+            ch_bed_to_filter.map { _meta, _bed, _bim, _fam, out -> out }
+        )
+        ch_versions = ch_versions.mix(PLINK2_REMOVE_SOMALIER.out.versions)
+        ch_shared_qc_bed = ch_shared_qc_bed
+            .join(SOMALIER_OUTLIERS.out.outliers)
+            .filter { _meta, _bed, _bim, _fam, path -> path.size() == 0 }
+            .map { meta, bed, bim, fam, _path -> [meta, bed, bim, fam] }
+            .mix(
+                PLINK2_REMOVE_SOMALIER.out.remove_bed
+                    .join(PLINK2_REMOVE_SOMALIER.out.remove_bim)
+                    .join(PLINK2_REMOVE_SOMALIER.out.remove_fam)
+            )
+        ch_shared_geno_plink = ch_shared_qc_bed
+    }
+
+    //
+    // Optional VCF annotation (default OFF; also via run_vcf_prep)
+    //
+    if (run_annotate_flag) {
         def ann_meta = [id: params.annotate_id ?: 'annotate']
-        if (!params.annotate_vcf) {
-            log.warn "run_annotate=true but missing --annotate_vcf."
+        def ann_vcf = params.annotate_vcf ?: vcf_prep_vcf
+        def ann_tbi = params.annotate_vcf_tbi ?: vcf_prep_tbi
+        if (!ann_vcf) {
+            log.warn "run_annotate/run_vcf_prep=true but missing --annotate_vcf/--vcf_prep_vcf."
         } else {
             def ch_ann_vcf = channel.of([
                 ann_meta,
-                file(params.annotate_vcf, checkIfExists: true),
-                params.annotate_vcf_tbi
-                    ? file(params.annotate_vcf_tbi, checkIfExists: true)
-                    : []
+                file(ann_vcf, checkIfExists: true),
+                ann_tbi ? file(ann_tbi, checkIfExists: true) : []
             ])
             def ch_ann_fa = params.annotate_fasta
                 ? channel.of([[id: 'annotate_fasta'], file(params.annotate_fasta, checkIfExists: true)])
@@ -826,19 +900,19 @@ workflow VARIANT2QTL {
     }
 
     //
-    // Optional VCF phasing (default OFF)
+    // Optional VCF phasing (default OFF; also via run_vcf_prep)
     //
-    if (params.run_phase) {
+    if (run_phase_flag) {
         def phase_meta = [id: params.phase_id ?: 'phase']
-        if (!params.phase_vcf) {
-            log.warn "run_phase=true but missing --phase_vcf."
+        def phase_vcf = params.phase_vcf ?: vcf_prep_vcf
+        def phase_tbi = params.phase_vcf_tbi ?: vcf_prep_tbi
+        if (!phase_vcf) {
+            log.warn "run_phase/run_vcf_prep=true but missing --phase_vcf/--vcf_prep_vcf."
         } else {
             def ch_phase_vcf = channel.of([
                 phase_meta,
-                file(params.phase_vcf, checkIfExists: true),
-                params.phase_vcf_tbi
-                    ? file(params.phase_vcf_tbi, checkIfExists: true)
-                    : []
+                file(phase_vcf, checkIfExists: true),
+                phase_tbi ? file(phase_tbi, checkIfExists: true) : []
             ])
             def ch_phase_ref = (params.phase_ref_vcf)
                 ? channel.of([
@@ -858,19 +932,19 @@ workflow VARIANT2QTL {
     }
 
     //
-    // Optional genotype imputation (default OFF)
+    // Optional genotype imputation (default OFF; also via run_vcf_prep)
     //
-    if (params.run_impute) {
+    if (run_impute_flag) {
         def imp_meta = [id: params.impute_id ?: 'impute']
-        if (!params.impute_vcf || !params.impute_panel) {
-            log.warn "run_impute=true but missing --impute_vcf and/or --impute_panel."
+        def imp_vcf = params.impute_vcf ?: vcf_prep_vcf
+        def imp_tbi = params.impute_vcf_tbi ?: vcf_prep_tbi
+        if (!imp_vcf || !params.impute_panel) {
+            log.warn "run_impute/run_vcf_prep=true but missing --impute_vcf/--vcf_prep_vcf and/or --impute_panel."
         } else {
             def ch_imp_vcf = channel.of([
                 imp_meta,
-                file(params.impute_vcf, checkIfExists: true),
-                params.impute_vcf_tbi
-                    ? file(params.impute_vcf_tbi, checkIfExists: true)
-                    : []
+                file(imp_vcf, checkIfExists: true),
+                imp_tbi ? file(imp_tbi, checkIfExists: true) : []
             ])
             def ch_imp_panel = channel.of([
                 imp_meta,

@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "VARIANT_RELATE"
+description: Somalier extract + relate for sample relatedness QC
+components:
+  - SOMALIER_EXTRACT
+  - SOMALIER_RELATE
+input:
+  - ch_vcf
+  - ch_fasta
+  - ch_fai
+  - ch_sites
+  - ch_ped
+output:
+  - extract
+  - html
+  - pairs_tsv
+  - samples_tsv
+  - versions
+authors:
+  - "@SiYangming"

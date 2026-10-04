@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process ENSEMBLVEP_VEP (real cache smoke)"
+    script "../../modules/nf-core/ensemblvep/vep/main.nf"
+    process "ENSEMBLVEP_VEP"
+    config "../../modules/nf-core/ensemblvep/vep/tests/vep_real.config"
+
+    tag "pipeline"
+    tag "ensemblvep"
+    tag "vep_real"
+
+    test("WBcel235 cache - real") {
+        when {
+            process {
+                """
+                def cache_dir = file("${projectDir}/assets/testdata/vep_cache_real/115_WBcel235", checkIfExists: true)
+                input[0] = [
+                    [ id:'vep_real', single_end:false ],
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/vcf/test2.vcf.gz', checkIfExists: true),
+                    []
+                ]
+                input[1] = "WBcel235"
+                input[2] = "caenorhabditis_elegans"
+                input[3] = "115"
+                input[4] = [[ id:'115_WBcel235' ], cache_dir]
+                input[5] = [[],[]]
+                input[6] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.vcf.size() == 1 || process.out.tab.size() == 1 || process.out.json.size() == 1 }
+            )
+        }
+    }
+}

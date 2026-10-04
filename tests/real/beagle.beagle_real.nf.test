@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process BEAGLE5_BEAGLE (real)"
+    script "../../modules/nf-core/beagle5/beagle/main.nf"
+    process "BEAGLE5_BEAGLE"
+
+    tag "pipeline"
+    tag "beagle"
+    tag "beagle_real"
+
+    test("plink_simulated - real") {
+        when {
+            process {
+                """
+                // Beagle without ref panel (gt-only); panel must be phased for ref=
+                input[0] = [
+                    [ id:'beagle_real' ],
+                    file("${projectDir}/assets/testdata/phase_impute_real/target10.vcf.gz", checkIfExists: true),
+                    file("${projectDir}/assets/testdata/phase_impute_real/target10.vcf.gz.tbi", checkIfExists: true),
+                    [],
+                    [],
+                    [],
+                    [],
+                    [],
+                    '1'
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.vcf.size() == 1 },
+                { assert path(process.out.vcf.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

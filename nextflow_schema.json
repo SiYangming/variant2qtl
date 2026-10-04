@@ -1025,6 +1025,134 @@
                 }
             }
         },
+        "relate_options": {
+            "title": "Somalier relatedness options",
+            "type": "object",
+            "fa_icon": "fas fa-users",
+            "description": "Optional Somalier extract/relate. Disabled by default.",
+            "properties": {
+                "run_relate": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run Somalier extract + relate. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "relate_id": {
+                    "type": "string",
+                    "default": "relate",
+                    "description": "Sample meta.id for Somalier.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "relate_vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Multi-sample VCF/BAM input for Somalier extract.",
+                    "fa_icon": "fas fa-file"
+                },
+                "relate_vcf_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Index for relate_vcf when VCF.",
+                    "fa_icon": "fas fa-file"
+                },
+                "relate_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Reference FASTA for Somalier.",
+                    "fa_icon": "fas fa-file"
+                },
+                "relate_fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "FASTA index.",
+                    "fa_icon": "fas fa-file"
+                },
+                "relate_sites": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Somalier sites VCF.",
+                    "fa_icon": "fas fa-file"
+                },
+                "relate_ped": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional pedigree for Somalier relate.",
+                    "fa_icon": "fas fa-file"
+                },
+                "genotype_qc_use_somalier": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Apply Somalier pairs as relatedness removals on QC bed. Default: false.",
+                    "fa_icon": "fas fa-link"
+                },
+                "genotype_qc_somalier_pairs": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional Somalier pairs.tsv (else uses run_relate output).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "genotype_qc_somalier_relatedness": {
+                    "type": "number",
+                    "default": 0.2,
+                    "description": "Relatedness threshold for Somalier outlier removal.",
+                    "fa_icon": "fas fa-sliders-h"
+                }
+            }
+        },
+        "vcf_prep_options": {
+            "title": "VCF prep umbrella options",
+            "type": "object",
+            "fa_icon": "fas fa-stream",
+            "description": "Optional annotate → phase → impute one-switch path. Disabled by default.",
+            "properties": {
+                "run_vcf_prep": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run annotate + phase + impute (skippable steps). Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "vcf_prep_vcf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Shared input VCF when per-step VCF params are unset.",
+                    "fa_icon": "fas fa-file"
+                },
+                "vcf_prep_vcf_tbi": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Index for vcf_prep_vcf.",
+                    "fa_icon": "fas fa-file"
+                },
+                "vcf_prep_skip_annotate": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip annotation step in run_vcf_prep.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "vcf_prep_skip_phase": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip phasing step in run_vcf_prep.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "vcf_prep_skip_impute": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip imputation step in run_vcf_prep.",
+                    "fa_icon": "fas fa-forward"
+                }
+            }
+        },
         "annotate_options": {
             "title": "VCF annotation options",
             "type": "object",
@@ -1631,6 +1759,12 @@
         },
         {
             "$ref": "#/$defs/snp_indel_options"
+        },
+        {
+            "$ref": "#/$defs/relate_options"
+        },
+        {
+            "$ref": "#/$defs/vcf_prep_options"
         },
         {
             "$ref": "#/$defs/annotate_options"
