@@ -1,0 +1,38 @@
+nextflow_pipeline {
+
+    name "Test pipeline phase path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "phase"
+    tag "stub"
+
+    test("-profile test_phase path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_phase = true
+                phase_vcf = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz"
+                phase_vcf_tbi = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz.tbi"
+                phase_ref_vcf = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz"
+                phase_ref_vcf_tbi = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz.tbi"
+                phase_map = "${projectDir}/assets/testdata/vcf_api_mini/genetic_map.txt"
+                phase_region = '1'
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/variant_phase/shapeit5_phasecommon").exists() }
+            )
+        }
+    }
+}
