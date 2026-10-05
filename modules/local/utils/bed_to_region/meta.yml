@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "bed_to_region"
+description: Collapse a BED to a single chr:start-end region string
+keywords:
+  - bed
+  - region
+  - scatter
+tools:
+  - "python":
+      description: "Python interpreter"
+      homepage: "https://www.python.org/"
+      documentation: "https://docs.python.org/3/"
+      licence: ["Python-2.0"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - bed:
+        type: file
+        description: BED intervals
+        pattern: "*.bed"
+    - scatter_count:
+        type: integer
+        description: Number of scatter chunks
+output:
+  region:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.region.txt":
+        type: file
+        description: Single chr:start-end region
+        pattern: "*.region.txt"
+    - scatter_count:
+        type: integer
+        description: Number of scatter chunks
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

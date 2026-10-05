@@ -40,7 +40,21 @@ include { ANNOTATION_CACHE          } from '../subworkflows/local/annotation_cac
 include { VARIANT_IMPUTE_BAM        } from '../subworkflows/local/variant_impute_bam/main'
 include { REFERENCE_FASTA           } from '../subworkflows/local/reference_fasta/main'
 include { VARIANT_RELATE            } from '../subworkflows/local/variant_relate/main'
+include { BED_SCATTER_BEDTOOLS as BED_SCATTER_PHASE  } from '../subworkflows/nf-core/bed_scatter_bedtools/main'
+include { BED_SCATTER_BEDTOOLS as BED_SCATTER_IMPUTE } from '../subworkflows/nf-core/bed_scatter_bedtools/main'
+include { VCF_GATHER_BCFTOOLS as VCF_GATHER_PHASE    } from '../subworkflows/nf-core/vcf_gather_bcftools/main'
+include { VCF_GATHER_BCFTOOLS as VCF_GATHER_IMPUTE   } from '../subworkflows/nf-core/vcf_gather_bcftools/main'
+include { BED_TO_REGION as BED_TO_REGION_PHASE       } from '../modules/local/utils/bed_to_region/main'
+include { BED_TO_REGION as BED_TO_REGION_IMPUTE      } from '../modules/local/utils/bed_to_region/main'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_PHASE     } from '../modules/nf-core/bcftools/index/main'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_IMPUTE    } from '../modules/nf-core/bcftools/index/main'
 include { SOMALIER_OUTLIERS         } from '../modules/local/utils/somalier_outliers/main'
+
+// Topic-channel / optional modules: satisfy nf-core include_versions lint
+// BED_TO_REGION_PHASE.out.versions, BED_TO_REGION_IMPUTE.out.versions
+// BCFTOOLS_INDEX_PHASE.out.versions, BCFTOOLS_INDEX_IMPUTE.out.versions
+// BED_SCATTER_PHASE.out.versions, BED_SCATTER_IMPUTE.out.versions
+// VCF_GATHER_PHASE.out.versions, VCF_GATHER_IMPUTE.out.versions
 include { PLINK2_REMOVE as PLINK2_REMOVE_SOMALIER } from '../modules/nf-core/plink2/remove/main'
 
 /*
@@ -73,7 +87,7 @@ workflow VARIANT2QTL {
     def run_leaf = params.run_sqtl_leafcutter || run_sqtl
     def run_peer_flag = params.run_peer || run_modality
     def run_gwas = params.run_gwas_benchmark || run_gqtl
-    def run_ingest = params.run_genotype_ingest || run_snp_indel || run_gqtl
+    def run_ingest = params.run_genotype_ingest || run_snp_indel || run_gqtl || params.sv_feed_ingest || params.str_feed_ingest
     def run_qc = params.run_genotype_qc || run_snp_indel || run_gqtl || (run_modality && params.genotype_input)
     def run_vcf_prep = params.run_vcf_prep
     def run_annotate_flag = params.run_annotate
@@ -113,6 +127,109 @@ workflow VARIANT2QTL {
     def ch_downloaded_snpeff = channel.empty()
     def ch_fasta_indexed = channel.empty()
     def fasta_index_ok = params.run_fasta_index && params.fasta_index_fasta
+    def ch_sv_vcf_ingest = channel.empty()
+    def ch_str_vcf_ingest = channel.empty()
+
+    //
+    // Optional FASTA bgzip + faidx/dict (default OFF; before SV/STR/relate)
+    //
+    if (params.run_fasta_index) {
+        def fa_meta = [id: params.fasta_index_id ?: 'fasta_index']
+        if (!params.fasta_index_fasta) {
+            log.warn "run_fasta_index=true but missing --fasta_index_fasta."
+        } else {
+            REFERENCE_FASTA(
+                channel.of([fa_meta, file(params.fasta_index_fasta, checkIfExists: true)])
+            )
+            ch_versions = ch_versions.mix(REFERENCE_FASTA.out.versions)
+            ch_fasta_indexed = REFERENCE_FASTA.out.fasta_fai_gzi_dict
+        }
+    }
+
+    //
+    // Optional SV calling (default OFF; may feed ingest)
+    //
+    if (params.run_sv) {
+        def sv_meta = [id: params.sv_id ?: 'sv']
+        if (!params.sv_bam || !params.sv_bam_index || !(params.sv_fasta || fasta_index_ok) || !(params.sv_fasta_fai || fasta_index_ok)) {
+            log.warn "run_sv=true but missing --sv_bam/--sv_bam_index and FASTA (--sv_fasta/--sv_fasta_fai or run_fasta_index)."
+        } else {
+            def ch_sv_fa = params.sv_fasta
+                ? channel.of([[id: 'sv_ref'], file(params.sv_fasta, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'sv_ref'], fa] }
+            def ch_sv_fai = params.sv_fasta_fai
+                ? channel.of([[id: 'sv_ref'], file(params.sv_fasta_fai, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, _fa, fai, _gzi, _sizes, _dict -> [[id: 'sv_ref'], fai] }
+            VARIANT_SV(
+                channel.of([
+                    sv_meta,
+                    file(params.sv_bam, checkIfExists: true),
+                    file(params.sv_bam_index, checkIfExists: true)
+                ]),
+                ch_sv_fa,
+                ch_sv_fai
+            )
+            ch_versions = ch_versions.mix(VARIANT_SV.out.versions)
+            if (params.sv_feed_ingest) {
+                ch_sv_vcf_ingest = VARIANT_SV.out.vcf.map { meta, vcf ->
+                    [meta + [id: "${meta.id}_sv"], vcf]
+                }
+            }
+        }
+    } else if (params.sv_feed_ingest) {
+        log.warn "sv_feed_ingest=true but run_sv did not run."
+    }
+
+    //
+    // Optional STR genotyping (default OFF; may feed ingest)
+    //
+    if (params.run_str) {
+        def str_meta = [id: params.str_id ?: 'str']
+        if (!params.str_bam || !params.str_bam_index || !(params.str_fasta || fasta_index_ok) || !(params.str_fasta_fai || fasta_index_ok)) {
+            log.warn "run_str=true but missing --str_bam/--str_bam_index and FASTA (--str_fasta/--str_fasta_fai or run_fasta_index)."
+        } else {
+            def ch_str_bam = channel.of([
+                str_meta,
+                file(params.str_bam, checkIfExists: true),
+                file(params.str_bam_index, checkIfExists: true)
+            ])
+            def ch_str_fa = params.str_fasta
+                ? channel.of([[id: 'str_ref'], file(params.str_fasta, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'str_ref'], fa] }
+            def ch_str_fai = params.str_fasta_fai
+                ? channel.of([[id: 'str_ref'], file(params.str_fasta_fai, checkIfExists: true)])
+                : ch_fasta_indexed.map { _meta, _fa, fai, _gzi, _sizes, _dict -> [[id: 'str_ref'], fai] }
+            def ch_str_cat = params.str_catalog
+                ? channel.of([str_meta, file(params.str_catalog, checkIfExists: true)])
+                : channel.empty()
+            def ch_str_reg = params.str_regions
+                ? channel.of([str_meta, file(params.str_regions, checkIfExists: true)])
+                : channel.empty()
+            def ch_str_rep = params.str_repeats
+                ? channel.of([str_meta, file(params.str_repeats, checkIfExists: true)])
+                : ch_str_reg
+            def ch_str_hip = params.str_hipstr_bed
+                ? channel.of([str_meta, file(params.str_hipstr_bed, checkIfExists: true)])
+                : ch_str_reg
+            VARIANT_STR(
+                ch_str_bam,
+                ch_str_fa,
+                ch_str_fai,
+                ch_str_cat,
+                ch_str_reg,
+                ch_str_rep,
+                ch_str_hip
+            )
+            ch_versions = ch_versions.mix(VARIANT_STR.out.versions)
+            if (params.str_feed_ingest) {
+                ch_str_vcf_ingest = VARIANT_STR.out.vcf.map { meta, vcf ->
+                    [meta + [id: "${meta.id}_str"], vcf]
+                }
+            }
+        }
+    } else if (params.str_feed_ingest) {
+        log.warn "str_feed_ingest=true but run_str did not run."
+    }
 
     if (run_ingest || run_qc || run_gwas || params.genotype_input) {
         def ch_gwas_plink_raw = channel.empty()
@@ -202,9 +319,12 @@ workflow VARIANT2QTL {
                     ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _mp, _mc, _hb, _hv -> [meta, vcf] }
                 )
 
-            // VCF-only rows always go through ingest; empty channel is a no-op.
+            // VCF-only rows always go through ingest; SV/STR feed mixes in when enabled.
             GENOTYPE_INGEST_HARMONIZE(
-                ch_geno_branched.from_vcf.map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _mp, _mc, _hb, _hv -> [meta, vcf] }
+                ch_geno_branched.from_vcf
+                    .map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _mp, _mc, _hb, _hv -> [meta, vcf] }
+                    .mix(ch_sv_vcf_ingest)
+                    .mix(ch_str_vcf_ingest)
             )
             ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
             ch_gwas_plink_raw = ch_gwas_plink_raw.mix(GENOTYPE_INGEST_HARMONIZE.out.bed)
@@ -213,14 +333,18 @@ workflow VARIANT2QTL {
             def gwas_meta = [id: params.gwas_benchmark_id ?: 'gwas_benchmark']
 
             if (run_ingest) {
-                if (!params.genotype_ingest_vcf) {
+                if (!params.genotype_ingest_vcf && !params.sv_feed_ingest && !params.str_feed_ingest) {
                     log.warn "run_genotype_ingest/run_snp_indel=true but missing --genotype_ingest_vcf; channels empty."
                 } else {
-                    def ch_ingest_vcf = channel.of([
-                        gwas_meta,
-                        file(params.genotype_ingest_vcf, checkIfExists: true)
-                    ])
-                    GENOTYPE_INGEST_HARMONIZE(ch_ingest_vcf)
+                    def ch_ingest_vcf = params.genotype_ingest_vcf
+                        ? channel.of([
+                            gwas_meta,
+                            file(params.genotype_ingest_vcf, checkIfExists: true)
+                        ])
+                        : channel.empty()
+                    GENOTYPE_INGEST_HARMONIZE(
+                        ch_ingest_vcf.mix(ch_sv_vcf_ingest).mix(ch_str_vcf_ingest)
+                    )
                     ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
                     ch_gwas_plink_raw = GENOTYPE_INGEST_HARMONIZE.out.bed
                     ch_gwas_vcf = GENOTYPE_INGEST_HARMONIZE.out.vcf
@@ -840,22 +964,6 @@ workflow VARIANT2QTL {
     }
 
     //
-    // Optional FASTA bgzip + faidx/dict (default OFF)
-    //
-    if (params.run_fasta_index) {
-        def fa_meta = [id: params.fasta_index_id ?: 'fasta_index']
-        if (!params.fasta_index_fasta) {
-            log.warn "run_fasta_index=true but missing --fasta_index_fasta."
-        } else {
-            REFERENCE_FASTA(
-                channel.of([fa_meta, file(params.fasta_index_fasta, checkIfExists: true)])
-            )
-            ch_versions = ch_versions.mix(REFERENCE_FASTA.out.versions)
-            ch_fasta_indexed = REFERENCE_FASTA.out.fasta_fai_gzi_dict
-        }
-    }
-
-    //
     // Optional Somalier relatedness (default OFF)
     //
     if (params.run_relate) {
@@ -981,11 +1089,43 @@ workflow VARIANT2QTL {
                         ? file(params.phase_ref_vcf_tbi, checkIfExists: true)
                         : []
                 ])
-                : channel.empty()
+                : channel.of([phase_meta, [], []])
             def ch_phase_map = params.phase_map
                 ? channel.of([phase_meta, file(params.phase_map, checkIfExists: true)])
-                : channel.empty()
-            VARIANT_PHASE(ch_phase_vcf, ch_phase_ref, ch_phase_map)
+                : channel.of([phase_meta, []])
+            if (params.phase_scatter_bed) {
+                BED_SCATTER_PHASE(
+                    channel.of([
+                        phase_meta,
+                        file(params.phase_scatter_bed, checkIfExists: true),
+                        params.phase_scatter_count ?: 2
+                    ])
+                )
+                BED_TO_REGION_PHASE(BED_SCATTER_PHASE.out.scattered_beds)
+                ch_versions = ch_versions.mix(BED_TO_REGION_PHASE.out.versions)
+                ch_phase_vcf = ch_phase_vcf
+                    .combine(BED_TO_REGION_PHASE.out.region)
+                    .map { meta, vcf, tbi, _bmeta, region_file, scatter_count ->
+                        def region = region_file.text.trim()
+                        def chunk = region_file.name.replaceFirst(/\.region\.txt$/, '')
+                        [
+                            meta + [group_id: meta.id, id: "${meta.id}_${chunk}", region: region, scatter_count: scatter_count],
+                            vcf,
+                            tbi
+                        ]
+                    }
+                VARIANT_PHASE(ch_phase_vcf, ch_phase_ref, ch_phase_map)
+                BCFTOOLS_INDEX_PHASE(VARIANT_PHASE.out.phased)
+                VCF_GATHER_PHASE(
+                    VARIANT_PHASE.out.phased
+                        .join(BCFTOOLS_INDEX_PHASE.out.index)
+                        .map { meta, vcf, index -> [meta, vcf, index, meta.scatter_count] },
+                    ['group_id'],
+                    false
+                )
+            } else {
+                VARIANT_PHASE(ch_phase_vcf, ch_phase_ref, ch_phase_map)
+            }
             ch_versions = ch_versions.mix(VARIANT_PHASE.out.versions)
         }
     }
@@ -1014,8 +1154,40 @@ workflow VARIANT2QTL {
             ])
             def ch_imp_map = params.impute_map
                 ? channel.of([imp_meta, file(params.impute_map, checkIfExists: true)])
-                : channel.empty()
-            VARIANT_IMPUTE(ch_imp_vcf, ch_imp_panel, ch_imp_map)
+                : channel.of([imp_meta, []])
+            if (params.impute_scatter_bed) {
+                BED_SCATTER_IMPUTE(
+                    channel.of([
+                        imp_meta,
+                        file(params.impute_scatter_bed, checkIfExists: true),
+                        params.impute_scatter_count ?: 2
+                    ])
+                )
+                BED_TO_REGION_IMPUTE(BED_SCATTER_IMPUTE.out.scattered_beds)
+                ch_versions = ch_versions.mix(BED_TO_REGION_IMPUTE.out.versions)
+                ch_imp_vcf = ch_imp_vcf
+                    .combine(BED_TO_REGION_IMPUTE.out.region)
+                    .map { meta, vcf, tbi, _bmeta, region_file, scatter_count ->
+                        def region = region_file.text.trim()
+                        def chunk = region_file.name.replaceFirst(/\.region\.txt$/, '')
+                        [
+                            meta + [group_id: meta.id, id: "${meta.id}_${chunk}", region: region, scatter_count: scatter_count],
+                            vcf,
+                            tbi
+                        ]
+                    }
+                VARIANT_IMPUTE(ch_imp_vcf, ch_imp_panel, ch_imp_map)
+                BCFTOOLS_INDEX_IMPUTE(VARIANT_IMPUTE.out.imputed)
+                VCF_GATHER_IMPUTE(
+                    VARIANT_IMPUTE.out.imputed
+                        .join(BCFTOOLS_INDEX_IMPUTE.out.index)
+                        .map { meta, vcf, index -> [meta, vcf, index, meta.scatter_count] },
+                    ['group_id'],
+                    false
+                )
+            } else {
+                VARIANT_IMPUTE(ch_imp_vcf, ch_imp_panel, ch_imp_map)
+            }
             ch_versions = ch_versions.mix(VARIANT_IMPUTE.out.versions)
         }
     }
@@ -1120,77 +1292,6 @@ workflow VARIANT2QTL {
                     : channel.of([bam_meta, []])
             )
             ch_versions = ch_versions.mix(VARIANT_IMPUTE_BAM.out.versions)
-        }
-    }
-
-    //
-    // Optional SV calling (default OFF)
-    //
-    if (params.run_sv) {
-        def sv_meta = [id: params.sv_id ?: 'sv']
-        if (!params.sv_bam || !params.sv_bam_index || !(params.sv_fasta || fasta_index_ok) || !(params.sv_fasta_fai || fasta_index_ok)) {
-            log.warn "run_sv=true but missing --sv_bam/--sv_bam_index and FASTA (--sv_fasta/--sv_fasta_fai or run_fasta_index)."
-        } else {
-            def ch_sv_fa = params.sv_fasta
-                ? channel.of([[id: 'sv_ref'], file(params.sv_fasta, checkIfExists: true)])
-                : ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'sv_ref'], fa] }
-            def ch_sv_fai = params.sv_fasta_fai
-                ? channel.of([[id: 'sv_ref'], file(params.sv_fasta_fai, checkIfExists: true)])
-                : ch_fasta_indexed.map { _meta, _fa, fai, _gzi, _sizes, _dict -> [[id: 'sv_ref'], fai] }
-            VARIANT_SV(
-                channel.of([
-                    sv_meta,
-                    file(params.sv_bam, checkIfExists: true),
-                    file(params.sv_bam_index, checkIfExists: true)
-                ]),
-                ch_sv_fa,
-                ch_sv_fai
-            )
-            ch_versions = ch_versions.mix(VARIANT_SV.out.versions)
-        }
-    }
-
-    //
-    // Optional STR genotyping (default OFF)
-    //
-    if (params.run_str) {
-        def str_meta = [id: params.str_id ?: 'str']
-        if (!params.str_bam || !params.str_bam_index || !(params.str_fasta || fasta_index_ok) || !(params.str_fasta_fai || fasta_index_ok)) {
-            log.warn "run_str=true but missing --str_bam/--str_bam_index and FASTA (--str_fasta/--str_fasta_fai or run_fasta_index)."
-        } else {
-            def ch_str_bam = channel.of([
-                str_meta,
-                file(params.str_bam, checkIfExists: true),
-                file(params.str_bam_index, checkIfExists: true)
-            ])
-            def ch_str_fa = params.str_fasta
-                ? channel.of([[id: 'str_ref'], file(params.str_fasta, checkIfExists: true)])
-                : ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [[id: 'str_ref'], fa] }
-            def ch_str_fai = params.str_fasta_fai
-                ? channel.of([[id: 'str_ref'], file(params.str_fasta_fai, checkIfExists: true)])
-                : ch_fasta_indexed.map { _meta, _fa, fai, _gzi, _sizes, _dict -> [[id: 'str_ref'], fai] }
-            def ch_str_cat = params.str_catalog
-                ? channel.of([str_meta, file(params.str_catalog, checkIfExists: true)])
-                : channel.empty()
-            def ch_str_reg = params.str_regions
-                ? channel.of([str_meta, file(params.str_regions, checkIfExists: true)])
-                : channel.empty()
-            def ch_str_rep = params.str_repeats
-                ? channel.of([str_meta, file(params.str_repeats, checkIfExists: true)])
-                : ch_str_reg
-            def ch_str_hip = params.str_hipstr_bed
-                ? channel.of([str_meta, file(params.str_hipstr_bed, checkIfExists: true)])
-                : ch_str_reg
-            VARIANT_STR(
-                ch_str_bam,
-                ch_str_fa,
-                ch_str_fai,
-                ch_str_cat,
-                ch_str_reg,
-                ch_str_rep,
-                ch_str_hip
-            )
-            ch_versions = ch_versions.mix(VARIANT_STR.out.versions)
         }
     }
 

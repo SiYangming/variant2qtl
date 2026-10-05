@@ -19,24 +19,38 @@ workflow VARIANT_PHASE {
     main:
     ch_versions = channel.empty()
 
-    def region = (params.phase_region ?: '1').toString()
+    ch_vcf_keyed = ch_vcf.map { meta, vcf, tbi ->
+        [meta.group_id ?: meta.id, meta, vcf, tbi]
+    }
 
-    ch_ref_aligned = ch_vcf
-        .join(ch_ref, remainder: true)
-        .map { meta, _vcf, _tbi, ref_vcf, ref_tbi ->
-            [meta, ref_vcf ?: [], ref_tbi ?: []]
+    ch_ref_aligned = ch_vcf_keyed
+        .join(
+            ch_ref.map { meta, ref_vcf, ref_tbi -> [meta.id, ref_vcf, ref_tbi] },
+            remainder: true
+        )
+        .map { row ->
+            def meta = row[1]
+            def ref_vcf = (row.size() > 4 && row[4]) ? row[4] : []
+            def ref_tbi = (row.size() > 5 && row[5]) ? row[5] : []
+            [meta, ref_vcf, ref_tbi]
         }
 
-    ch_map_aligned = ch_vcf
-        .join(ch_map, remainder: true)
-        .map { meta, _vcf, _tbi, gmap ->
-            [meta, gmap ?: []]
+    ch_map_aligned = ch_vcf_keyed
+        .join(
+            ch_map.map { meta, gmap -> [meta.id, gmap] },
+            remainder: true
+        )
+        .map { row ->
+            def meta = row[1]
+            def gmap = (row.size() > 4 && row[4]) ? row[4] : []
+            [meta, gmap]
         }
 
     ch_phase_in = ch_vcf
         .join(ch_ref_aligned)
         .join(ch_map_aligned)
         .map { meta, vcf, tbi, ref_vcf, ref_tbi, gmap ->
+            def region = (meta.region ?: params.phase_region ?: '1').toString()
             [meta, vcf, tbi, [], region, ref_vcf, ref_tbi, [], [], gmap]
         }
 

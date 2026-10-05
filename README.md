@@ -64,7 +64,7 @@ Now, you can run the pipeline using:
 ```bash
 nextflow run SiYangming/variant2qtl \
    -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
+   -params-file assets/params_eqtl.yml \
    --outdir <OUTDIR>
 ```
 

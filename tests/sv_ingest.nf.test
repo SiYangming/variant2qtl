@@ -1,0 +1,40 @@
+nextflow_pipeline {
+
+    name "Test pipeline sv ingest path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "sv"
+    tag "ingest"
+    tag "stub"
+
+    test("-profile test_sv_ingest path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_sv = true
+                sv_feed_ingest = true
+                sv_engines = 'smoove'
+                sv_bam = "${projectDir}/assets/testdata/sv_mini/sample.bam"
+                sv_bam_index = "${projectDir}/assets/testdata/sv_mini/sample.bam.bai"
+                sv_fasta = "${projectDir}/assets/testdata/sv_mini/ref.fa"
+                sv_fasta_fai = "${projectDir}/assets/testdata/sv_mini/ref.fa.fai"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/variant_sv/smoove_call").exists() },
+                { assert path("$outputDir/genotype_ingest/plink_vcf").exists() }
+            )
+        }
+    }
+}
