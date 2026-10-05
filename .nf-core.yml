@@ -19,8 +19,6 @@ lint:
   # AWS test workflows not used for this personal pipeline
   actions_awstest: false
   actions_awsfulltest: false
-  # Zenodo DOI filled after GitHub+Zenodo archive
-  readme: false
   files_exist:
     - CODE_OF_CONDUCT.md
     - assets/nf-core-variant2qtl_logo_light.png
