@@ -1,0 +1,50 @@
+nextflow_pipeline {
+
+    name "Test pipeline vcf_prep QC path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "vcf_prep"
+    tag "qc"
+    tag "stub"
+
+    test("-profile test_vcf_prep_qc path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_vcf_prep = true
+                vcf_prep_feed_ingest = true
+                run_genotype_qc = true
+                vcf_prep_vcf = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz"
+                vcf_prep_vcf_tbi = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz.tbi"
+                annotate_tools = 'snpeff'
+                annotate_snpeff_db = 'GRCh38.99'
+                annotate_snpeff_cache = "${projectDir}/assets/testdata/vcf_api_mini/snpeff_cache"
+                phase_ref_vcf = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz"
+                phase_ref_vcf_tbi = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz.tbi"
+                phase_map = "${projectDir}/assets/testdata/vcf_api_mini/genetic_map.txt"
+                phase_region = '1'
+                impute_engine = 'beagle5'
+                impute_panel = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz"
+                impute_panel_tbi = "${projectDir}/assets/testdata/vcf_api_mini/ref.vcf.gz.tbi"
+                impute_map = "${projectDir}/assets/testdata/vcf_api_mini/genetic_map.txt"
+                impute_region = '1'
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/genotype_ingest/plink_vcf").exists() },
+                { assert path("$outputDir/genotype_qc/plink2_filter").exists() }
+            )
+        }
+    }
+}

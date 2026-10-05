@@ -21,7 +21,7 @@ nextflow_pipeline {
                 run_sv = true
                 sv_feed_ingest = true
                 sv_merge = true
-                sv_engines = 'smoove,delly'
+                sv_engines = 'smoove,manta'
                 sv_bam = "${projectDir}/assets/testdata/sv_mini/sample.bam"
                 sv_bam_index = "${projectDir}/assets/testdata/sv_mini/sample.bam.bai"
                 sv_fasta = "${projectDir}/assets/testdata/sv_mini/ref.fa"

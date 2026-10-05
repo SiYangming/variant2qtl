@@ -82,6 +82,7 @@ Directories below are relative to `--outdir`. Most optional branches are **off b
 - `variant_annotate/` — VEP / snpEff; optional `bcftools_view` / `ensemblvep_filtervep` when `annotate_filter`
 - `variant_phase/` — SHAPEIT5
 - `variant_impute/` — Beagle5 / Minimac4 / GLIMPSE
+- `genotype_ingest/` — also receives `--vcf_prep_feed_ingest` prepared VCFs
 - `scatter/` — optional `--phase_scatter_bed` / `--impute_scatter_bed` (BED split, region strings, concat/index)
 - `variant_impute_bam/` — GLIMPSE2 chunk / phase / ligate
 - `variant_relate/` — Somalier extract / relate
