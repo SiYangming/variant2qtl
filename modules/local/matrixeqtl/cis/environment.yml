@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+channels:
+  - conda-forge
+  - bioconda
+  - YangmingSi
+dependencies:
+  - YangmingSi::matrixeqtl=2.4
+  - bioconda::plink2=2.00a5.10
+  - conda-forge::python=3.11

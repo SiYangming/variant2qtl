@@ -26,6 +26,10 @@
 
 > Cite the OmiGA version used in the run (container pin `1.8.17` in this pipeline). `--mode cis`, `trans`, and `independent-cis` share this binary.
 
+- [MatrixEQTL](https://CRAN.R-project.org/package=MatrixEQTL)
+
+> Shabalin AA. Matrix eQTL: ultra fast eQTL analysis via large matrix operations. Bioinformatics. 2012. Pipeline pin `2.4` (`YangmingSi::matrixeqtl` / `quay.io/bioinfortools/matrixeqtl:2.4`).
+
 - [tensorQTL](https://pubmed.ncbi.nlm.nih.gov/32929287/)
 
 > Taylor-Weiner A, et al. Scaling computational genomics to millions of individuals with GPUs. Genome Biol. 2019.
