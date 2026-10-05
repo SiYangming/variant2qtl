@@ -68,6 +68,10 @@ nextflow run SiYangming/variant2qtl \
    --outdir <OUTDIR>
 ```
 
+Until the first GitHub release, omit `-r` (the default branch is **0.0.1dev**). After a numeric tag exists, pin it with `-r 0.0.1`.
+
+Other recipes: `assets/params_vcf_prep.yml`, `assets/params_leafcutter_cluster.yml`, `assets/params_qc_extras.yml`, `assets/params_bgen.yml`. See [docs/usage.md](docs/usage.md).
+
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/running/run-pipelines#using-parameter-files).
 

@@ -1,0 +1,14 @@
+# Example: BAM → LeafCutter cluster → FastQTL BED
+#
+#   nextflow run . -profile docker -stub \
+#     -params-file assets/params_leafcutter_cluster.yml \
+#     --outdir results_leafcutter_cluster
+
+input: assets/samplesheet_stub.csv
+igenomes_ignore: true
+validate_params: false
+
+run_leafcutter_cluster: true
+sqtl_bam: assets/testdata/str_mini/sample.bam
+sqtl_bam_index: assets/testdata/str_mini/sample.bam.bai
+sqtl_genes: assets/testdata/sqtl_leafcutter_mini/genes.bed

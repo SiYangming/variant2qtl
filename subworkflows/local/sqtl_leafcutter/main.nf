@@ -1,29 +1,47 @@
 //
 // LeafCutter intron counts → FastQTL BED + phenotype_group.
-// Enable with params.run_sqtl_leafcutter (default false).
-// Versions via topic("versions") on LEAFCUTTER_PREPARE — do not mix into Path ch_versions.
+// Optional BAM → regtools junctions extract → leafcutter clusterregtools.
+// Enable with params.run_sqtl_leafcutter and/or params.run_leafcutter_cluster (default false).
+// Mix Path versions from REGTOOLS only — do not mix topic versions into ch_versions.
 //
 
-include { LEAFCUTTER_PREPARE } from '../../../modules/local/leafcutter/prepare/main'
+include { REGTOOLS_JUNCTIONSEXTRACT    } from '../../../modules/nf-core/regtools/junctionsextract/main'
+include { LEAFCUTTER_CLUSTERREGTOOLS   } from '../../../modules/nf-core/leafcutter/clusterregtools/main'
+include { LEAFCUTTER_PREPARE           } from '../../../modules/local/leafcutter/prepare/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
-// LEAFCUTTER_PREPARE.out.versions
+// LEAFCUTTER_PREPARE.out.versions, LEAFCUTTER_CLUSTERREGTOOLS.out.versions
+// REGTOOLS_JUNCTIONSEXTRACT.out.versions
 
 
 workflow SQTL_LEAFCUTTER {
     take:
-    ch_counts  // channel: [ meta, perind counts ]
+    ch_counts  // channel: [ meta, perind counts ] (empty when clustering from BAM)
     ch_genes   // channel: [ meta, gene BED ] (may be empty)
+    ch_bam     // channel: [ meta, bam, bai ] (empty when using counts)
 
     main:
     ch_versions = channel.empty()
+    ch_counts_use = ch_counts
 
-    ch_genes_aligned = ch_counts
+    if (params.sqtl_bam || params.run_leafcutter_cluster) {
+        REGTOOLS_JUNCTIONSEXTRACT(
+            ch_bam,
+            params.sqtl_junc_strand ?: 'XS'
+        )
+        ch_versions = ch_versions.mix(REGTOOLS_JUNCTIONSEXTRACT.out.versions)
+        LEAFCUTTER_CLUSTERREGTOOLS(
+            REGTOOLS_JUNCTIONSEXTRACT.out.junc.map { meta, junc -> [meta, junc] }
+        )
+        ch_counts_use = LEAFCUTTER_CLUSTERREGTOOLS.out.counts
+    }
+
+    ch_genes_aligned = ch_counts_use
         .join(ch_genes, remainder: true)
         .map { meta, _counts, genes -> [meta, genes ?: []] }
 
     LEAFCUTTER_PREPARE(
-        ch_counts,
+        ch_counts_use,
         ch_genes_aligned
     )
 

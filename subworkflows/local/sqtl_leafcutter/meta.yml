@@ -1,11 +1,14 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "SQTL_LEAFCUTTER"
-description: Prepare sQTL FastQTL BED and phenotype groups from LeafCutter counts
+description: Prepare sQTL FastQTL BED from LeafCutter counts or BAM junction clustering
 components:
+  - REGTOOLS_JUNCTIONSEXTRACT
+  - LEAFCUTTER_CLUSTERREGTOOLS
   - LEAFCUTTER_PREPARE
 input:
   - ch_counts
   - ch_genes
+  - ch_bam
 output:
   - bed
   - phenotype_group

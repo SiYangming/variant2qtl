@@ -278,7 +278,7 @@
                 "genotype_to_bgen": {
                     "type": "boolean",
                     "default": false,
-                    "description": "When molQTL runs with a VCF, also export BGEN via PLINK2_VCF2BGEN.",
+                    "description": "Export BGEN via PLINK2_VCF2BGEN from an available VCF (ingest or molQTL). Default: false.",
                     "fa_icon": "fas fa-file-export",
                     "hidden": true
                 },
@@ -717,6 +717,33 @@
                     "exists": true,
                     "description": "Optional gene BED for intron→gene annotation.",
                     "fa_icon": "fas fa-file"
+                },
+                "run_leafcutter_cluster": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run regtools junctions extract + leafcutter clusterregtools before prepare. Also on when --sqtl_bam is set. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
+                },
+                "sqtl_bam": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BAM for LeafCutter junction extract (needs --sqtl_bam_index).",
+                    "fa_icon": "fas fa-file"
+                },
+                "sqtl_bam_index": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "BAM index for --sqtl_bam.",
+                    "fa_icon": "fas fa-file"
+                },
+                "sqtl_junc_strand": {
+                    "type": "string",
+                    "default": "XS",
+                    "description": "regtools junctions extract strand mode (-s).",
+                    "fa_icon": "fas fa-dna",
+                    "hidden": true
                 }
             }
         },
