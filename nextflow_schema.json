@@ -1182,6 +1182,12 @@
                     "default": false,
                     "description": "Skip imputation step in run_vcf_prep.",
                     "fa_icon": "fas fa-forward"
+                },
+                "vcf_prep_feed_ingest": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Mix run_vcf_prep output VCF into genotype_ingest. Default: false.",
+                    "fa_icon": "fas fa-toggle-off"
                 }
             }
         },

@@ -18,6 +18,10 @@
 
 > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
 
+## QTL / genotype analysis tools
+
+Pipeline switches (all default off) wrap PLINK/PLINK2, bcftools, OmiGA, tensorQTL, QTLtools, SHAPEIT5, Beagle5, Minimac4, GLIMPSE/GLIMPSE2, Ensembl VEP, snpEff, smoove/Manta/Delly/SURVIVOR, ExpansionHunter/GangSTR/HipSTR/TRGT/mergeSTR, Somalier, GEMMA/EMMAX/TASSEL/rMVP, SuSiE, coloc, mashr, and LDSC/TWAS-style helpers. Cite the specific tools used in a given run.
+
 ## Software packaging/containerisation tools
 
 - [Anaconda](https://anaconda.com)

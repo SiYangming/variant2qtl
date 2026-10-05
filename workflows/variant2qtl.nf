@@ -81,7 +81,7 @@ workflow VARIANT2QTL {
     def run_leaf = params.run_sqtl_leafcutter || run_sqtl
     def run_peer_flag = params.run_peer || run_modality
     def run_gwas = params.run_gwas_benchmark || run_gqtl
-    def run_ingest = params.run_genotype_ingest || run_snp_indel || run_gqtl || params.sv_feed_ingest || params.str_feed_ingest
+    def run_ingest = params.run_genotype_ingest || run_snp_indel || run_gqtl || params.sv_feed_ingest || params.str_feed_ingest || params.vcf_prep_feed_ingest
     def run_qc = params.run_genotype_qc || run_snp_indel || run_gqtl || (run_modality && params.genotype_input)
     def run_vcf_prep = params.run_vcf_prep
     def run_annotate_flag = params.run_annotate
@@ -123,6 +123,7 @@ workflow VARIANT2QTL {
     def fasta_index_ok = params.run_fasta_index && params.fasta_index_fasta
     def ch_sv_vcf_ingest = channel.empty()
     def ch_str_vcf_ingest = channel.empty()
+    def ch_vcf_prep_ingest = channel.empty()
 
     //
     // Optional FASTA bgzip + faidx/dict (default OFF; before SV/STR/relate)
@@ -138,6 +139,99 @@ workflow VARIANT2QTL {
             ch_versions = ch_versions.mix(REFERENCE_FASTA.out.versions)
             ch_fasta_indexed = REFERENCE_FASTA.out.fasta_fai_gzi_dict
         }
+    }
+
+    //
+    // Optional annotation cache download (default OFF; before annotate / vcf_prep)
+    //
+    if (params.run_cache) {
+        def cache_meta = [id: params.cache_id ?: 'cache']
+        def tools = (params.cache_tools ?: 'snpeff,ensemblvep')
+            .tokenize(',')
+            .collect { tool -> tool.trim().toLowerCase() }
+        def ch_vep_info = tools.contains('ensemblvep')
+            ? channel.of([
+                cache_meta,
+                params.annotate_vep_genome ?: (params.genome ?: 'GRCh38'),
+                params.annotate_vep_species ?: 'homo_sapiens',
+                params.annotate_vep_cache_version ?: '110'
+            ])
+            : channel.empty()
+        def ch_snpeff_info = tools.contains('snpeff')
+            ? channel.of([cache_meta, params.annotate_snpeff_db ?: 'GRCh38.99'])
+            : channel.empty()
+        ANNOTATION_CACHE(ch_vep_info, ch_snpeff_info)
+        ch_versions = ch_versions.mix(ANNOTATION_CACHE.out.versions)
+        ch_downloaded_vep = ANNOTATION_CACHE.out.vep_cache
+        ch_downloaded_snpeff = ANNOTATION_CACHE.out.snpeff_cache
+    }
+
+    //
+    // Optional chained annotate → phase → impute (default OFF; may feed ingest)
+    //
+    if (run_vcf_prep) {
+        def prep_meta = [id: params.vcf_prep_id ?: 'vcf_prep']
+        if (!vcf_prep_vcf) {
+            log.warn "run_vcf_prep=true but missing --vcf_prep_vcf (or --annotate_vcf/--phase_vcf/--impute_vcf)."
+        } else if (!params.vcf_prep_skip_impute && !params.impute_panel) {
+            log.warn "run_vcf_prep=true but missing --impute_panel (or set --vcf_prep_skip_impute)."
+        } else {
+            def ch_prep_vcf = channel.of([
+                prep_meta,
+                file(vcf_prep_vcf, checkIfExists: true),
+                vcf_prep_tbi ? file(vcf_prep_tbi, checkIfExists: true) : []
+            ])
+            def ch_prep_fa = params.annotate_fasta
+                ? channel.of([prep_meta, file(params.annotate_fasta, checkIfExists: true)])
+                : (fasta_index_ok
+                    ? ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [prep_meta, fa] }
+                    : channel.of([prep_meta, []]))
+            def ch_prep_vep = params.annotate_vep_cache
+                ? channel.of([prep_meta, file(params.annotate_vep_cache, checkIfExists: true)])
+                : (params.run_cache ? ch_downloaded_vep.map { _meta, cache -> [prep_meta, cache] } : channel.of([prep_meta, []]))
+            def ch_prep_snpeff = params.annotate_snpeff_cache
+                ? channel.of([prep_meta, file(params.annotate_snpeff_cache, checkIfExists: true)])
+                : (params.run_cache ? ch_downloaded_snpeff.map { _meta, cache -> [prep_meta, cache] } : channel.of([prep_meta, []]))
+            def ch_prep_pref = params.phase_ref_vcf
+                ? channel.of([
+                    prep_meta,
+                    file(params.phase_ref_vcf, checkIfExists: true),
+                    params.phase_ref_vcf_tbi ? file(params.phase_ref_vcf_tbi, checkIfExists: true) : []
+                ])
+                : channel.of([prep_meta, [], []])
+            def ch_prep_pmap = params.phase_map
+                ? channel.of([prep_meta, file(params.phase_map, checkIfExists: true)])
+                : channel.of([prep_meta, []])
+            def ch_prep_panel = params.impute_panel
+                ? channel.of([
+                    prep_meta,
+                    file(params.impute_panel, checkIfExists: true),
+                    params.impute_panel_tbi ? file(params.impute_panel_tbi, checkIfExists: true) : []
+                ])
+                : channel.empty()
+            def ch_prep_imap = params.impute_map
+                ? channel.of([prep_meta, file(params.impute_map, checkIfExists: true)])
+                : channel.of([prep_meta, []])
+            VARIANT_VCF_PREP(
+                ch_prep_vcf,
+                ch_prep_fa,
+                ch_prep_vep,
+                ch_prep_snpeff,
+                ch_prep_pref,
+                ch_prep_pmap,
+                ch_prep_panel,
+                ch_prep_imap
+            )
+            ch_versions = ch_versions.mix(VARIANT_VCF_PREP.out.versions)
+            if (params.vcf_prep_feed_ingest) {
+                ch_vcf_prep_ingest = VARIANT_VCF_PREP.out.vcf.map { row ->
+                    def meta = row[0]
+                    [meta + [id: "${meta.id}_prep"], row[1]]
+                }
+            }
+        }
+    } else if (params.vcf_prep_feed_ingest) {
+        log.warn "vcf_prep_feed_ingest=true but run_vcf_prep did not run."
     }
 
     //
@@ -319,6 +413,7 @@ workflow VARIANT2QTL {
                     .map { meta, vcf, _bed, _bim, _fam, _phe, _cov, _mp, _mc, _hb, _hv -> [meta, vcf] }
                     .mix(ch_sv_vcf_ingest)
                     .mix(ch_str_vcf_ingest)
+                    .mix(ch_vcf_prep_ingest)
             )
             ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
             ch_gwas_plink_raw = ch_gwas_plink_raw.mix(GENOTYPE_INGEST_HARMONIZE.out.bed)
@@ -327,7 +422,7 @@ workflow VARIANT2QTL {
             def gwas_meta = [id: params.gwas_benchmark_id ?: 'gwas_benchmark']
 
             if (run_ingest) {
-                if (!params.genotype_ingest_vcf && !params.sv_feed_ingest && !params.str_feed_ingest) {
+                if (!params.genotype_ingest_vcf && !params.sv_feed_ingest && !params.str_feed_ingest && !params.vcf_prep_feed_ingest) {
                     log.warn "run_genotype_ingest/run_snp_indel=true but missing --genotype_ingest_vcf; channels empty."
                 } else {
                     def ch_ingest_vcf = params.genotype_ingest_vcf
@@ -337,7 +432,7 @@ workflow VARIANT2QTL {
                         ])
                         : channel.empty()
                     GENOTYPE_INGEST_HARMONIZE(
-                        ch_ingest_vcf.mix(ch_sv_vcf_ingest).mix(ch_str_vcf_ingest)
+                        ch_ingest_vcf.mix(ch_sv_vcf_ingest).mix(ch_str_vcf_ingest).mix(ch_vcf_prep_ingest)
                     )
                     ch_versions = ch_versions.mix(GENOTYPE_INGEST_HARMONIZE.out.versions)
                     ch_gwas_plink_raw = GENOTYPE_INGEST_HARMONIZE.out.bed
@@ -933,31 +1028,6 @@ workflow VARIANT2QTL {
     }
 
     //
-    // Optional annotation cache download (default OFF)
-    //
-    if (params.run_cache) {
-        def cache_meta = [id: params.cache_id ?: 'cache']
-        def tools = (params.cache_tools ?: 'snpeff,ensemblvep')
-            .tokenize(',')
-            .collect { tool -> tool.trim().toLowerCase() }
-        def ch_vep_info = tools.contains('ensemblvep')
-            ? channel.of([
-                cache_meta,
-                params.annotate_vep_genome ?: (params.genome ?: 'GRCh38'),
-                params.annotate_vep_species ?: 'homo_sapiens',
-                params.annotate_vep_cache_version ?: '110'
-            ])
-            : channel.empty()
-        def ch_snpeff_info = tools.contains('snpeff')
-            ? channel.of([cache_meta, params.annotate_snpeff_db ?: 'GRCh38.99'])
-            : channel.empty()
-        ANNOTATION_CACHE(ch_vep_info, ch_snpeff_info)
-        ch_versions = ch_versions.mix(ANNOTATION_CACHE.out.versions)
-        ch_downloaded_vep = ANNOTATION_CACHE.out.vep_cache
-        ch_downloaded_snpeff = ANNOTATION_CACHE.out.snpeff_cache
-    }
-
-    //
     // Optional Somalier relatedness (default OFF)
     //
     if (params.run_relate) {
@@ -1149,66 +1219,6 @@ workflow VARIANT2QTL {
                 VARIANT_IMPUTE(ch_imp_vcf, ch_imp_panel, ch_imp_map)
             }
             ch_versions = ch_versions.mix(VARIANT_IMPUTE.out.versions)
-        }
-    }
-
-    //
-    // Optional chained annotate → phase → impute (default OFF)
-    //
-    if (run_vcf_prep) {
-        def prep_meta = [id: params.vcf_prep_id ?: 'vcf_prep']
-        if (!vcf_prep_vcf) {
-            log.warn "run_vcf_prep=true but missing --vcf_prep_vcf (or --annotate_vcf/--phase_vcf/--impute_vcf)."
-        } else if (!params.vcf_prep_skip_impute && !params.impute_panel) {
-            log.warn "run_vcf_prep=true but missing --impute_panel (or set --vcf_prep_skip_impute)."
-        } else {
-            def ch_prep_vcf = channel.of([
-                prep_meta,
-                file(vcf_prep_vcf, checkIfExists: true),
-                vcf_prep_tbi ? file(vcf_prep_tbi, checkIfExists: true) : []
-            ])
-            def ch_prep_fa = params.annotate_fasta
-                ? channel.of([prep_meta, file(params.annotate_fasta, checkIfExists: true)])
-                : (fasta_index_ok
-                    ? ch_fasta_indexed.map { _meta, fa, _fai, _gzi, _sizes, _dict -> [prep_meta, fa] }
-                    : channel.of([prep_meta, []]))
-            def ch_prep_vep = params.annotate_vep_cache
-                ? channel.of([prep_meta, file(params.annotate_vep_cache, checkIfExists: true)])
-                : (params.run_cache ? ch_downloaded_vep.map { _meta, cache -> [prep_meta, cache] } : channel.of([prep_meta, []]))
-            def ch_prep_snpeff = params.annotate_snpeff_cache
-                ? channel.of([prep_meta, file(params.annotate_snpeff_cache, checkIfExists: true)])
-                : (params.run_cache ? ch_downloaded_snpeff.map { _meta, cache -> [prep_meta, cache] } : channel.of([prep_meta, []]))
-            def ch_prep_pref = params.phase_ref_vcf
-                ? channel.of([
-                    prep_meta,
-                    file(params.phase_ref_vcf, checkIfExists: true),
-                    params.phase_ref_vcf_tbi ? file(params.phase_ref_vcf_tbi, checkIfExists: true) : []
-                ])
-                : channel.of([prep_meta, [], []])
-            def ch_prep_pmap = params.phase_map
-                ? channel.of([prep_meta, file(params.phase_map, checkIfExists: true)])
-                : channel.of([prep_meta, []])
-            def ch_prep_panel = params.impute_panel
-                ? channel.of([
-                    prep_meta,
-                    file(params.impute_panel, checkIfExists: true),
-                    params.impute_panel_tbi ? file(params.impute_panel_tbi, checkIfExists: true) : []
-                ])
-                : channel.empty()
-            def ch_prep_imap = params.impute_map
-                ? channel.of([prep_meta, file(params.impute_map, checkIfExists: true)])
-                : channel.of([prep_meta, []])
-            VARIANT_VCF_PREP(
-                ch_prep_vcf,
-                ch_prep_fa,
-                ch_prep_vep,
-                ch_prep_snpeff,
-                ch_prep_pref,
-                ch_prep_pmap,
-                ch_prep_panel,
-                ch_prep_imap
-            )
-            ch_versions = ch_versions.mix(VARIANT_VCF_PREP.out.versions)
         }
     }
 

@@ -20,6 +20,7 @@ That enables `run_eqtl` (phenotype_prepare + PEER + OmiGA cis) via `--genotype_i
 
 - `assets/params_vcf_prep.yml` — sequential annotate → phase → impute
 - `assets/params_vcf_prep_scatter.yml` — same chain with `--phase_scatter_bed` / `--impute_scatter_bed`
+- `assets/params_vcf_prep_qc.yml` — vcf_prep → ingest → genotype QC
 - `assets/params_sv_feed_qc.yml` — SV call → ingest → genotype QC
 - `assets/params_cache_annotate.yml` — snpEff cache download then annotate
 
@@ -168,7 +169,7 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`); optional `annotate_filter` (bcftools view / filter_vep)
 - `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`; optional `--phase_scatter_bed` / `--phase_scatter_count` (bed_scatter + gather)
 - `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map; optional `--impute_scatter_bed` / `--impute_scatter_count`
-- `run_vcf_prep` — sequential annotate → phase → impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`); independent `run_annotate` / `run_phase` / `run_impute` stay parallel; `--phase_scatter_bed` / `--impute_scatter_bed` scatter/gather inside the chain (`vcf_scatter_gather`)
+- `run_vcf_prep` — sequential annotate → phase → impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`); independent `run_annotate` / `run_phase` / `run_impute` stay parallel; `--phase_scatter_bed` / `--impute_scatter_bed` scatter/gather inside the chain (`vcf_scatter_gather`); `--vcf_prep_feed_ingest` mixes the prepared VCF into `genotype_ingest`
 - `run_cache` — download VEP/snpEff caches (`cache_tools`); used as annotate / `vcf_prep` cache when `--annotate_*_cache` is unset
 - `run_impute_bam` — GLIMPSE2 chunk → phase → ligate (`--impute_bam_input` + `--impute_panel`); `--impute_bam_chunk` for auto-chunk
 - `run_fasta_index` — bgzip FASTA + samtools faidx/dict; used for relate / VEP / SV / STR / GLIMPSE2 when those FASTA params are unset
@@ -579,9 +580,12 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_str_ingest`
 - `test_phase_scatter`
 - `test_vcf_prep_scatter`
+- `test_vcf_prep_ingest`
+- `test_vcf_prep_qc`
 - `test_sv_qc`
 - `test_sv_merge`
 - `test_str_merge`
+- `test_trgt`
 - `test_snp_indel`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`
