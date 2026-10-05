@@ -56,7 +56,7 @@ Directories below are relative to `--outdir`. Most optional branches are **off b
 <details markdown="1">
 <summary>Output files</summary>
 
-- `genotype_ingest/` — VCF→PLINK ingest
+- `genotype_ingest/` — VCF→PLINK ingest (includes SV/STR feed when `--sv_feed_ingest` / `--str_feed_ingest`; biallelic filter drops complex alleles)
 - `genotype_qc/` — PLINK2 filter, optional het/relatedness/PCA, Somalier outlier remove
 - `gwas_benchmark/` — GEMMA / EMMAX / TASSEL / rMVP / OmiGA GWAS
 - `phenotype_prepare/` — FastQTL BED from expression matrix
@@ -82,6 +82,7 @@ Directories below are relative to `--outdir`. Most optional branches are **off b
 - `variant_annotate/` — VEP / snpEff; optional `bcftools_view` / `ensemblvep_filtervep` when `annotate_filter`
 - `variant_phase/` — SHAPEIT5
 - `variant_impute/` — Beagle5 / Minimac4 / GLIMPSE
+- `scatter/` — optional `--phase_scatter_bed` / `--impute_scatter_bed` (BED split, region strings, concat/index)
 - `variant_impute_bam/` — GLIMPSE2 chunk / phase / ligate
 - `variant_relate/` — Somalier extract / relate
 
