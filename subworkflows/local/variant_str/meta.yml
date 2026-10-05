@@ -6,6 +6,8 @@ components:
   - GANGSTR
   - HIPSTR
   - TRGT_GENOTYPE
+  - BCFTOOLS_INDEX
+  - TRTOOLS_MERGESTR
 input:
   - ch_bam
   - ch_fasta

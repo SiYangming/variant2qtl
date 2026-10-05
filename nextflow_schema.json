@@ -1647,6 +1647,33 @@
                     "exists": true,
                     "description": "Reference FASTA index.",
                     "fa_icon": "fas fa-file"
+                },
+                "sv_merge": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "When two or more SV engines emit VCFs, merge with SURVIVOR before ingest. Single-engine calls are unchanged.",
+                    "fa_icon": "fas fa-object-group"
+                },
+                "sv_merge_max_dist": {
+                    "type": "integer",
+                    "default": 1000,
+                    "description": "SURVIVOR max breakpoint distance.",
+                    "fa_icon": "fas fa-ruler",
+                    "hidden": true
+                },
+                "sv_merge_min_callers": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "SURVIVOR minimum supporting callers.",
+                    "fa_icon": "fas fa-hashtag",
+                    "hidden": true
+                },
+                "sv_merge_min_size": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "SURVIVOR minimum SV size.",
+                    "fa_icon": "fas fa-ruler",
+                    "hidden": true
                 }
             }
         },
@@ -1730,6 +1757,12 @@
                     "exists": true,
                     "description": "HipSTR regions BED.",
                     "fa_icon": "fas fa-file"
+                },
+                "str_merge": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "When two or more STR engines emit VCFs, merge with mergeSTR before ingest. Single-engine calls are unchanged.",
+                    "fa_icon": "fas fa-object-group"
                 }
             }
         },

@@ -40,21 +40,15 @@ include { ANNOTATION_CACHE          } from '../subworkflows/local/annotation_cac
 include { VARIANT_IMPUTE_BAM        } from '../subworkflows/local/variant_impute_bam/main'
 include { REFERENCE_FASTA           } from '../subworkflows/local/reference_fasta/main'
 include { VARIANT_RELATE            } from '../subworkflows/local/variant_relate/main'
-include { BED_SCATTER_BEDTOOLS as BED_SCATTER_PHASE  } from '../subworkflows/nf-core/bed_scatter_bedtools/main'
-include { BED_SCATTER_BEDTOOLS as BED_SCATTER_IMPUTE } from '../subworkflows/nf-core/bed_scatter_bedtools/main'
-include { VCF_GATHER_BCFTOOLS as VCF_GATHER_PHASE    } from '../subworkflows/nf-core/vcf_gather_bcftools/main'
-include { VCF_GATHER_BCFTOOLS as VCF_GATHER_IMPUTE   } from '../subworkflows/nf-core/vcf_gather_bcftools/main'
-include { BED_TO_REGION as BED_TO_REGION_PHASE       } from '../modules/local/utils/bed_to_region/main'
-include { BED_TO_REGION as BED_TO_REGION_IMPUTE      } from '../modules/local/utils/bed_to_region/main'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_PHASE     } from '../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_IMPUTE    } from '../modules/nf-core/bcftools/index/main'
+include { VCF_SCATTER_REGIONS as VCF_SCATTER_PHASE  } from '../subworkflows/local/vcf_scatter_gather/main'
+include { VCF_GATHER_REGIONS as VCF_GATHER_PHASE    } from '../subworkflows/local/vcf_scatter_gather/main'
+include { VCF_SCATTER_REGIONS as VCF_SCATTER_IMPUTE } from '../subworkflows/local/vcf_scatter_gather/main'
+include { VCF_GATHER_REGIONS as VCF_GATHER_IMPUTE   } from '../subworkflows/local/vcf_scatter_gather/main'
 include { SOMALIER_OUTLIERS         } from '../modules/local/utils/somalier_outliers/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
-// BED_TO_REGION_PHASE.out.versions, BED_TO_REGION_IMPUTE.out.versions
-// BCFTOOLS_INDEX_PHASE.out.versions, BCFTOOLS_INDEX_IMPUTE.out.versions
-// BED_SCATTER_PHASE.out.versions, BED_SCATTER_IMPUTE.out.versions
-// VCF_GATHER_PHASE.out.versions, VCF_GATHER_IMPUTE.out.versions
+// VCF_SCATTER_PHASE.out.versions, VCF_GATHER_PHASE.out.versions
+// VCF_SCATTER_IMPUTE.out.versions, VCF_GATHER_IMPUTE.out.versions
 include { PLINK2_REMOVE as PLINK2_REMOVE_SOMALIER } from '../modules/nf-core/plink2/remove/main'
 
 /*
@@ -1094,35 +1088,18 @@ workflow VARIANT2QTL {
                 ? channel.of([phase_meta, file(params.phase_map, checkIfExists: true)])
                 : channel.of([phase_meta, []])
             if (params.phase_scatter_bed) {
-                BED_SCATTER_PHASE(
+                VCF_SCATTER_PHASE(
+                    ch_phase_vcf,
                     channel.of([
                         phase_meta,
                         file(params.phase_scatter_bed, checkIfExists: true),
                         params.phase_scatter_count ?: 2
                     ])
                 )
-                BED_TO_REGION_PHASE(BED_SCATTER_PHASE.out.scattered_beds)
-                ch_versions = ch_versions.mix(BED_TO_REGION_PHASE.out.versions)
-                ch_phase_vcf = ch_phase_vcf
-                    .combine(BED_TO_REGION_PHASE.out.region)
-                    .map { meta, vcf, tbi, _bmeta, region_file, scatter_count ->
-                        def region = region_file.text.trim()
-                        def chunk = region_file.name.replaceFirst(/\.region\.txt$/, '')
-                        [
-                            meta + [group_id: meta.id, id: "${meta.id}_${chunk}", region: region, scatter_count: scatter_count],
-                            vcf,
-                            tbi
-                        ]
-                    }
-                VARIANT_PHASE(ch_phase_vcf, ch_phase_ref, ch_phase_map)
-                BCFTOOLS_INDEX_PHASE(VARIANT_PHASE.out.phased)
-                VCF_GATHER_PHASE(
-                    VARIANT_PHASE.out.phased
-                        .join(BCFTOOLS_INDEX_PHASE.out.index)
-                        .map { meta, vcf, index -> [meta, vcf, index, meta.scatter_count] },
-                    ['group_id'],
-                    false
-                )
+                ch_versions = ch_versions.mix(VCF_SCATTER_PHASE.out.versions)
+                VARIANT_PHASE(VCF_SCATTER_PHASE.out.vcf, ch_phase_ref, ch_phase_map)
+                VCF_GATHER_PHASE(VARIANT_PHASE.out.phased)
+                ch_versions = ch_versions.mix(VCF_GATHER_PHASE.out.versions)
             } else {
                 VARIANT_PHASE(ch_phase_vcf, ch_phase_ref, ch_phase_map)
             }
@@ -1156,35 +1133,18 @@ workflow VARIANT2QTL {
                 ? channel.of([imp_meta, file(params.impute_map, checkIfExists: true)])
                 : channel.of([imp_meta, []])
             if (params.impute_scatter_bed) {
-                BED_SCATTER_IMPUTE(
+                VCF_SCATTER_IMPUTE(
+                    ch_imp_vcf,
                     channel.of([
                         imp_meta,
                         file(params.impute_scatter_bed, checkIfExists: true),
                         params.impute_scatter_count ?: 2
                     ])
                 )
-                BED_TO_REGION_IMPUTE(BED_SCATTER_IMPUTE.out.scattered_beds)
-                ch_versions = ch_versions.mix(BED_TO_REGION_IMPUTE.out.versions)
-                ch_imp_vcf = ch_imp_vcf
-                    .combine(BED_TO_REGION_IMPUTE.out.region)
-                    .map { meta, vcf, tbi, _bmeta, region_file, scatter_count ->
-                        def region = region_file.text.trim()
-                        def chunk = region_file.name.replaceFirst(/\.region\.txt$/, '')
-                        [
-                            meta + [group_id: meta.id, id: "${meta.id}_${chunk}", region: region, scatter_count: scatter_count],
-                            vcf,
-                            tbi
-                        ]
-                    }
-                VARIANT_IMPUTE(ch_imp_vcf, ch_imp_panel, ch_imp_map)
-                BCFTOOLS_INDEX_IMPUTE(VARIANT_IMPUTE.out.imputed)
-                VCF_GATHER_IMPUTE(
-                    VARIANT_IMPUTE.out.imputed
-                        .join(BCFTOOLS_INDEX_IMPUTE.out.index)
-                        .map { meta, vcf, index -> [meta, vcf, index, meta.scatter_count] },
-                    ['group_id'],
-                    false
-                )
+                ch_versions = ch_versions.mix(VCF_SCATTER_IMPUTE.out.versions)
+                VARIANT_IMPUTE(VCF_SCATTER_IMPUTE.out.vcf, ch_imp_panel, ch_imp_map)
+                VCF_GATHER_IMPUTE(VARIANT_IMPUTE.out.imputed)
+                ch_versions = ch_versions.mix(VCF_GATHER_IMPUTE.out.versions)
             } else {
                 VARIANT_IMPUTE(ch_imp_vcf, ch_imp_panel, ch_imp_map)
             }
@@ -1224,10 +1184,10 @@ workflow VARIANT2QTL {
                     file(params.phase_ref_vcf, checkIfExists: true),
                     params.phase_ref_vcf_tbi ? file(params.phase_ref_vcf_tbi, checkIfExists: true) : []
                 ])
-                : channel.empty()
+                : channel.of([prep_meta, [], []])
             def ch_prep_pmap = params.phase_map
                 ? channel.of([prep_meta, file(params.phase_map, checkIfExists: true)])
-                : channel.empty()
+                : channel.of([prep_meta, []])
             def ch_prep_panel = params.impute_panel
                 ? channel.of([
                     prep_meta,
@@ -1237,7 +1197,7 @@ workflow VARIANT2QTL {
                 : channel.empty()
             def ch_prep_imap = params.impute_map
                 ? channel.of([prep_meta, file(params.impute_map, checkIfExists: true)])
-                : channel.empty()
+                : channel.of([prep_meta, []])
             VARIANT_VCF_PREP(
                 ch_prep_vcf,
                 ch_prep_fa,

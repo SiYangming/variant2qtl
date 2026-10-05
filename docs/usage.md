@@ -19,6 +19,8 @@ nextflow run . -profile docker -stub \
 That enables `run_eqtl` (phenotype_prepare + PEER + OmiGA cis) via `--genotype_input`. Other recipes:
 
 - `assets/params_vcf_prep.yml` — sequential annotate → phase → impute
+- `assets/params_vcf_prep_scatter.yml` — same chain with `--phase_scatter_bed` / `--impute_scatter_bed`
+- `assets/params_sv_feed_qc.yml` — SV call → ingest → genotype QC
 - `assets/params_cache_annotate.yml` — snpEff cache download then annotate
 
 You still need `--input` (FASTQ samplesheet) for the FastQC/MultiQC path; the example files set it to `assets/samplesheet_stub.csv`.
@@ -166,7 +168,7 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`); optional `annotate_filter` (bcftools view / filter_vep)
 - `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`; optional `--phase_scatter_bed` / `--phase_scatter_count` (bed_scatter + gather)
 - `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map; optional `--impute_scatter_bed` / `--impute_scatter_count`
-- `run_vcf_prep` — sequential annotate → phase → impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`); independent `run_annotate` / `run_phase` / `run_impute` stay parallel
+- `run_vcf_prep` — sequential annotate → phase → impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`); independent `run_annotate` / `run_phase` / `run_impute` stay parallel; `--phase_scatter_bed` / `--impute_scatter_bed` scatter/gather inside the chain (`vcf_scatter_gather`)
 - `run_cache` — download VEP/snpEff caches (`cache_tools`); used as annotate / `vcf_prep` cache when `--annotate_*_cache` is unset
 - `run_impute_bam` — GLIMPSE2 chunk → phase → ligate (`--impute_bam_input` + `--impute_panel`); `--impute_bam_chunk` for auto-chunk
 - `run_fasta_index` — bgzip FASTA + samtools faidx/dict; used for relate / VEP / SV / STR / GLIMPSE2 when those FASTA params are unset
@@ -190,8 +192,8 @@ nf-test test tests/real/vep.vep_real.nf.test --config nf-test.real.config --prof
 **SNP/Indel umbrella / SV / STR**
 
 - `run_snp_indel` — ingest (if needed) + QC + OmiGA cis from `--genotype_input`
-- `run_sv` — `--sv_bam` + fasta; engines `smoove,manta,delly`; `--sv_feed_ingest` mixes the called VCF into `genotype_ingest` (biallelic filter; complex SV alleles are dropped before PLINK)
-- `run_str` — BAM + fasta + catalog/regions; engines `expansionhunter,gangstr,hipstr,trgt`; `--str_feed_ingest` same ingest path as SV
+- `run_sv` — `--sv_bam` + fasta; engines `smoove,manta,delly`; `--sv_feed_ingest` mixes the called VCF into `genotype_ingest` (biallelic filter; complex SV alleles are dropped before PLINK). With 2+ engines, `--sv_merge` (default true) gunzips then SURVIVOR-merges before ingest; `--sv_merge_max_dist` / `--sv_merge_min_callers` / `--sv_merge_min_size`. Enable `--run_genotype_qc` to QC the ingested PLINK bed.
+- `run_str` — BAM + fasta + catalog/regions; engines `expansionhunter,gangstr,hipstr,trgt`; `--str_feed_ingest` same ingest path as SV. With 2+ engines, `--str_merge` (default true) indexes then mergeSTR before ingest.
 
 **LeafCutter sQTL**
 
@@ -576,6 +578,10 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_sv_ingest`
 - `test_str_ingest`
 - `test_phase_scatter`
+- `test_vcf_prep_scatter`
+- `test_sv_qc`
+- `test_sv_merge`
+- `test_str_merge`
 - `test_snp_indel`
   - Genotype QC + GWAS / molQTL / SuSiE smoke profiles; prefer with `-stub` in CI; see [Genotype ingest, QC, GWAS benchmark, molQTL, and fine-mapping](#genotype-ingest-qc-gwas-benchmark-molqtl-and-fine-mapping)
 - `docker`

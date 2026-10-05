@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "vcf_scatter_gather"
+description: Scatter VCFs on BED regions and gather with bcftools concat
+keywords:
+  - vcf
+  - scatter
+  - gather
+components:
+  - bedtools/split
+  - bcftools/index
+  - bcftools/concat
+  - htslib/bgziptabix
+input:
+  - ch_vcf:
+      description: "[ meta, vcf, tbi ]"
+  - ch_bed:
+      description: "[ meta, bed, scatter_count ]"
+output:
+  - vcf:
+      description: scattered or gathered VCF tuples
+  - versions:
+      description: Software versions
+authors:
+  - "@SiYangming"

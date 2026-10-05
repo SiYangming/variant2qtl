@@ -8,12 +8,16 @@ include { EXPANSIONHUNTER } from '../../../modules/nf-core/expansionhunter/main'
 include { GANGSTR         } from '../../../modules/nf-core/gangstr/main'
 include { HIPSTR          } from '../../../modules/nf-core/hipstr/main'
 include { TRGT_GENOTYPE   } from '../../../modules/nf-core/trgt/genotype/main'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STR } from '../../../modules/nf-core/bcftools/index/main'
+include { TRTOOLS_MERGESTR } from '../../../modules/nf-core/trtools/mergestr/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
 // EXPANSIONHUNTER.out.versions
 // GANGSTR.out.versions
 // HIPSTR.out.versions
 // TRGT_GENOTYPE.out.versions
+// BCFTOOLS_INDEX_STR.out.versions
+// TRTOOLS_MERGESTR.out.versions
 
 
 workflow VARIANT_STR {
@@ -84,6 +88,38 @@ workflow VARIANT_STR {
             ch_repeats
         )
         ch_vcf = ch_vcf.mix(TRGT_GENOTYPE.out.vcf)
+    }
+
+    if (params.str_merge != false) {
+        ch_grouped = ch_vcf
+            .map { meta, vcf -> [meta.id, meta, vcf] }
+            .groupTuple()
+            .map { _id, metas, vcfs ->
+                def files = vcfs instanceof Collection ? vcfs.flatten() : [vcfs]
+                [metas[0], files]
+            }
+            .branch { _meta, files ->
+                one: files.size() <= 1
+                more: true
+            }
+        ch_one = ch_grouped.one.map { meta, files -> [meta, files[0]] }
+        ch_flat = ch_grouped.more.transpose().map { meta, vcf ->
+            def stem = vcf.name.replaceFirst(/\.vcf(\.gz)?$/, '')
+            [meta + [id: "${meta.id}_${stem}", group_id: meta.id], vcf]
+        }
+        BCFTOOLS_INDEX_STR(ch_flat)
+        TRTOOLS_MERGESTR(
+            ch_flat
+                .join(BCFTOOLS_INDEX_STR.out.index)
+                .map { meta, vcf, tbi -> [meta.group_id ?: meta.id, meta, vcf, tbi] }
+                .groupTuple()
+                .map { _id, metas, vcfs, tbis -> [metas[0], vcfs, tbis] }
+        )
+        ch_vcf = ch_one.mix(
+            TRTOOLS_MERGESTR.out.vcf.map { meta, vcf ->
+                [meta + [id: meta.group_id ?: meta.id], vcf]
+            }
+        )
     }
 
     emit:

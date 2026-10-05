@@ -68,7 +68,7 @@ Directories below are relative to `--outdir`. Most optional branches are **off b
 - `qtl_coloc/` / `qtl_hyprcoloc/` / `qtl_smr/` / `qtl_mashr/` / `qtl_metal/` / `qtl_torus/`
 - `qtl_twas/` — FUSION / PredictDB
 - `qtl_ldsc/` — h2 / partitioned enrichment
-- `variant_sv/` / `variant_str/` — SV / STR callers
+- `variant_sv/` / `variant_str/` — SV / STR callers; optional `survivor_merge` / `trtools_mergestr` when 2+ engines
 
 </details>
 
