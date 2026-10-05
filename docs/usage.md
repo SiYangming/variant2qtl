@@ -4,6 +4,8 @@
 
 ## Introduction
 
+Parameter names in `nextflow.config` and `nextflow_schema.json` from **v0.0.1** are a stable contract: add new switches (default off) rather than renaming existing ones. A major SemVer bump is required to rename flags.
+
 <!-- NOTE: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
 ### Shortest eQTL command
@@ -22,7 +24,9 @@ That enables `run_eqtl` (phenotype_prepare + PEER + OmiGA cis) via `--genotype_i
 - `assets/params_vcf_prep.yml` — sequential annotate → phase → impute
 - `assets/params_leafcutter_cluster.yml` — BAM → LeafCutter cluster → FastQTL BED
 - `assets/params_qc_extras.yml` — ingest → QC het/relatedness/PCA
+- `assets/params_qc_somalier.yml` — ingest → QC extras + Somalier relate + `--genotype_qc_use_somalier`
 - `assets/params_bgen.yml` — ingest VCF → BGEN
+- `assets/params_qc_bgen.yml` — ingest → QC → recode VCF → BGEN
 - `assets/params_vcf_prep_scatter.yml` — same chain with `--phase_scatter_bed` / `--impute_scatter_bed`
 - `assets/params_vcf_prep_qc.yml` — vcf_prep → ingest → genotype QC
 - `assets/params_sv_feed_qc.yml` — SV call → ingest → genotype QC
@@ -56,17 +60,19 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 ### Feature flags
 
-| Param                 | Default | What it does                                                                                                                               |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `run_genotype_ingest` | `false` | Legacy single-VCF ingest via `--genotype_ingest_vcf` when **not** using `--genotype_input`. VCF-only samplesheet rows always ingest.       |
-| `run_genotype_qc`     | `false` | MAF/HWE/geno filter (`PLINK2_FILTER`); optional het / relatedness / PCA via `genotype_qc_run_*`. Filtered bed feeds GWAS when both are on. |
-| `run_gwas_benchmark`  | `false` | Parallel engines via `gwas_benchmark_parallel` (pheno adapt → formats → engines → optional `assoc_standardize`).                           |
-| `run_omiga_cis`       | `false` | OmiGA cis-molQTL (`molqtl_map_omiga`). Use dedicated bed/bim/fam or reuse QC bed.                                                          |
-| `run_tensorqtl_cis`   | `false` | tensorQTL cis-molQTL (`molqtl_map_tensorqtl`). Prefer samplesheet molQTL columns or `--tensorqtl_use_qc_bed`.                              |
-| `run_finemap_susie`   | `false` | SuSiE fine-mapping (`qtl_finemap_susie`) from `--finemap_susie_sumstats` or cis QTL outputs from OmiGA/tensorQTL/QTLtools.                 |
-| `run_coloc`           | `false` | QTL–GWAS `coloc.abf` (`qtl_coloc`) from `--coloc_*_sumstats` or cis QTL + GWAS standardized tables. hyprcoloc not wired.                   |
-| `run_qtltools_cis`    | `false` | QTLtools cis-molQTL (`molqtl_map_qtltools`). Prefer samplesheet molQTL columns or `--qtltools_use_qc_bed`.                                 |
-| `run_qtl_postprocess` | `false` | Harmonise cis tables from any engine and add BH q-values (`qtl_postprocess_cis`).                                                          |
+| Param                       | Default | What it does                                                                                                                               |
+| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `run_genotype_ingest`       | `false` | Legacy single-VCF ingest via `--genotype_ingest_vcf` when **not** using `--genotype_input`. VCF-only samplesheet rows always ingest.       |
+| `run_genotype_qc`           | `false` | MAF/HWE/geno filter (`PLINK2_FILTER`); optional het / relatedness / PCA via `genotype_qc_run_*`. Filtered bed feeds GWAS when both are on. |
+| `run_gwas_benchmark`        | `false` | Parallel engines via `gwas_benchmark_parallel` (pheno adapt → formats → engines → optional `assoc_standardize`).                           |
+| `run_omiga_cis`             | `false` | OmiGA cis-molQTL (`molqtl_map_omiga`, `--mode cis`).                                                                                       |
+| `run_omiga_trans`           | `false` | OmiGA trans (`--mode trans`). Same genotype/phenotype params as cis.                                                                       |
+| `run_omiga_independent_cis` | `false` | OmiGA independent-cis (`--mode independent-cis`).                                                                                          |
+| `run_tensorqtl_cis`         | `false` | tensorQTL cis-molQTL (`molqtl_map_tensorqtl`). Prefer samplesheet molQTL columns or `--tensorqtl_use_qc_bed`.                              |
+| `run_finemap_susie`         | `false` | SuSiE fine-mapping (`qtl_finemap_susie`) from `--finemap_susie_sumstats` or cis QTL outputs from OmiGA/tensorQTL/QTLtools.                 |
+| `run_coloc`                 | `false` | QTL–GWAS `coloc.abf` (`qtl_coloc`) from `--coloc_*_sumstats` or cis QTL + GWAS standardized tables. hyprcoloc not wired.                   |
+| `run_qtltools_cis`          | `false` | QTLtools cis-molQTL (`molqtl_map_qtltools`). Prefer samplesheet molQTL columns or `--qtltools_use_qc_bed`.                                 |
+| `run_qtl_postprocess`       | `false` | Harmonise cis tables from any engine and add BH q-values (`qtl_postprocess_cis`).                                                          |
 
 ### Related file / option params
 
@@ -93,13 +99,14 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `genotype_qc_run_het` / `genotype_qc_het_sd`
 - `genotype_qc_run_relatedness` / `genotype_qc_pi_hat`
 - `genotype_qc_run_pca` / `genotype_qc_pca_n`
-- `genotype_to_bgen` — PLINK2 VCF→BGEN from ingest VCF (or molQTL VCF)
+- `genotype_to_bgen` — PLINK2 VCF→BGEN from ingest VCF, or from the VCF rebuilt after `--run_genotype_qc`
 
-**OmiGA cis**
+**OmiGA cis / trans / independent-cis**
 
 - Prefer samplesheet `molqtl_phenotype` / `molqtl_covariates` with `--genotype_input`
 - Legacy: `omiga_cis_id`, `omiga_cis_bed` / `_bim` / `_fam`, `omiga_cis_vcf`, `omiga_cis_phenotype`, `omiga_cis_covariates`
 - `omiga_cis_use_qc_bed` — reuse shared QC bed from the genotype QC branch instead of samplesheet/legacy bed
+- Extra modes (default off): `--run_omiga_trans`, `--run_omiga_independent_cis` (do not rename `--run_omiga_cis`)
 
 **tensorQTL cis**
 
@@ -180,11 +187,18 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `run_fasta_index` — bgzip FASTA + samtools faidx/dict; used for relate / VEP / SV / STR / GLIMPSE2 when those FASTA params are unset
 - `run_relate` — Somalier extract/relate; optional `genotype_qc_use_somalier` to remove related samples from QC bed
 
-**Real (non-stub) smokes** (ignored by default CI; use `nf-test.real.config`):
+**Core non-stub smoke** (required for a 1.0-style gate; ignored by default CI stub job):
+
+```bash
+# LDSC h2 on a real panel (core path)
+nf-test test modules/local/ldsc/h2/tests/main.ldsc_real.nf.test \
+  --config nf-test.real.config --profile docker
+```
+
+Other real smokes (same config; also ignored by default CI):
 
 ```bash
 nf-test test \
-  modules/local/ldsc/h2/tests/main.ldsc_real.nf.test \
   modules/local/twas/predictdb/tests/main.predictdb_real.nf.test \
   modules/local/twas/fusion/tests/main.predictdb_real.nf.test \
   tests/real/beagle.beagle_real.nf.test \
@@ -234,31 +248,32 @@ nf-test test tests/real/vep.vep_real.nf.test --config nf-test.real.config --prof
 2. **Samplesheet bed → QC → GWAS**: `--genotype_input assets/genotype_samplesheet_bed.csv --run_genotype_qc --run_gwas_benchmark`
 3. **Legacy params bed → QC → GWAS**: `--run_genotype_qc --run_gwas_benchmark` + `--gwas_benchmark_{bed,bim,fam,phenotype}`
 4. **Samplesheet bed → QC → OmiGA cis**: `--genotype_input assets/genotype_samplesheet_omiga.csv --run_genotype_qc --run_omiga_cis --omiga_cis_use_qc_bed`
-5. **Legacy QC bed → OmiGA cis**: `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`
-6. **Samplesheet bed → QC → tensorQTL cis**: `--genotype_input assets/genotype_samplesheet_tensorqtl.csv --run_genotype_qc --run_tensorqtl_cis --tensorqtl_use_qc_bed`
-7. **SuSiE from sumstats**: `--run_finemap_susie --finemap_susie_sumstats assets/testdata/finemap_susie_mini/sumstats.tsv`
-8. **Samplesheet bed → QC → QTLtools cis**: `--genotype_input assets/genotype_samplesheet_qtltools.csv --run_genotype_qc --run_qtltools_cis --qtltools_use_qc_bed`
-9. **coloc from mini sumstats**: `--run_coloc --coloc_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --coloc_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
-10. **cis postprocess from a table**: `--run_qtl_postprocess --qtl_postprocess_input assets/testdata/qtl_postprocess_mini/cis_qtl.tsv`
-11. **Phenotype matrix → FastQTL BED**: `--run_phenotype_prepare --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
-12. **PEER factors from a BED**: `--run_peer --peer_phenotype assets/testdata/peer_mini/phenotype.bed --peer_nk 2`
-13. **LeafCutter sQTL BED**: `--run_sqtl_leafcutter --sqtl_counts assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv --sqtl_genes assets/testdata/sqtl_leafcutter_mini/genes.bed`
-14. **HyPrColoc-style clustering**: `--run_hyprcoloc --hyprcoloc_sumstats assets/testdata/hyprcoloc_mini/traits.tsv`
-15. **SMR/HEIDI from mini sumstats**: `--run_smr --smr_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --smr_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
-16. **mashr from mini effects**: `--run_mashr --mashr_sumstats assets/testdata/mashr_mini/effects.tsv`
-17. **METAL from mini cohorts**: `--run_metal --metal_sumstats assets/testdata/metal_mini/cohorts.tsv`
-18. **TORUS from mini annotations**: `--run_torus --torus_annot assets/testdata/torus_mini/annot.tsv`
-19. **TWAS from mini weights**: `--run_twas --twas_weights assets/testdata/twas_mini/weights.tsv --twas_gwas assets/testdata/twas_mini/gwas.tsv`
-20. **FINEMAP/CAVIAR/DAP-G PIPs**: `--run_finemap_extra --finemap_extra_sumstats assets/testdata/finemap_susie_mini/sumstats.tsv --finemap_extra_method finemap`
-21. **SNP/Indel umbrella**: `--run_snp_indel --genotype_input assets/genotype_samplesheet_omiga.csv`
-22. **SV smoove**: `--run_sv --sv_bam assets/testdata/sv_mini/sample.bam --sv_bam_index assets/testdata/sv_mini/sample.bam.bai --sv_fasta assets/testdata/sv_mini/ref.fa --sv_fasta_fai assets/testdata/sv_mini/ref.fa.fai`
-23. **STR ExpansionHunter**: `--run_str --str_bam assets/testdata/str_mini/sample.bam --str_bam_index assets/testdata/str_mini/sample.bam.bai --str_fasta assets/testdata/str_mini/ref.fa --str_fasta_fai assets/testdata/str_mini/ref.fa.fai --str_catalog assets/testdata/str_mini/catalog.json`
-24. **eQTL modality**: `--run_eqtl --genotype_input assets/genotype_samplesheet_omiga.csv --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
-25. **sQTL modality**: `--run_sqtl --genotype_input assets/genotype_samplesheet_omiga.csv --sqtl_counts assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv --sqtl_genes assets/testdata/sqtl_leafcutter_mini/genes.bed`
-26. **LDSC h2**: `--run_ldsc --ldsc_sumstats assets/testdata/ldsc_mini/sumstats_nol2.tsv --ldsc_ldscores assets/testdata/ldsc_mini/ldscores.tsv --ldsc_annot assets/testdata/ldsc_mini/annot.tsv`
-27. **TWAS with MetaXcan weights + LD**: `--run_twas --twas_weights assets/testdata/twas_mini/weights_metaxcan.tsv --twas_gwas assets/testdata/twas_mini/gwas.tsv --twas_ld assets/testdata/twas_mini/ld.tsv`
-28. **gQTL modality**: `--run_gqtl --genotype_input assets/genotype_samplesheet_bed.csv`
-29. **TWAS from PredictDB**: `--run_twas --twas_weights assets/testdata/twas_mini/predictdb_mini.db --twas_gwas assets/testdata/twas_mini/gwas.tsv`
+5. **Samplesheet bed → QC → OmiGA trans**: add `--run_omiga_trans` (leave `--run_omiga_cis` false)
+6. **Legacy QC bed → OmiGA cis**: `--run_omiga_cis --omiga_cis_use_qc_bed --omiga_cis_phenotype ...`
+7. **Samplesheet bed → QC → tensorQTL cis**: `--genotype_input assets/genotype_samplesheet_tensorqtl.csv --run_genotype_qc --run_tensorqtl_cis --tensorqtl_use_qc_bed`
+8. **SuSiE from sumstats**: `--run_finemap_susie --finemap_susie_sumstats assets/testdata/finemap_susie_mini/sumstats.tsv`
+9. **Samplesheet bed → QC → QTLtools cis**: `--genotype_input assets/genotype_samplesheet_qtltools.csv --run_genotype_qc --run_qtltools_cis --qtltools_use_qc_bed`
+10. **coloc from mini sumstats**: `--run_coloc --coloc_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --coloc_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
+11. **cis postprocess from a table**: `--run_qtl_postprocess --qtl_postprocess_input assets/testdata/qtl_postprocess_mini/cis_qtl.tsv`
+12. **Phenotype matrix → FastQTL BED**: `--run_phenotype_prepare --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
+13. **PEER factors from a BED**: `--run_peer --peer_phenotype assets/testdata/peer_mini/phenotype.bed --peer_nk 2`
+14. **LeafCutter sQTL BED**: `--run_sqtl_leafcutter --sqtl_counts assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv --sqtl_genes assets/testdata/sqtl_leafcutter_mini/genes.bed`
+15. **HyPrColoc-style clustering**: `--run_hyprcoloc --hyprcoloc_sumstats assets/testdata/hyprcoloc_mini/traits.tsv`
+16. **SMR/HEIDI from mini sumstats**: `--run_smr --smr_qtl_sumstats assets/testdata/coloc_mini/qtl.tsv --smr_gwas_sumstats assets/testdata/coloc_mini/gwas.tsv`
+17. **mashr from mini effects**: `--run_mashr --mashr_sumstats assets/testdata/mashr_mini/effects.tsv`
+18. **METAL from mini cohorts**: `--run_metal --metal_sumstats assets/testdata/metal_mini/cohorts.tsv`
+19. **TORUS from mini annotations**: `--run_torus --torus_annot assets/testdata/torus_mini/annot.tsv`
+20. **TWAS from mini weights**: `--run_twas --twas_weights assets/testdata/twas_mini/weights.tsv --twas_gwas assets/testdata/twas_mini/gwas.tsv`
+21. **FINEMAP/CAVIAR/DAP-G PIPs**: `--run_finemap_extra --finemap_extra_sumstats assets/testdata/finemap_susie_mini/sumstats.tsv --finemap_extra_method finemap`
+22. **SNP/Indel umbrella**: `--run_snp_indel --genotype_input assets/genotype_samplesheet_omiga.csv`
+23. **SV smoove**: `--run_sv --sv_bam assets/testdata/sv_mini/sample.bam --sv_bam_index assets/testdata/sv_mini/sample.bam.bai --sv_fasta assets/testdata/sv_mini/ref.fa --sv_fasta_fai assets/testdata/sv_mini/ref.fa.fai`
+24. **STR ExpansionHunter**: `--run_str --str_bam assets/testdata/str_mini/sample.bam --str_bam_index assets/testdata/str_mini/sample.bam.bai --str_fasta assets/testdata/str_mini/ref.fa --str_fasta_fai assets/testdata/str_mini/ref.fa.fai --str_catalog assets/testdata/str_mini/catalog.json`
+25. **eQTL modality**: `--run_eqtl --genotype_input assets/genotype_samplesheet_omiga.csv --phenotype_matrix assets/testdata/phenotype_prepare_mini/expr.tsv --phenotype_gene_bed assets/testdata/phenotype_prepare_mini/genes.bed --phenotype_samples assets/testdata/phenotype_prepare_mini/samples.txt`
+26. **sQTL modality**: `--run_sqtl --genotype_input assets/genotype_samplesheet_omiga.csv --sqtl_counts assets/testdata/sqtl_leafcutter_mini/perind.counts.tsv --sqtl_genes assets/testdata/sqtl_leafcutter_mini/genes.bed`
+27. **LDSC h2**: `--run_ldsc --ldsc_sumstats assets/testdata/ldsc_mini/sumstats_nol2.tsv --ldsc_ldscores assets/testdata/ldsc_mini/ldscores.tsv --ldsc_annot assets/testdata/ldsc_mini/annot.tsv`
+28. **TWAS with MetaXcan weights + LD**: `--run_twas --twas_weights assets/testdata/twas_mini/weights_metaxcan.tsv --twas_gwas assets/testdata/twas_mini/gwas.tsv --twas_ld assets/testdata/twas_mini/ld.tsv`
+29. **gQTL modality**: `--run_gqtl --genotype_input assets/genotype_samplesheet_bed.csv`
+30. **TWAS from PredictDB**: `--run_twas --twas_weights assets/testdata/twas_mini/predictdb_mini.db --twas_gwas assets/testdata/twas_mini/gwas.tsv`
 
 Notes: `plink_simulated` alleles are `D`/`d`; EMMAX paths recode to numeric (`12 transpose`). Real EMMAX binaries are amd64-oriented — on arm64 prefer engines without `emmax`, or use `-stub`. OmiGA/tensorQTL mini testdata uses A/T-recoded alleles under `assets/testdata/omiga_cis_mini/`.
 
@@ -549,6 +564,8 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
   - Includes links to test data so needs no other parameters
 - `test_gwas`
 - `test_omiga`
+- `test_omiga_trans`
+- `test_omiga_independent`
 - `test_tensorqtl`
 - `test_finemap`
 - `test_qtltools`
@@ -559,6 +576,8 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_sqtl`
 - `test_leafcutter_cluster`
 - `test_qc_extras`
+- `test_qc_somalier`
+- `test_qc_bgen`
 - `test_bgen`
 - `test_hyprcoloc`
 - `test_smr`

@@ -6,7 +6,7 @@
                     "fastqc": "0.12.1"
                 },
                 "Workflow": {
-                    "SiYangming/variant2qtl": "v0.0.1dev"
+                    "SiYangming/variant2qtl": "v0.0.1"
                 }
             },
             [

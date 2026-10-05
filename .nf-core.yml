@@ -8,7 +8,6 @@ lint:
   # Personal (is_nfcore: false) pipeline: skip nf-core modules/subworkflows component
   # lint (version bumps + pinned-utils check_local_copy). Local nextflow lint is the gate.
   nfcore_components: false
-  # Version string is release-style until first tagged release
   nextflow_config:
     - manifest.name
     - manifest.homePage
@@ -20,10 +19,6 @@ lint:
   # AWS test workflows not used for this personal pipeline
   actions_awstest: false
   actions_awsfulltest: false
-  # No tagged release yet — keep 0.0.1dev; skip release-only numeric/version gates
-  version_consistency: false
-  # No institutional pipeline-specific config published for this personal pipeline
-  included_configs: false
   files_exist:
     - CODE_OF_CONDUCT.md
     - assets/nf-core-variant2qtl_logo_light.png
@@ -38,7 +33,7 @@ template:
   name: variant2qtl
   description: An end-to-end, multi-entry Nextflow pipeline for comprehensive QTL (eQTL/sQTL/pQTL) analysis, integrating diverse genetic variants (SNPs, Indels, STRs, and SVs) with automated functional annotation.
   author: siyangming
-  version: 0.0.1dev
+  version: 0.0.1
   force: false
   outdir: .
   skip_features: []

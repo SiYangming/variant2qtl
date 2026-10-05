@@ -3,10 +3,27 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.0.1dev - [unreleased]
+## [Unreleased]
 
 ### `Added`
 
+### `Fixed`
+
+### `Dependencies`
+
+### `Deprecated`
+
+## v0.0.1 - 2026-10-05
+
+First citable release. Pin with `-r 0.0.1` after the GitHub tag. Parameter names in `nextflow.config` / `nextflow_schema.json` are frozen from this version (add switches; do not rename existing ones without a major bump). Zenodo DOI is filled after the GitHub release is published.
+
+### `Added`
+
+- After `--run_genotype_qc`, rebuild a VCF from the filtered PLINK bed (`PLINK_RECODE_QC_VCF`) and feed `--genotype_to_bgen` (no longer empties the VCF channel). Recipe `assets/params_qc_bgen.yml`, profile `test_qc_bgen`.
+- Somalier relate + QC extras in one recipe (`assets/params_qc_somalier.yml`, `test_qc_somalier`); relatedness hook combines on file, not `meta.id`.
+- OmiGA `--mode trans` / `--mode independent-cis` behind `--run_omiga_trans` / `--run_omiga_independent_cis` (default off; `--run_omiga_cis` unchanged). Profiles `test_omiga_trans` / `test_omiga_independent`.
+- Documented core non-stub smoke: LDSC real nf-test via `nf-test.real.config`.
+- Local lint gate pinned to nf-core/tools **4.1.0** (same as CI).
 - Installed nf-core modules/subworkflows for GWAS/QTL scaffolding (plink/plink2, regenie, gcta, VCF annotate/phase/impute, etc.).
 - Local engines: GEMMA, EMMAX, TASSEL, rMVP, OmiGA (cis/GWAS) with packaging pins.
 - Subworkflows (default OFF): `genotype_ingest_harmonize`, `genotype_qc`, `genotype_to_gwas_formats`, `gwas_benchmark_parallel`, `molqtl_map_omiga`.
@@ -58,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-engine SV/STR merge before ingest: SURVIVOR (`--sv_merge`) and mergeSTR (`--str_merge`); profiles `test_vcf_prep_scatter` / `test_sv_qc` / `test_sv_merge` / `test_str_merge`.
 - Example params YAML `assets/params_vcf_prep_scatter.yml`, `assets/params_sv_feed_qc.yml`, and `assets/params_vcf_prep_qc.yml`.
 - Stub eval for Manta/GangSTR topic versions succeeds without the real binaries (`|| true`); profiles `test_vcf_prep_ingest` / `test_vcf_prep_qc` / `test_trgt`.
-- README shortest command uses `-params-file assets/params_eqtl.yml`. **No 0.0.1 tag.**
+- README shortest command uses `-params-file assets/params_eqtl.yml`.
 
 ### `Fixed`
 

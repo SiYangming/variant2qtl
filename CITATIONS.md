@@ -18,9 +18,43 @@
 
 > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
 
-## QTL / genotype analysis tools
+- [PLINK](https://pubmed.ncbi.nlm.nih.gov/17701901/) / [PLINK 2](https://www.cog-genomics.org/plink/2.0/)
 
-Pipeline switches (all default off) wrap PLINK/PLINK2, bcftools, OmiGA, tensorQTL, QTLtools, SHAPEIT5, Beagle5, Minimac4, GLIMPSE/GLIMPSE2, Ensembl VEP, snpEff, smoove/Manta/Delly/SURVIVOR, ExpansionHunter/GangSTR/HipSTR/TRGT/mergeSTR, Somalier, GEMMA/EMMAX/TASSEL/rMVP, SuSiE, coloc, mashr, and LDSC/TWAS-style helpers. Cite the specific tools used in a given run.
+> Purcell S, et al. PLINK: a tool set for whole-genome association and population-based linkage analyses. Am J Hum Genet. 2007.
+
+- [OmiGA](https://github.com/bioinfortools/omiga)
+
+> Cite the OmiGA version used in the run (container pin `1.8.17` in this pipeline). `--mode cis`, `trans`, and `independent-cis` share this binary.
+
+- [tensorQTL](https://pubmed.ncbi.nlm.nih.gov/32929287/)
+
+> Taylor-Weiner A, et al. Scaling computational genomics to millions of individuals with GPUs. Genome Biol. 2019.
+
+- [QTLtools](https://pubmed.ncbi.nlm.nih.gov/28135258/)
+
+> Delaneau O, et al. A complete tool set for molecular QTL discovery and analysis. Nat Commun. 2017.
+
+- [Somalier](https://pubmed.ncbi.nlm.nih.gov/31969154/)
+
+> Pedersen BS, et al. Somalier: rapid relatedness estimation for cancer and germline studies using efficient genome sketches. Genome Med. 2020.
+
+- [Ensembl VEP](https://pubmed.ncbi.nlm.nih.gov/20562413/)
+
+> McLaren W, et al. The Ensembl Variant Effect Predictor. Genome Biol. 2016.
+
+- [SHAPEIT5](https://pubmed.ncbi.nlm.nih.gov/36914880/)
+
+> Hofmeister RJ, et al. Accurate rare variant phasing of whole-genome and whole-exome sequencing data in the UK Biobank. Nat Genet. 2023.
+
+- [SuSiE](https://pubmed.ncbi.nlm.nih.gov/32746963/)
+
+> Wang G, et al. A simple new approach to variable selection in regression, with application to genetic fine mapping. J R Stat Soc Series B. 2020.
+
+- [LDSC](https://pubmed.ncbi.nlm.nih.gov/25642630/)
+
+> Bulik-Sullivan BK, et al. LD Score regression distinguishes confounding from polygenicity in genome-wide association studies. Nat Genet. 2015.
+
+Pipeline switches (all default off) wrap additional callers (Beagle5, Minimac4, GLIMPSE/GLIMPSE2, snpEff, smoove/Manta/Delly/SURVIVOR, ExpansionHunter/GangSTR/HipSTR/TRGT/mergeSTR, GEMMA/EMMAX/TASSEL/rMVP, coloc, mashr, LeafCutter, and TWAS-style helpers). Cite the specific tools used in a given run.
 
 ## Software packaging/containerisation tools
 
