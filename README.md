@@ -14,7 +14,7 @@
 
 ## Introduction
 
-**SiYangming/variant2qtl** (current version: **0.0.1dev**) is a Nextflow DSL2 pipeline for high-throughput QTL association analysis.
+**SiYangming/variant2qtl** (current version: **0.0.1**) is a Nextflow DSL2 pipeline for high-throughput QTL association analysis.
 
 **English**
 
@@ -68,9 +68,7 @@ nextflow run SiYangming/variant2qtl \
    --outdir <OUTDIR>
 ```
 
-Until the first GitHub release, omit `-r` (the default branch is **0.0.1dev**). After a numeric tag exists, pin it with `-r 0.0.1`.
-
-Other recipes: `assets/params_vcf_prep.yml`, `assets/params_leafcutter_cluster.yml`, `assets/params_qc_extras.yml`, `assets/params_bgen.yml`. See [docs/usage.md](docs/usage.md).
+Pin a release with `-r 0.0.1` once the GitHub tag exists. Other recipes: `assets/params_vcf_prep.yml`, `assets/params_leafcutter_cluster.yml`, `assets/params_qc_extras.yml`, `assets/params_qc_somalier.yml`, `assets/params_bgen.yml`, `assets/params_qc_bgen.yml`. See [docs/usage.md](docs/usage.md).
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/running/run-pipelines#using-parameter-files).
@@ -89,10 +87,7 @@ If you would like to contribute to this pipeline, please see the [contributing g
 
 ## Citations
 
-<!-- NOTE: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use SiYangming/variant2qtl for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-<!-- NOTE: Add bibliography of tools and data used in your pipeline -->
+If you use SiYangming/variant2qtl, cite the GitHub release **v0.0.1**. A Zenodo DOI will replace the placeholder badge (`10.5281/zenodo.XXXXXXX`) after the first GitHub release is published and archived.
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

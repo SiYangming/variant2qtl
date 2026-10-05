@@ -1,0 +1,38 @@
+nextflow_pipeline {
+
+    name "Test pipeline QC then BGEN path"
+    script "../main.nf"
+    tag "pipeline"
+    tag "bgen"
+    tag "qc"
+    tag "stub"
+
+    test("-profile test_qc_bgen path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                genotype_input = "${projectDir}/assets/genotype_samplesheet.csv"
+                run_genotype_ingest = true
+                run_genotype_qc = true
+                genotype_to_bgen = true
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/genotype_qc/plink2_filter").exists() },
+                { assert path("$outputDir/genotype_qc/plink_recode_vcf").exists() },
+                { assert path("$outputDir/genotype_analysis/plink2_vcf2bgen").exists() }
+            )
+        }
+    }
+}

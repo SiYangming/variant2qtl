@@ -278,7 +278,7 @@
                 "genotype_to_bgen": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Export BGEN via PLINK2_VCF2BGEN from an available VCF (ingest or molQTL). Default: false.",
+                    "description": "Export BGEN via PLINK2_VCF2BGEN from the current VCF (ingest, or PLINK recode after genotype QC). Default: false.",
                     "fa_icon": "fas fa-file-export",
                     "hidden": true
                 },
@@ -303,6 +303,20 @@
                     "description": "Run OmiGA cis-molQTL via molqtl_map_omiga. Default: false.",
                     "fa_icon": "fas fa-toggle-off",
                     "help_text": "When true, runs OMIGA_CIS on PLINK genotype + molecular phenotype BED/OPF. Prefer `--genotype_input` with `molqtl_phenotype` (and optional `molqtl_covariates`), or legacy `--omiga_cis_*` params. Main FastQC path is unchanged when false. Prefer a params-file for boolean flags."
+                },
+                "run_omiga_trans": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run OmiGA trans-molQTL (`--mode trans`). Default: false. Does not rename --run_omiga_cis.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "hidden": true
+                },
+                "run_omiga_independent_cis": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run OmiGA independent-cis (`--mode independent-cis`). Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "hidden": true
                 },
                 "omiga_cis_id": {
                     "type": "string",

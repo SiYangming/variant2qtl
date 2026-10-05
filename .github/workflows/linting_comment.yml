@@ -1,0 +1,12 @@
+name: nf-core linting comment
+# Comments are posted by .github/workflows/pr-comment.yml from the linting job artifact.
+# This workflow exists so nf-core/tools 4.1.0 files_exist lint matches CI.
+on:
+  workflow_run:
+    workflows: ["nf-core linting"]
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip duplicate comment
+        run: echo "PR lint comments are posted by pr-comment.yml"

@@ -46,10 +46,12 @@ include { VCF_GATHER_REGIONS as VCF_GATHER_PHASE    } from '../subworkflows/loca
 include { VCF_SCATTER_REGIONS as VCF_SCATTER_IMPUTE } from '../subworkflows/local/vcf_scatter_gather/main'
 include { VCF_GATHER_REGIONS as VCF_GATHER_IMPUTE   } from '../subworkflows/local/vcf_scatter_gather/main'
 include { SOMALIER_OUTLIERS         } from '../modules/local/utils/somalier_outliers/main'
+include { PLINK_RECODE as PLINK_RECODE_QC_VCF } from '../modules/nf-core/plink/recode/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
 // VCF_SCATTER_PHASE.out.versions, VCF_GATHER_PHASE.out.versions
 // VCF_SCATTER_IMPUTE.out.versions, VCF_GATHER_IMPUTE.out.versions
+// PLINK_RECODE_QC_VCF.out.versions
 include { PLINK2_REMOVE as PLINK2_REMOVE_SOMALIER } from '../modules/nf-core/plink2/remove/main'
 
 /*
@@ -91,7 +93,7 @@ workflow VARIANT2QTL {
     def run_impute_flag = params.run_impute
     def vcf_prep_vcf = params.vcf_prep_vcf ?: params.annotate_vcf ?: params.phase_vcf ?: params.impute_vcf
     def vcf_prep_tbi = params.vcf_prep_vcf_tbi ?: params.annotate_vcf_tbi ?: params.phase_vcf_tbi ?: params.impute_vcf_tbi
-    def run_omiga = params.run_omiga_cis || run_snp_indel || (run_modality && modality_engine == 'omiga')
+    def run_omiga = params.run_omiga_cis || params.run_omiga_trans || params.run_omiga_independent_cis || run_snp_indel || (run_modality && modality_engine == 'omiga')
     def run_tensor = params.run_tensorqtl_cis || (run_modality && modality_engine == 'tensorqtl')
     def run_qtltools = params.run_qtltools_cis || (run_modality && modality_engine == 'qtltools')
     //
@@ -470,21 +472,21 @@ workflow VARIANT2QTL {
         }
 
         def ch_gwas_plink = ch_gwas_plink_raw
-        def ch_vcf_for_bgen = ch_gwas_vcf
         if (run_qc) {
             GENOTYPE_QC(ch_gwas_plink_raw)
             ch_versions = ch_versions.mix(GENOTYPE_QC.out.versions)
             ch_gwas_plink = GENOTYPE_QC.out.bed
             ch_shared_qc_bed = GENOTYPE_QC.out.bed
-            // QC changes SNP set — force VCF rebuild from filtered bed
-            ch_gwas_vcf = channel.empty()
+            // QC changes the SNP/sample set — rebuild VCF from the filtered bed
+            PLINK_RECODE_QC_VCF(ch_gwas_plink)
+            ch_gwas_vcf = PLINK_RECODE_QC_VCF.out.vcfgz.mix(PLINK_RECODE_QC_VCF.out.vcf)
         }
 
         ch_shared_geno_plink = ch_gwas_plink
         ch_shared_geno_vcf = ch_gwas_vcf
 
         if (params.genotype_to_bgen && !run_omiga) {
-            GENOTYPE_TO_ANALYSIS_FORMAT(ch_gwas_plink, ch_vcf_for_bgen)
+            GENOTYPE_TO_ANALYSIS_FORMAT(ch_gwas_plink, ch_gwas_vcf)
             ch_versions = ch_versions.mix(GENOTYPE_TO_ANALYSIS_FORMAT.out.versions)
         }
 
@@ -1099,23 +1101,24 @@ workflow VARIANT2QTL {
         }
         SOMALIER_OUTLIERS(ch_pairs_for_qc)
         ch_versions = ch_versions.mix(SOMALIER_OUTLIERS.out.versions)
-        def ch_som_remove = SOMALIER_OUTLIERS.out.outliers
-            .filter { _meta, path -> path.size() > 0 }
-        def ch_bed_to_filter = ch_shared_qc_bed.join(ch_som_remove)
+        // Relate meta.id is independent of genotype_qc bed id — combine, do not join.
+        def ch_bed_with_out = ch_shared_qc_bed
+            .combine(SOMALIER_OUTLIERS.out.outliers.map { _meta, path -> path })
+        def ch_bed_to_filter = ch_bed_with_out
+            .filter { _meta, _bed, _bim, _fam, path -> path.size() > 0 }
+        def ch_bed_keep = ch_bed_with_out
+            .filter { _meta, _bed, _bim, _fam, path -> path.size() == 0 }
+            .map { meta, bed, bim, fam, _path -> [meta, bed, bim, fam] }
         PLINK2_REMOVE_SOMALIER(
             ch_bed_to_filter.map { meta, bed, bim, fam, _out -> [meta, bed, bim, fam] },
             ch_bed_to_filter.map { _meta, _bed, _bim, _fam, out -> out }
         )
         ch_versions = ch_versions.mix(PLINK2_REMOVE_SOMALIER.out.versions)
-        ch_shared_qc_bed = ch_shared_qc_bed
-            .join(SOMALIER_OUTLIERS.out.outliers)
-            .filter { _meta, _bed, _bim, _fam, path -> path.size() == 0 }
-            .map { meta, bed, bim, fam, _path -> [meta, bed, bim, fam] }
-            .mix(
-                PLINK2_REMOVE_SOMALIER.out.remove_bed
-                    .join(PLINK2_REMOVE_SOMALIER.out.remove_bim)
-                    .join(PLINK2_REMOVE_SOMALIER.out.remove_fam)
-            )
+        ch_shared_qc_bed = ch_bed_keep.mix(
+            PLINK2_REMOVE_SOMALIER.out.remove_bed
+                .join(PLINK2_REMOVE_SOMALIER.out.remove_bim)
+                .join(PLINK2_REMOVE_SOMALIER.out.remove_fam)
+        )
         ch_shared_geno_plink = ch_shared_qc_bed
     }
 

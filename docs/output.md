@@ -57,13 +57,13 @@ Directories below are relative to `--outdir`. Most optional branches are **off b
 <summary>Output files</summary>
 
 - `genotype_ingest/` — VCF→PLINK ingest (includes SV/STR feed when `--sv_feed_ingest` / `--str_feed_ingest`; biallelic filter drops complex alleles)
-- `genotype_qc/` — PLINK2 filter, optional het/relatedness/PCA, Somalier outlier remove
-- `genotype_analysis/` — optional BGEN (`plink2_vcf2bgen`) when `--genotype_to_bgen`
+- `genotype_qc/` — PLINK2 filter, optional het/relatedness/PCA, `plink_recode_vcf` after QC, Somalier outlier remove
+- `genotype_analysis/` — optional BGEN (`plink2_vcf2bgen`) when `--genotype_to_bgen` (uses QC-rebuilt VCF when QC ran)
 - `gwas_benchmark/` — GEMMA / EMMAX / TASSEL / rMVP / OmiGA GWAS
 - `phenotype_prepare/` — FastQTL BED from expression matrix
 - `covariate_peer/` — PEER factors
 - `sqtl_leafcutter/` — intron ratios / sQTL BED; optional `regtools_junctionsextract` / `leafcutter_clusterregtools`
-- `molqtl_omiga/` / `molqtl_tensorqtl/` / `molqtl_qtltools/` — cis QTL
+- `molqtl_omiga/` — `omiga_cis` / `omiga_trans` / `omiga_independent`
 - `qtl_postprocess/` — BH q-values
 - `qtl_finemap_susie/` / `qtl_finemap_extra/` — PIPs
 - `qtl_coloc/` / `qtl_hyprcoloc/` / `qtl_smr/` / `qtl_mashr/` / `qtl_metal/` / `qtl_torus/`

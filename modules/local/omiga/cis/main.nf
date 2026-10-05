@@ -14,6 +14,7 @@ process OMIGA_CIS {
 
     output:
     tuple val(meta), path("*.cis_qtl*.txt.gz"), emit: cis_qtl, optional: true
+    tuple val(meta), path("*.trans_qtl*.txt.gz"), emit: trans_qtl, optional: true
     tuple val(meta), path("*_out"), emit: outdir
     tuple val("${task.process}"), val('omiga'), eval('omiga --version 2>&1 | head -1 | sed "s/[^0-9.]//g" || echo 1.8.17'), emit: versions_omiga, topic: versions
 
@@ -23,13 +24,14 @@ process OMIGA_CIS {
     script:
     def args = task.ext.args ?: '--qtl-map-model a+A --cis-window 1000000 --verbose'
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def mode = task.ext.mode ?: 'cis'
     def cov_arg = covariates ? "--covariates ${covariates}" : ''
     """
     GENO_PREFIX=\$(echo ${bed} | sed 's/\\.bed\$//')
     mkdir -p ${prefix}_out
 
     omiga \\
-        --mode cis \\
+        --mode ${mode} \\
         --genotype \${GENO_PREFIX} \\
         --phenotype ${phenotype} \\
         ${cov_arg} \\
@@ -38,15 +40,19 @@ process OMIGA_CIS {
         --threads ${task.cpus} \\
         ${args}
 
-    find ${prefix}_out -type f -name '*.cis_qtl*.txt.gz' -exec cp -t . {} + 2>/dev/null || true
-    ls *.cis_qtl*.txt.gz >/dev/null 2>&1 || touch ${prefix}.cis_qtl.txt.gz
+    find ${prefix}_out -type f -name '*qtl*.txt.gz' -exec cp -t . {} + 2>/dev/null || true
+    ls *.cis_qtl*.txt.gz *.trans_qtl*.txt.gz *.independent_cis_qtl*.txt.gz >/dev/null 2>&1 || touch ${prefix}.${mode.replaceAll('[^A-Za-z0-9]+', '_')}_qtl.txt.gz
     """
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def mode = task.ext.mode ?: 'cis'
+    def stub_tag = mode.replaceAll('[^A-Za-z0-9]+', '_')
     """
     mkdir -p ${prefix}_out
     touch ${prefix}.cis_qtl.txt.gz
+    touch ${prefix}.${stub_tag}_qtl.txt.gz
     touch ${prefix}_out/${prefix}.cis_qtl.txt.gz
+    touch ${prefix}_out/${prefix}.${stub_tag}_qtl.txt.gz
     """
 }

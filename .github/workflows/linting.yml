@@ -46,7 +46,7 @@ jobs:
         run: uv tool install nf-core==${{ steps.read_yml.outputs['nf_core_version'] }}
 
       - name: Run nf-core pipelines lint
-        # Personal pipeline: PRs into main are not releases; keep non-release lint (allows 0.0.1dev).
+        # Personal pipeline: PRs into main are not GitHub Releases; keep non-release lint.
         if: ${{ github.event_name != 'release' }}
         env:
           GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
