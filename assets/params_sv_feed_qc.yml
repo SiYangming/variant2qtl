@@ -1,0 +1,18 @@
+# Example: SV calling → ingest → genotype QC
+#
+#   nextflow run . -profile docker -stub \
+#     -params-file assets/params_sv_feed_qc.yml \
+#     --outdir results_sv_qc
+
+input: assets/samplesheet_stub.csv
+igenomes_ignore: true
+validate_params: false
+
+run_sv: true
+sv_feed_ingest: true
+run_genotype_qc: true
+sv_engines: smoove
+sv_bam: assets/testdata/sv_mini/sample.bam
+sv_bam_index: assets/testdata/sv_mini/sample.bam.bai
+sv_fasta: assets/testdata/sv_mini/ref.fa
+sv_fasta_fai: assets/testdata/sv_mini/ref.fa.fai

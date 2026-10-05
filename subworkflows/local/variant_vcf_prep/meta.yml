@@ -5,6 +5,8 @@ components:
   - VARIANT_ANNOTATE
   - VARIANT_PHASE
   - VARIANT_IMPUTE
+  - VCF_SCATTER_REGIONS
+  - VCF_GATHER_REGIONS
 input:
   - ch_vcf
   - ch_fasta

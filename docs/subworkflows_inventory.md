@@ -106,14 +106,15 @@ nf-core subworkflows install vcf_impute_minimac4
 | 建议名                                            | 职责                                                                                 |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `variant2qtl_snp_indel`                           | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis                        |
-| `variant_sv`                                      | **已实现**；smoove/manta/delly；`params.run_sv` 默认关                               |
-| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；`params.run_str` 默认关                          |
+| `variant_sv`                                      | **已实现**；smoove/manta/delly；2+ engines 时 SURVIVOR merge；`params.run_sv` 默认关 |
+| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；2+ engines 时 mergeSTR；`params.run_str` 默认关  |
 | `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关                                    |
 | `variant_annotate` / `run_annotate`               | **已实现**；VEP/snpEff 模块包装；默认关                                              |
-| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5；可选 `phase_scatter_bed` + `vcf_gather_bcftools`；默认关       |
+| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5；可选 `phase_scatter_bed` + `vcf_scatter_gather`；默认关        |
 | `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；可选 `impute_scatter_bed` + gather；默认关 |
+| `vcf_scatter_gather`                              | **已实现**；BED scatter + gather；供 phase/impute/`run_vcf_prep` 共用                |
 | `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                                          |
-| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步）；默认关                         |
+| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步；可选 scatter/gather）；默认关    |
 | `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；可喂 annotate；默认关                             |
 | `variant_impute_bam` / `run_impute_bam`           | **已实现**；`bam_vcf_impute_glimpse2` chunk/phase/ligate；默认关                     |
 | `reference_fasta` / `run_fasta_index`             | **已实现**；产物可喂 relate/VEP/SV/STR/GLIMPSE2；默认关                              |
@@ -125,7 +126,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：打 0.0.1 tag（仅在你明确要求时），或把 scatter 接到 `run_vcf_prep` 串行链。
+## 建议下一步：打 0.0.1 tag（仅在你明确要求时）。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

@@ -5,6 +5,8 @@ components:
   - SMOOVE_CALL
   - MANTA_GERMLINE
   - DELLY_CALL
+  - GUNZIP
+  - SURVIVOR_MERGE
 input:
   - ch_bam
   - ch_fasta

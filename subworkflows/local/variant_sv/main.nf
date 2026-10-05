@@ -7,11 +7,15 @@
 include { SMOOVE_CALL    } from '../../../modules/nf-core/smoove/call/main'
 include { MANTA_GERMLINE } from '../../../modules/nf-core/manta/germline/main'
 include { DELLY_CALL     } from '../../../modules/nf-core/delly/call/main'
+include { GUNZIP as GUNZIP_SV } from '../../../modules/nf-core/gunzip/main'
+include { SURVIVOR_MERGE } from '../../../modules/nf-core/survivor/merge/main'
 
 // Topic-channel / optional modules: satisfy nf-core include_versions lint
 // SMOOVE_CALL.out.versions
 // MANTA_GERMLINE.out.versions
 // DELLY_CALL.out.versions
+// GUNZIP_SV.out.versions
+// SURVIVOR_MERGE.out.versions
 
 
 workflow VARIANT_SV {
@@ -55,6 +59,49 @@ workflow VARIANT_SV {
             'vcf'
         )
         ch_vcf = ch_vcf.mix(DELLY_CALL.out.bcf)
+    }
+
+    // Merge multi-engine calls (SURVIVOR). Gzipped VCFs are gunzipped first.
+    if (params.sv_merge != false) {
+        ch_grouped = ch_vcf
+            .map { meta, vcf -> [meta.id, meta, vcf] }
+            .groupTuple()
+            .map { _id, metas, vcfs ->
+                def files = vcfs instanceof Collection ? vcfs.flatten() : [vcfs]
+                [metas[0], files]
+            }
+            .branch { _meta, files ->
+                one: files.size() <= 1
+                more: true
+            }
+        ch_one = ch_grouped.one.map { meta, files -> [meta, files[0]] }
+        ch_flat = ch_grouped.more.transpose().map { meta, vcf ->
+            def stem = vcf.name.replaceFirst(/\.vcf(\.gz)?$/, '')
+            [meta + [id: "${meta.id}_${stem}", group_id: meta.id], vcf]
+        }
+        ch_by_ext = ch_flat.branch { _meta, vcf ->
+            gz: vcf.toString().endsWith('.gz')
+            rest: true
+        }
+        GUNZIP_SV(ch_by_ext.gz)
+        ch_uncomp = ch_by_ext.rest.mix(GUNZIP_SV.out.gunzip)
+        SURVIVOR_MERGE(
+            ch_uncomp
+                .map { meta, vcf -> [meta.group_id ?: meta.id, meta, vcf] }
+                .groupTuple()
+                .map { _id, metas, vcfs -> [metas[0], vcfs] },
+            params.sv_merge_max_dist ?: 1000,
+            params.sv_merge_min_callers ?: 1,
+            1,
+            1,
+            0,
+            params.sv_merge_min_size ?: 0
+        )
+        ch_vcf = ch_one.mix(
+            SURVIVOR_MERGE.out.vcf.map { meta, vcf ->
+                [meta + [id: meta.group_id ?: meta.id], vcf]
+            }
+        )
     }
 
     emit:
