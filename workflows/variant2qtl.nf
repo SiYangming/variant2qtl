@@ -13,6 +13,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_vari
 include { GWAS_BENCHMARK_PARALLEL   } from '../subworkflows/local/gwas_benchmark_parallel/main'
 include { GENOTYPE_QC               } from '../subworkflows/local/genotype_qc/main'
 include { GENOTYPE_INGEST_HARMONIZE } from '../subworkflows/local/genotype_ingest_harmonize/main'
+include { GENOTYPE_TO_ANALYSIS_FORMAT } from '../subworkflows/local/genotype_to_analysis_format/main'
 include { MOLQTL_MAP_OMIGA          } from '../subworkflows/local/molqtl_map_omiga/main'
 include { MOLQTL_MAP_TENSORQTL      } from '../subworkflows/local/molqtl_map_tensorqtl/main'
 include { MOLQTL_MAP_QTLTOOLS       } from '../subworkflows/local/molqtl_map_qtltools/main'
@@ -78,7 +79,8 @@ workflow VARIANT2QTL {
     def run_modality = run_eqtl || run_sqtl || run_pqtl
     def modality_engine = (params.qtl_modality_engine ?: 'omiga').toString().trim().toLowerCase()
     def run_pheno_prep = params.run_phenotype_prepare || run_eqtl || run_pqtl
-    def run_leaf = params.run_sqtl_leafcutter || run_sqtl
+    def run_leaf_cluster = params.run_leafcutter_cluster || params.sqtl_bam
+    def run_leaf = params.run_sqtl_leafcutter || run_sqtl || run_leaf_cluster
     def run_peer_flag = params.run_peer || run_modality
     def run_gwas = params.run_gwas_benchmark || run_gqtl
     def run_ingest = params.run_genotype_ingest || run_snp_indel || run_gqtl || params.sv_feed_ingest || params.str_feed_ingest || params.vcf_prep_feed_ingest
@@ -468,6 +470,7 @@ workflow VARIANT2QTL {
         }
 
         def ch_gwas_plink = ch_gwas_plink_raw
+        def ch_vcf_for_bgen = ch_gwas_vcf
         if (run_qc) {
             GENOTYPE_QC(ch_gwas_plink_raw)
             ch_versions = ch_versions.mix(GENOTYPE_QC.out.versions)
@@ -479,6 +482,11 @@ workflow VARIANT2QTL {
 
         ch_shared_geno_plink = ch_gwas_plink
         ch_shared_geno_vcf = ch_gwas_vcf
+
+        if (params.genotype_to_bgen && !run_omiga) {
+            GENOTYPE_TO_ANALYSIS_FORMAT(ch_gwas_plink, ch_vcf_for_bgen)
+            ch_versions = ch_versions.mix(GENOTYPE_TO_ANALYSIS_FORMAT.out.versions)
+        }
 
         if (run_gwas) {
             if (!params.genotype_input && !params.gwas_benchmark_phenotype) {
@@ -521,14 +529,26 @@ workflow VARIANT2QTL {
     //
     if (run_leaf) {
         def sqtl_meta = [id: params.sqtl_id ?: 'sqtl_leafcutter']
-        if (!params.sqtl_counts) {
-            log.warn "run_sqtl_leafcutter/run_sqtl=true but missing --sqtl_counts."
+        if (!params.sqtl_counts && !params.sqtl_bam) {
+            log.warn "run_sqtl_leafcutter/run_sqtl/run_leafcutter_cluster=true but missing --sqtl_counts or --sqtl_bam."
         } else {
-            def ch_sqtl_counts = channel.of([sqtl_meta, file(params.sqtl_counts, checkIfExists: true)])
+            def ch_sqtl_counts = params.sqtl_counts
+                ? channel.of([sqtl_meta, file(params.sqtl_counts, checkIfExists: true)])
+                : channel.empty()
             def ch_sqtl_genes = params.sqtl_genes
                 ? channel.of([sqtl_meta, file(params.sqtl_genes, checkIfExists: true)])
                 : channel.empty()
-            SQTL_LEAFCUTTER(ch_sqtl_counts, ch_sqtl_genes)
+            def ch_sqtl_bam = (params.sqtl_bam && params.sqtl_bam_index)
+                ? channel.of([
+                    sqtl_meta,
+                    file(params.sqtl_bam, checkIfExists: true),
+                    file(params.sqtl_bam_index, checkIfExists: true)
+                ])
+                : channel.empty()
+            if (params.sqtl_bam && !params.sqtl_bam_index) {
+                log.warn "sqtl_bam is set but --sqtl_bam_index is missing."
+            }
+            SQTL_LEAFCUTTER(ch_sqtl_counts, ch_sqtl_genes, ch_sqtl_bam)
             ch_versions = ch_versions.mix(SQTL_LEAFCUTTER.out.versions)
             ch_prepared_pheno = ch_prepared_pheno.mix(SQTL_LEAFCUTTER.out.bed)
         }

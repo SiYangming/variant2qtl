@@ -18,7 +18,11 @@ nextflow run . -profile docker -stub \
 
 That enables `run_eqtl` (phenotype_prepare + PEER + OmiGA cis) via `--genotype_input`. Other recipes:
 
+- `assets/params_eqtl.yml` — eQTL (phenotype_prepare + PEER + OmiGA cis)
 - `assets/params_vcf_prep.yml` — sequential annotate → phase → impute
+- `assets/params_leafcutter_cluster.yml` — BAM → LeafCutter cluster → FastQTL BED
+- `assets/params_qc_extras.yml` — ingest → QC het/relatedness/PCA
+- `assets/params_bgen.yml` — ingest VCF → BGEN
 - `assets/params_vcf_prep_scatter.yml` — same chain with `--phase_scatter_bed` / `--impute_scatter_bed`
 - `assets/params_vcf_prep_qc.yml` — vcf_prep → ingest → genotype QC
 - `assets/params_sv_feed_qc.yml` — SV call → ingest → genotype QC
@@ -89,6 +93,7 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 - `genotype_qc_run_het` / `genotype_qc_het_sd`
 - `genotype_qc_run_relatedness` / `genotype_qc_pi_hat`
 - `genotype_qc_run_pca` / `genotype_qc_pca_n`
+- `genotype_to_bgen` — PLINK2 VCF→BGEN from ingest VCF (or molQTL VCF)
 
 **OmiGA cis**
 
@@ -199,8 +204,8 @@ nf-test test tests/real/vep.vep_real.nf.test --config nf-test.real.config --prof
 **LeafCutter sQTL**
 
 - `sqtl_counts` — LeafCutter perind `count/total`; `sqtl_genes` optional gene BED
+- `--sqtl_bam` / `--run_leafcutter_cluster` — `regtools junctions extract` + `leafcutter clusterregtools`, then the same prepare step
 - Writes FastQTL BED + `phenotype_group`; feeds cis engines like phenotype_prepare
-- Cluster BAM junctions with nf-core `leafcutter/clusterregtools` upstream if needed
 
 **cis-QTL postprocess**
 
@@ -552,6 +557,9 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `test_pheno`
 - `test_peer`
 - `test_sqtl`
+- `test_leafcutter_cluster`
+- `test_qc_extras`
+- `test_bgen`
 - `test_hyprcoloc`
 - `test_smr`
 - `test_mashr`

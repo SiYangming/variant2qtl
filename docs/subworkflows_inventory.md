@@ -71,11 +71,11 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P1 — 协变量与 sQTL 表型（表型矩阵侧）
 
-| 建议名              | 职责                                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `covariate_peer`    | **已实现**；PEER 隐因子 → tensorQTL / OmiGA 协变量表；`params.run_peer` 默认关                       |
-| `sqtl_leafcutter`   | **已实现**；counts → ratio/INV/annotate → BED + phenotype_group；`params.run_sqtl_leafcutter` 默认关 |
-| `phenotype_prepare` | **已实现**；样本交集、缺失过滤、quantile/INV、BED 化；`params.run_phenotype_prepare` 默认关          |
+| 建议名              | 职责                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `covariate_peer`    | **已实现**；PEER 隐因子 → tensorQTL / OmiGA 协变量表；`params.run_peer` 默认关                                           |
+| `sqtl_leafcutter`   | **已实现**；counts 或 BAM→regtools+clusterregtools → BED；`params.run_sqtl_leafcutter` / `run_leafcutter_cluster` 默认关 |
+| `phenotype_prepare` | **已实现**；样本交集、缺失过滤、quantile/INV、BED 化；`params.run_phenotype_prepare` 默认关                              |
 
 ### P2 — 精细定位 / 共定位 / 富集
 
@@ -126,7 +126,7 @@ nf-core subworkflows install vcf_impute_minimac4
 - **现成可复用**：主要在 **VCF 注释、亲缘、相位/填补、参考与缓存**（约 15+ 个 subworkflow），没有现成的 “QTL mapping” 或 “PLINK QC 全流程” subworkflow。
 - **必须自建**：多源变异整合、基因型 QC（plink1/2）、**OmiGA/tensorQTL/QTLtools 映射**、PEER、LeafCutter sQTL、fine-map/coloc，以及按变异类型/QTL 模态的编排层。
 
-## 建议下一步：打 0.0.1 tag（仅在你明确要求时）。P0 核心路径与 VCF 预处理已可入库。
+## 建议下一步：打 0.0.1 tag（仅在你明确要求时）。P0 核心路径、VCF 预处理与 LeafCutter 聚类已可入库。
 
 P0 SNP/Indel 核心路径（ingest → QC → analysis-format → OmiGA cis / GWAS benchmark）已可用。
 

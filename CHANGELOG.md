@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional `annotate_filter` via `vcf_filter_bcftools_ensemblvep`; `run_impute_bam` uses `bam_vcf_impute_glimpse2` (chunk/phase/ligate).
 - `--sv_feed_ingest` / `--str_feed_ingest` mix called VCFs into `genotype_ingest` with a biallelic `bcftools view` (complex SV/STR alleles are dropped before PLINK); `--run_genotype_qc` filters that bed.
 - `--vcf_prep_feed_ingest` mixes sequential `run_vcf_prep` output into the same ingest path (optional QC via `--run_genotype_qc`).
+- LeafCutter BAM clustering (`--run_leafcutter_cluster` / `--sqtl_bam`) via `regtools/junctionsextract` + `leafcutter/clusterregtools`.
+- Pipeline `--genotype_to_bgen` export and QC extras stub (`test_qc_extras` / `test_bgen` / `test_leafcutter_cluster`).
 - Optional `--phase_scatter_bed` / `--impute_scatter_bed` (`vcf_scatter_gather`) on standalone phase/impute and inside `run_vcf_prep`.
 - Multi-engine SV/STR merge before ingest: SURVIVOR (`--sv_merge`) and mergeSTR (`--str_merge`); profiles `test_vcf_prep_scatter` / `test_sv_qc` / `test_sv_merge` / `test_str_merge`.
 - Example params YAML `assets/params_vcf_prep_scatter.yml`, `assets/params_sv_feed_qc.yml`, and `assets/params_vcf_prep_qc.yml`.

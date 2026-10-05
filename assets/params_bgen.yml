@@ -1,0 +1,13 @@
+# Example: ingest VCF and export BGEN
+#
+#   nextflow run . -profile docker -stub \
+#     -params-file assets/params_bgen.yml \
+#     --outdir results_bgen
+
+input: assets/samplesheet_stub.csv
+igenomes_ignore: true
+validate_params: false
+
+genotype_input: assets/genotype_samplesheet.csv
+run_genotype_ingest: true
+genotype_to_bgen: true

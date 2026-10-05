@@ -1,0 +1,17 @@
+# Example: genotype QC with het, relatedness, and PCA extras
+#
+#   nextflow run . -profile docker -stub \
+#     -params-file assets/params_qc_extras.yml \
+#     --outdir results_qc_extras
+
+input: assets/samplesheet_stub.csv
+igenomes_ignore: true
+validate_params: false
+
+genotype_input: assets/genotype_samplesheet.csv
+run_genotype_ingest: true
+run_genotype_qc: true
+genotype_qc_args: "--maf 0.01 --hwe 1e-6 --geno 0.2"
+genotype_qc_run_het: true
+genotype_qc_run_relatedness: true
+genotype_qc_run_pca: true
