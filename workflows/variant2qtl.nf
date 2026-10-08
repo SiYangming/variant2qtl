@@ -17,6 +17,7 @@ include { GENOTYPE_TO_ANALYSIS_FORMAT } from '../subworkflows/local/genotype_to_
 include { MOLQTL_MAP_OMIGA          } from '../subworkflows/local/molqtl_map_omiga/main'
 include { MOLQTL_MAP_TENSORQTL      } from '../subworkflows/local/molqtl_map_tensorqtl/main'
 include { MOLQTL_MAP_QTLTOOLS       } from '../subworkflows/local/molqtl_map_qtltools/main'
+include { MOLQTL_MAP_MATRIXEQTL     } from '../subworkflows/local/molqtl_map_matrixeqtl/main'
 include { QTL_FINEMAP_SUSIE         } from '../subworkflows/local/qtl_finemap_susie/main'
 include { QTL_COLOC                 } from '../subworkflows/local/qtl_coloc/main'
 include { QTL_POSTPROCESS_CIS       } from '../subworkflows/local/qtl_postprocess_cis/main'
@@ -96,6 +97,7 @@ workflow VARIANT2QTL {
     def run_omiga = params.run_omiga_cis || params.run_omiga_trans || params.run_omiga_independent_cis || run_snp_indel || (run_modality && modality_engine == 'omiga')
     def run_tensor = params.run_tensorqtl_cis || (run_modality && modality_engine == 'tensorqtl')
     def run_qtltools = params.run_qtltools_cis || (run_modality && modality_engine == 'qtltools')
+    def run_matrixeqtl = params.run_matrixeqtl_cis || (run_modality && modality_engine == 'matrixeqtl')
     //
     // MODULE: Run FastQC
     //
@@ -847,6 +849,90 @@ workflow VARIANT2QTL {
     }
 
     //
+    // Optional MatrixEQTL cis-molQTL (default OFF)
+    // Prefer --genotype_input molqtl_phenotype[/covariates] (+ optional QC bed).
+    //
+    if (run_matrixeqtl) {
+        def matrixeqtl_meta = [id: params.matrixeqtl_cis_id ?: 'matrixeqtl_cis']
+        def ch_matrixeqtl_plink = channel.empty()
+        def ch_matrixeqtl_pheno = channel.empty()
+        def ch_matrixeqtl_covar = channel.empty()
+
+        if (params.genotype_input) {
+            if (params.matrixeqtl_use_qc_bed || run_modality) {
+                if (run_qc) {
+                    ch_matrixeqtl_plink = ch_shared_qc_bed
+                } else {
+                    log.warn "matrixeqtl_use_qc_bed/modality=true but QC did not run; falling back to samplesheet genotype bed."
+                    ch_matrixeqtl_plink = ch_shared_geno_plink
+                }
+            } else {
+                ch_matrixeqtl_plink = ch_shared_geno_plink
+            }
+
+            def ch_param_me_pheno = params.matrixeqtl_cis_phenotype
+                ? ch_matrixeqtl_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.matrixeqtl_cis_phenotype, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_matrixeqtl_pheno = ch_molqtl_pheno.ifEmpty(ch_param_me_pheno)
+
+            def ch_param_me_covar = params.matrixeqtl_cis_covariates
+                ? ch_matrixeqtl_plink.map { meta, _bed, _bim, _fam ->
+                    [meta, file(params.matrixeqtl_cis_covariates, checkIfExists: true)]
+                }
+                : channel.empty()
+            ch_matrixeqtl_covar = ch_molqtl_covar.ifEmpty(ch_param_me_covar)
+        } else {
+            if (params.matrixeqtl_use_qc_bed) {
+                ch_matrixeqtl_plink = ch_shared_qc_bed.map { _meta, bed, bim, fam ->
+                    [matrixeqtl_meta, bed, bim, fam]
+                }
+            } else if (params.matrixeqtl_cis_bed && params.matrixeqtl_cis_bim && params.matrixeqtl_cis_fam) {
+                ch_matrixeqtl_plink = channel.of([
+                    matrixeqtl_meta,
+                    file(params.matrixeqtl_cis_bed, checkIfExists: true),
+                    file(params.matrixeqtl_cis_bim, checkIfExists: true),
+                    file(params.matrixeqtl_cis_fam, checkIfExists: true)
+                ])
+            }
+
+            ch_matrixeqtl_pheno = params.matrixeqtl_cis_phenotype
+                ? channel.of([matrixeqtl_meta, file(params.matrixeqtl_cis_phenotype, checkIfExists: true)])
+                : channel.empty()
+
+            ch_matrixeqtl_covar = params.matrixeqtl_cis_covariates
+                ? channel.of([matrixeqtl_meta, file(params.matrixeqtl_cis_covariates, checkIfExists: true)])
+                : channel.empty()
+
+            if (!params.matrixeqtl_use_qc_bed &&
+                (!params.matrixeqtl_cis_bed || !params.matrixeqtl_cis_bim || !params.matrixeqtl_cis_fam)) {
+                log.warn "run_matrixeqtl_cis=true but missing --matrixeqtl_cis_bed/bim/fam (or --matrixeqtl_use_qc_bed); channels empty."
+            }
+            if (!params.matrixeqtl_cis_phenotype && !params.run_phenotype_prepare) {
+                log.warn "run_matrixeqtl_cis=true but missing --matrixeqtl_cis_phenotype (and phenotype_prepare did not run)."
+            }
+        }
+
+        ch_matrixeqtl_pheno = ch_matrixeqtl_pheno.ifEmpty(
+            ch_prepared_pheno.map { _meta, bed -> [matrixeqtl_meta, bed] }
+        )
+        ch_matrixeqtl_covar = ch_matrixeqtl_covar.ifEmpty(
+            ch_peer_cov_omiga.map { _meta, cov -> [matrixeqtl_meta, cov] }
+        )
+
+        MOLQTL_MAP_MATRIXEQTL(
+            ch_matrixeqtl_plink,
+            ch_matrixeqtl_pheno,
+            ch_matrixeqtl_covar
+        )
+        ch_versions = ch_versions.mix(MOLQTL_MAP_MATRIXEQTL.out.versions)
+        ch_qtl_cis_for_finemap = ch_qtl_cis_for_finemap.mix(
+            MOLQTL_MAP_MATRIXEQTL.out.cis_qtl.map { meta, cis -> [meta + [engine: 'matrixeqtl'], cis] }
+        )
+    }
+
+    //
     // Optional SuSiE fine-mapping (default OFF)
     // Prefer --finemap_susie_sumstats; else reuse cis QTL outputs from OmiGA/tensorQTL when those ran.
     //
@@ -862,7 +948,7 @@ workflow VARIANT2QTL {
             ])
         } else {
             ch_finemap_sumstats = ch_qtl_cis_for_finemap
-            if (!run_omiga && !run_tensor && !run_qtltools) {
+            if (!run_omiga && !run_tensor && !run_qtltools && !run_matrixeqtl) {
                 log.warn "run_finemap_susie=true but missing --finemap_susie_sumstats (and no cis QTL engine outputs)."
             }
         }
@@ -893,7 +979,7 @@ workflow VARIANT2QTL {
             ? channel.of([coloc_meta, file(params.coloc_gwas_sumstats, checkIfExists: true)])
             : ch_gwas_std
 
-        if (!params.coloc_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
+        if (!params.coloc_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools && !run_matrixeqtl) {
             log.warn "run_coloc=true but missing --coloc_qtl_sumstats (and no cis QTL engine outputs)."
         }
         if (!params.coloc_gwas_sumstats && !run_gwas) {
@@ -930,7 +1016,7 @@ workflow VARIANT2QTL {
         def ch_smr_gwas = params.smr_gwas_sumstats
             ? channel.of([smr_meta, file(params.smr_gwas_sumstats, checkIfExists: true)])
             : ch_gwas_std
-        if (!params.smr_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
+        if (!params.smr_qtl_sumstats && !run_omiga && !run_tensor && !run_qtltools && !run_matrixeqtl) {
             log.warn "run_smr=true but missing --smr_qtl_sumstats (and no cis QTL engine outputs)."
         }
         if (!params.smr_gwas_sumstats && !run_gwas) {
@@ -1042,7 +1128,7 @@ workflow VARIANT2QTL {
         def ch_extra = params.finemap_extra_sumstats
             ? channel.of([extra_meta, file(params.finemap_extra_sumstats, checkIfExists: true)])
             : ch_qtl_cis_for_finemap
-        if (!params.finemap_extra_sumstats && !run_omiga && !run_tensor && !run_qtltools) {
+        if (!params.finemap_extra_sumstats && !run_omiga && !run_tensor && !run_qtltools && !run_matrixeqtl) {
             log.warn "run_finemap_extra=true but missing --finemap_extra_sumstats (and no cis QTL engine outputs)."
         }
         QTL_FINEMAP_EXTRA(ch_extra)
@@ -1299,7 +1385,7 @@ workflow VARIANT2QTL {
             ])
             : ch_qtl_cis_for_finemap
 
-        if (!params.qtl_postprocess_input && !run_omiga && !run_tensor && !run_qtltools) {
+        if (!params.qtl_postprocess_input && !run_omiga && !run_tensor && !run_qtltools && !run_matrixeqtl) {
             log.warn "run_qtl_postprocess=true but missing --qtl_postprocess_input (and no cis QTL engine outputs)."
         }
 

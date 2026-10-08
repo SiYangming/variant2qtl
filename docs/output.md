@@ -64,6 +64,8 @@ Directories below are relative to `--outdir`. Most optional branches are **off b
 - `covariate_peer/` — PEER factors
 - `sqtl_leafcutter/` — intron ratios / sQTL BED; optional `regtools_junctionsextract` / `leafcutter_clusterregtools`
 - `molqtl_omiga/` — `omiga_cis` / `omiga_trans` / `omiga_independent`
+- `molqtl_matrixeqtl/` — MatrixEQTL cis
+- `molqtl_tensorqtl/` / `molqtl_qtltools/` — cis QTL
 - `qtl_postprocess/` — BH q-values
 - `qtl_finemap_susie/` / `qtl_finemap_extra/` — PIPs
 - `qtl_coloc/` / `qtl_hyprcoloc/` / `qtl_smr/` / `qtl_mashr/` / `qtl_metal/` / `qtl_torus/`

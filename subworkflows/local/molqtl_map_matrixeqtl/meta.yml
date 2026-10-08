@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "MOLQTL_MAP_MATRIXEQTL"
+description: Local subworkflow molqtl_map_matrixeqtl (MatrixEQTL cis) for SiYangming/variant2qtl
+keywords:
+  - gwas
+  - qtl
+  - matrixeqtl
+  - local
+components:
+  - matrixeqtl/cis
+input: []
+output: []
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

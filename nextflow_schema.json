@@ -573,6 +573,69 @@
                 }
             }
         },
+        "matrixeqtl_cis_options": {
+            "title": "MatrixEQTL cis options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Optional MatrixEQTL cis-molQTL (molqtl_map_matrixeqtl). Disabled by default.",
+            "properties": {
+                "run_matrixeqtl_cis": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run MatrixEQTL cis mapping via molqtl_map_matrixeqtl. Default: false.",
+                    "fa_icon": "fas fa-toggle-off",
+                    "help_text": "Prefer `--genotype_input` molqtl_phenotype[/covariates]. Converts PLINK bed + FastQTL BED inside the process. Pin YangmingSi::matrixeqtl=2.4 / quay.io/bioinfortools/matrixeqtl:2.4."
+                },
+                "matrixeqtl_cis_id": {
+                    "type": "string",
+                    "default": "matrixeqtl_cis",
+                    "description": "Sample meta.id for the MatrixEQTL cis branch.",
+                    "fa_icon": "fas fa-tag",
+                    "hidden": true
+                },
+                "matrixeqtl_cis_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .bed for MatrixEQTL cis (required unless --matrixeqtl_use_qc_bed or --genotype_input).",
+                    "fa_icon": "fas fa-file"
+                },
+                "matrixeqtl_cis_bim": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .bim for MatrixEQTL cis.",
+                    "fa_icon": "fas fa-file"
+                },
+                "matrixeqtl_cis_fam": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "PLINK .fam for MatrixEQTL cis.",
+                    "fa_icon": "fas fa-file"
+                },
+                "matrixeqtl_use_qc_bed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Reuse the shared genotype_qc bed for MatrixEQTL cis instead of --matrixeqtl_cis_bed/bim/fam.",
+                    "fa_icon": "fas fa-link"
+                },
+                "matrixeqtl_cis_phenotype": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Molecular phenotype BED for MatrixEQTL cis.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "matrixeqtl_cis_covariates": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional covariates for MatrixEQTL cis.",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
         "qtl_postprocess_options": {
             "title": "cis-QTL postprocess options",
             "type": "object",
@@ -584,7 +647,7 @@
                     "default": false,
                     "description": "Harmonise cis-QTL tables and add BH q-values. Default: false.",
                     "fa_icon": "fas fa-toggle-off",
-                    "help_text": "When true, standardises `--qtl_postprocess_input` or cis outputs from OmiGA/tensorQTL/QTLtools."
+                    "help_text": "When true, standardises `--qtl_postprocess_input` or cis outputs from OmiGA/tensorQTL/QTLtools/MatrixEQTL."
                 },
                 "qtl_postprocess_id": {
                     "type": "string",
@@ -1035,7 +1098,7 @@
                 "qtl_modality_engine": {
                     "type": "string",
                     "default": "omiga",
-                    "enum": ["omiga", "tensorqtl", "qtltools"],
+                    "enum": ["omiga", "tensorqtl", "qtltools", "matrixeqtl"],
                     "description": "Cis QTL engine for e/s/pQTL modality umbrellas.",
                     "fa_icon": "fas fa-cogs"
                 }
@@ -2023,6 +2086,9 @@
         },
         {
             "$ref": "#/$defs/qtltools_cis_options"
+        },
+        {
+            "$ref": "#/$defs/matrixeqtl_cis_options"
         },
         {
             "$ref": "#/$defs/qtl_postprocess_options"

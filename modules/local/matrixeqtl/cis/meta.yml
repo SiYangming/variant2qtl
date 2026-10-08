@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "matrixeqtl_cis"
+description: Run MatrixEQTL cis-QTL mapping (converts PLINK + FastQTL BED)
+keywords:
+  - matrixeqtl
+  - cis-qtl
+  - eqtl
+  - molqtl
+tools:
+  - "matrixeqtl":
+      description: "Matrix eQTL: ultra fast eQTL analysis via large matrix operations"
+      homepage: "http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/"
+      documentation: "https://CRAN.R-project.org/package=MatrixEQTL"
+      tool_dev_url: "https://github.com/SiYangming/MatrixEQTL"
+      licence: ["LGPL-3.0-or-later"]
+      identifier: ""
+
+input:
+  - - meta:
+        type: map
+        description: Groovy map containing sample information
+    - bed:
+        type: file
+        description: PLINK bed
+        pattern: "*.bed"
+    - bim:
+        type: file
+        description: PLINK bim
+        pattern: "*.bim"
+    - fam:
+        type: file
+        description: PLINK fam
+        pattern: "*.fam"
+  - - meta2:
+        type: map
+        description: Phenotype metadata
+    - phenotype:
+        type: file
+        description: FastQTL-style phenotype BED
+        pattern: "*.{bed.gz,bed}"
+  - - meta3:
+        type: map
+        description: Covariate metadata; pass [] when absent
+    - covariates:
+        type: file
+        description: Optional covariates (sample×cov or cov×sample)
+        pattern: "*.{txt,tsv,cov}"
+
+output:
+  cis_qtl:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*.cis_qtl*.txt.gz":
+        type: file
+        description: Cis-QTL summary statistics
+        pattern: "*.cis_qtl*.txt.gz"
+  outdir:
+    - meta:
+        type: map
+        description: Groovy map containing sample information
+    - "*_out":
+        type: directory
+        description: Full MatrixEQTL output directory
+  versions_matrixeqtl:
+    description: Software versions
+
+authors:
+  - "@SiYangming"
+maintainers:
+  - "@SiYangming"

@@ -6,15 +6,15 @@
 
 ## P0 — QTL 核心引擎
 
-| 建议模块名           | 说明                                                                                                                                            | 参考                                   |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `omiga`              | **OmiGA**：超高效 molQTL（cis / independent-cis / interaction-cis / trans）与 GWAS；支持 LM/LMM、加性/非加性、GRM、自动协变量；适合复杂亲缘群体 | https://omiga.bio/#/ ；Nat Commun 2026 |
-| `tensorqtl`          | GTEx 系主流 eQTL/sQTL/pQTL 引擎（GPU/CPU）                                                                                                      | —                                      |
-| `qtltools`           | cis/trans QTL、quan、correct、pca 等                                                                                                            | —                                      |
-| `fastqtl`            | 经典 cis-eQTL                                                                                                                                   | —                                      |
-| `matrixeqtl`         | R Matrix eQTL                                                                                                                                   | —                                      |
-| `saige-qtl` / `apex` | 大规模 / 混合模型 QTL                                                                                                                           | —                                      |
-| `mmqtl`              | 多样本 / 多组织 QTL                                                                                                                             | —                                      |
+| 建议模块名           | 说明                                                                                                                                            | 参考                                                                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `omiga`              | **OmiGA**：超高效 molQTL（cis / independent-cis / interaction-cis / trans）与 GWAS；支持 LM/LMM、加性/非加性、GRM、自动协变量；适合复杂亲缘群体 | https://omiga.bio/#/ ；Nat Commun 2026                                                |
+| `tensorqtl`          | GTEx 系主流 eQTL/sQTL/pQTL 引擎（GPU/CPU）                                                                                                      | —                                                                                     |
+| `qtltools`           | cis/trans QTL、quan、correct、pca 等                                                                                                            | —                                                                                     |
+| `fastqtl`            | 经典 cis-eQTL                                                                                                                                   | —                                                                                     |
+| `matrixeqtl`         | R Matrix eQTL                                                                                                                                   | **已实现** cis；`YangmingSi::matrixeqtl=2.4` / `quay.io/bioinfortools/matrixeqtl:2.4` |
+| `saige-qtl` / `apex` | 大规模 / 混合模型 QTL                                                                                                                           | —                                                                                     |
+| `mmqtl`              | 多样本 / 多组织 QTL                                                                                                                             | —                                                                                     |
 
 ### P0 — OmiGA 模块状态（已建 / 未接入 workflow）
 
