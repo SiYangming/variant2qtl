@@ -1299,12 +1299,12 @@
             "title": "VCF annotation options",
             "type": "object",
             "fa_icon": "fas fa-tags",
-            "description": "Optional Ensembl VEP / snpEff annotation. Disabled by default.",
+            "description": "Optional vcfanno overlay and/or Ensembl VEP / snpEff annotation. Disabled by default.",
             "properties": {
                 "run_annotate": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Run VCF annotation (VEP and/or snpEff). Default: false.",
+                    "description": "Run VCF annotation (optional vcfanno, then VEP and/or snpEff). Default: false.",
                     "fa_icon": "fas fa-toggle-off"
                 },
                 "annotate_id": {
@@ -1317,7 +1317,7 @@
                 "annotate_tools": {
                     "type": "string",
                     "default": "snpeff",
-                    "description": "Comma-separated tools: ensemblvep, snpeff.",
+                    "description": "Comma-separated effect tools: ensemblvep, snpeff (vcfanno is separate).",
                     "fa_icon": "fas fa-cogs"
                 },
                 "annotate_vcf": {
@@ -1377,6 +1377,36 @@
                     "exists": true,
                     "description": "Optional snpEff dataDir / cache.",
                     "fa_icon": "fas fa-folder"
+                },
+                "annotate_vcfanno": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Overlay INFO from VCF/BED/tabix resources via vcfanno before effect annotation. Needs annotate_vcfanno_toml.",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "annotate_vcfanno_toml": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "vcfanno TOML config (resource basenames must match staged files).",
+                    "fa_icon": "fas fa-file"
+                },
+                "annotate_vcfanno_lua": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional Lua script for vcfanno custom annotations.",
+                    "fa_icon": "fas fa-file"
+                },
+                "annotate_vcfanno_resources": {
+                    "type": "string",
+                    "description": "Comma-separated vcfanno resource paths (BED/VCF and indices) referenced by the TOML basenames.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "annotate_sites_per_chunk": {
+                    "type": "integer",
+                    "description": "Variants per scatter chunk for VEP/snpEff (null = no scatter).",
+                    "fa_icon": "fas fa-th"
                 },
                 "annotate_filter": {
                     "type": "boolean",

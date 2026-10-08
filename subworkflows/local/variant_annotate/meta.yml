@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "VARIANT_ANNOTATE"
-description: Annotate VCF with Ensembl VEP and/or snpEff (nf-core modules)
+description: Annotate VCF with optional vcfanno overlay then Ensembl VEP and/or snpEff (scatter-gather)
 components:
-  - ENSEMBLVEP_VEP
-  - SNPEFF_SNPEFF
+  - VCFANNO
+  - VCF_ANNOTATE_ENSEMBLVEP_SNPEFF
   - VCF_FILTER_BCFTOOLS_ENSEMBLVEP
 input:
   - ch_vcf

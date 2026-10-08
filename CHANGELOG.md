@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Added`
 
 - MatrixEQTL cis engine (`--run_matrixeqtl_cis`, `molqtl_map_matrixeqtl`) pinned to **2.4** (`YangmingSi::matrixeqtl` / `quay.io/bioinfortools/matrixeqtl:2.4`); packaging lives at https://github.com/SiYangming/MatrixEQTL. Profile `test_matrixeqtl`.
-- Installed nf-core module `vcfanno` (VCF/BED/tabix overlay INFO annotation). Not wired into `VARIANT_ANNOTATE` yet.
+- Wired `VARIANT_ANNOTATE`: optional `vcfanno` (`annotate_vcfanno*`) then `vcf_annotate_ensemblvep_snpeff` (optional `annotate_sites_per_chunk` scatter-gather) then filter; mini testdata under `assets/testdata/vcf_api_mini/vcfanno/`.
 
 ### `Fixed`
 

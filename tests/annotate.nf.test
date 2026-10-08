@@ -34,4 +34,68 @@ nextflow_pipeline {
             )
         }
     }
+
+    test("annotate vcfanno + snpeff path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_annotate = true
+                annotate_tools = 'snpeff'
+                annotate_vcf = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz"
+                annotate_vcf_tbi = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz.tbi"
+                annotate_snpeff_db = 'GRCh38.99'
+                annotate_snpeff_cache = "${projectDir}/assets/testdata/vcf_api_mini/snpeff_cache"
+                annotate_vcfanno = true
+                annotate_vcfanno_toml = "${projectDir}/assets/testdata/vcf_api_mini/vcfanno/conf.toml"
+                annotate_vcfanno_resources = "${projectDir}/assets/testdata/vcf_api_mini/vcfanno/anno.bed.gz,${projectDir}/assets/testdata/vcf_api_mini/vcfanno/anno.bed.gz.tbi"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/variant_annotate/vcfanno").exists() },
+                { assert path("$outputDir/variant_annotate/snpeff_snpeff").exists() }
+            )
+        }
+    }
+
+    test("annotate snpeff scatter-gather path (stub)") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input  = "${projectDir}/assets/samplesheet_stub.csv"
+                igenomes_ignore = true
+                validate_params = false
+
+                run_annotate = true
+                annotate_tools = 'snpeff'
+                annotate_vcf = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz"
+                annotate_vcf_tbi = "${projectDir}/assets/testdata/vcf_api_mini/sample.vcf.gz.tbi"
+                annotate_snpeff_db = 'GRCh38.99'
+                annotate_snpeff_cache = "${projectDir}/assets/testdata/vcf_api_mini/snpeff_cache"
+                annotate_sites_per_chunk = 2
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path("$outputDir/pipeline_info/variant2qtl_software_mqc_versions.yml").exists() },
+                { assert path("$outputDir/variant_annotate/bcftools_pluginscatter").exists() },
+                { assert path("$outputDir/variant_annotate/snpeff_snpeff").exists() }
+            )
+        }
+    }
 }
