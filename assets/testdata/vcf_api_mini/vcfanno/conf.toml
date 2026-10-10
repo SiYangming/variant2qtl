@@ -1,0 +1,5 @@
+[[annotation]]
+file="anno.bed.gz"
+columns = [4]
+names = ["ANN_SCORE"]
+ops = ["mean"]

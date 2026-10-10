@@ -186,7 +186,7 @@ When `--genotype_input` is set, it **overrides** scattered `--gwas_benchmark_bed
 
 **VCF annotate / phase / impute / relate**
 
-- `run_annotate` — `--annotate_vcf`; tools `snpeff` / `ensemblvep` (`annotate_tools`); optional `annotate_filter` (bcftools view / filter_vep)
+- `run_annotate` — `--annotate_vcf`; optional `annotate_vcfanno` + TOML/resources; effect tools `snpeff` / `ensemblvep` (`annotate_tools`) via scatter-gather (`annotate_sites_per_chunk`); optional `annotate_filter` (bcftools view / filter_vep)
 - `run_phase` — SHAPEIT5 `--phase_vcf` + optional ref/map/`phase_region`; optional `--phase_scatter_bed` / `--phase_scatter_count` (bed_scatter + gather)
 - `run_impute` — `--impute_engine` `beagle5` (default) / `minimac4` / `glimpse`; panel + optional map; optional `--impute_scatter_bed` / `--impute_scatter_count`
 - `run_vcf_prep` — sequential annotate → phase → impute (`vcf_prep_skip_*` to skip steps; shared `--vcf_prep_vcf`); independent `run_annotate` / `run_phase` / `run_impute` stay parallel; `--phase_scatter_bed` / `--impute_scatter_bed` scatter/gather inside the chain (`vcf_scatter_gather`); `--vcf_prep_feed_ingest` mixes the prepared VCF into `genotype_ingest`

@@ -82,7 +82,7 @@ Directories below are relative to `--outdir`. Most optional branches are **off b
 
 - `annotation_cache/` — VEP / snpEff cache download
 - `reference_fasta/` — bgzip FASTA, faidx, dict
-- `variant_annotate/` — VEP / snpEff; optional `bcftools_view` / `ensemblvep_filtervep` when `annotate_filter`
+- `variant_annotate/` — optional `vcfanno`; VEP / snpEff (scatter helpers when `annotate_sites_per_chunk`); optional `bcftools_view` / `ensemblvep_filtervep` when `annotate_filter`
 - `variant_phase/` — SHAPEIT5
 - `variant_impute/` — Beagle5 / Minimac4 / GLIMPSE
 - `genotype_ingest/` — also receives `--vcf_prep_feed_ingest` prepared VCFs

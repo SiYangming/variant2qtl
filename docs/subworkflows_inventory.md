@@ -104,21 +104,21 @@ nf-core subworkflows install vcf_impute_minimac4
 
 ### P3 — 编排层（pipeline 级）
 
-| 建议名                                            | 职责                                                                                                        |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `variant2qtl_snp_indel`                           | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis                                               |
-| `variant_sv`                                      | **已实现**；smoove/manta/delly；2+ engines 时 SURVIVOR merge；`params.run_sv` 默认关                        |
-| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；2+ engines 时 mergeSTR；`params.run_str` 默认关                         |
-| `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关                                                           |
-| `variant_annotate` / `run_annotate`               | **已实现**；VEP/snpEff 模块包装；默认关                                                                     |
-| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5；可选 `phase_scatter_bed` + `vcf_scatter_gather`；默认关                               |
-| `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；可选 `impute_scatter_bed` + gather；默认关                        |
-| `vcf_scatter_gather`                              | **已实现**；BED scatter + gather；供 phase/impute/`run_vcf_prep` 共用                                       |
-| `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                                                                 |
-| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步；可选 scatter/gather；`--vcf_prep_feed_ingest`）；默认关 |
-| `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；可喂 annotate；默认关                                                    |
-| `variant_impute_bam` / `run_impute_bam`           | **已实现**；`bam_vcf_impute_glimpse2` chunk/phase/ligate；默认关                                            |
-| `reference_fasta` / `run_fasta_index`             | **已实现**；产物可喂 relate/VEP/SV/STR/GLIMPSE2；默认关                                                     |
+| 建议名                                            | 职责                                                                                                              |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `variant2qtl_snp_indel`                           | **已实现** 为 `params.run_snp_indel`：ingest + QC + OmiGA cis                                                     |
+| `variant_sv`                                      | **已实现**；smoove/manta/delly；2+ engines 时 SURVIVOR merge；`params.run_sv` 默认关                              |
+| `variant_str`                                     | **已实现**；EH/GangSTR/HipSTR/TRGT；2+ engines 时 mergeSTR；`params.run_str` 默认关                               |
+| `run_eqtl` / `run_sqtl` / `run_pqtl` / `run_gqtl` | **已实现**；模态伞（gQTL=ingest+QC+GWAS）；默认关                                                                 |
+| `variant_annotate` / `run_annotate`               | **已实现**；可选 vcfanno → `vcf_annotate_ensemblvep_snpeff`（`annotate_sites_per_chunk` scatter）→ filter；默认关 |
+| `variant_phase` / `run_phase`                     | **已实现**；SHAPEIT5；可选 `phase_scatter_bed` + `vcf_scatter_gather`；默认关                                     |
+| `variant_impute` / `run_impute`                   | **已实现**；beagle5 / minimac4 / glimpse；可选 `impute_scatter_bed` + gather；默认关                              |
+| `vcf_scatter_gather`                              | **已实现**；BED scatter + gather；供 phase/impute/`run_vcf_prep` 共用                                             |
+| `variant_relate` / `run_relate`                   | **已实现**；Somalier extract/relate；默认关                                                                       |
+| `run_vcf_prep`                                    | **已实现**；**串行** annotate→phase→impute（可跳步；可选 scatter/gather；`--vcf_prep_feed_ingest`）；默认关       |
+| `annotation_cache` / `run_cache`                  | **已实现**；VEP/snpEff cache 下载；可喂 annotate；默认关                                                          |
+| `variant_impute_bam` / `run_impute_bam`           | **已实现**；`bam_vcf_impute_glimpse2` chunk/phase/ligate；默认关                                                  |
+| `reference_fasta` / `run_fasta_index`             | **已实现**；产物可喂 relate/VEP/SV/STR/GLIMPSE2；默认关                                                           |
 
 ---
 
